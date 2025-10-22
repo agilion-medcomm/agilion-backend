@@ -11,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/api", (req, res) => {
-    res.status(200).json({ message: "API is set and ready to go!" });
+    res.send("Hello world!");
 });
 
 app.listen(PORT, () => {
