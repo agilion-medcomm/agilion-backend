@@ -10,6 +10,7 @@ const PORT = process.env.PORT || 9000;
 app.use(cors());
 app.use(express.json());
 
+// first endpoint 
 app.get("/api", (req, res) => {
     res.send("Hello world!");
 });
