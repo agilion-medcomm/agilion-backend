@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  # PostgreSQL veritabanımız için servis
+  db:
+    image: postgres:16-alpine  # Herkesin aynı imajı kullanmasını sağlar (lightweight)
+    container_name: hospital_db_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}       # .env'den okur, yoksa 'postgres' kullanır
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-admin} # .env'den okur, yoksa 'admin' kullanır
+      POSTGRES_DB: ${DB_NAME:-hospital_db}     # .env'den okur, yoksa 'hospital_db' kullanır
+    ports:
+      - "5432:5432"  # Lokal 5432 portunu, container'ın 5432 portuna bağlar
+    volumes:
+      - postgres_data:/var/lib/postgresql/data # Verilerin kalıcı olmasını sağlar (container silinse bile)
+
+volumes:
+  # Veritabanı verilerinin saklanacağı yer
+  postgres_data:
