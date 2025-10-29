@@ -1,0 +1,113 @@
+// This block defines the database connection.
+// Prisma reads this from your .env file.
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// This block tells Prisma to generate the client.
+// This is the standard configuration.
+generator client {
+  provider = "prisma-client-js"
+}
+
+// --- Enum Definitions ---
+// Defines a set of allowed values for the Role.
+enum UserRole {
+  PATIENT
+  DOCTOR
+  ADMIN
+}
+
+// --- Model Definitions ---
+
+// Base User model for login and common info
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String   // We will store a hashed password
+  role      UserRole @default(PATIENT)
+  firstName String
+  lastName  String
+  phone     String?  @unique // '?' means optional
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // --- Relationships ---
+  // A user can be ONE patient (1-to-1)
+  patient Patient?
+  // A user can be ONE doctor (1-to-1)
+  doctor  Doctor?
+  // A user can be ONE admin (1-to-1)
+  admin   Admin?
+
+  @@map("users") // Maps this model to the "users" table in Postgres
+}
+
+// Patient model, linked to a User
+model Patient {
+  id     Int  @id @default(autoincrement())
+  userId Int  @unique // Foreign key
+  user   User @relation(fields: [userId], references: [id])
+
+  // Patient-specific fields
+  dateOfBirth DateTime?
+  // medicalHistory String? // We can add more fields later
+
+  // --- Relationships ---
+  // A patient can have MANY appointments
+  appointments Appointment[]
+
+  @@map("patients")
+}
+
+// Doctor model, linked to a User
+model Doctor {
+  id     Int  @id @default(autoincrement())
+  userId Int  @unique // Foreign key
+  user   User @relation(fields: [userId], references: [id])
+
+  // Doctor-specific fields
+  specialization String
+  // bio            String? // We can add more fields later
+
+  // --- Relationships ---
+  // A doctor can have MANY appointments
+  appointments Appointment[]
+
+  @@map("doctors")
+}
+
+// Admin model, linked to a User
+model Admin {
+  id     Int  @id @default(autoincrement())
+  userId Int  @unique // Foreign key
+  user   User @relation(fields: [userId], references: [id])
+
+  // Admin-specific fields
+  // permissionsLevel Int? // We can add more fields later
+
+  @@map("admins")
+}
+
+// Appointment model
+model Appointment {
+  id          Int       @id @default(autoincrement())
+  patientId   Int
+  patient     Patient   @relation(fields: [patientId], references: [id])
+  doctorId    Int
+  doctor      Doctor    @relation(fields: [doctorId], references: [id])
+  
+  startTime   DateTime
+  endTime     DateTime
+  status      String    // e.g., "SCHEDULED", "COMPLETED", "CANCELLED"
+  reason      String?
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // We add an index to prevent a doctor from being double-booked
+  @@unique([doctorId, startTime])
+  @@map("appointments")
+}
