@@ -1,7 +1,7 @@
 // src/app.js
 const express = require('express');
 const cors = require('cors'); // We'll need this for React
-
+const { errorHandler } = require("./api/middlewares/errorHandler");
 const app = express();
 
 // --- Core Middleware ---
