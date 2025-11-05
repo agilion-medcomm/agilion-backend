@@ -21,6 +21,16 @@ const errorHandler = (err, req, res, next) => {
 
     // --- Handle Specific Known Errors ---
 
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+        // P2002 stands for unique constraint failed
+        if (err.code === 'P2002') {
+            statusCode = 409;
+            const fields = err.meta.target.join(', ');
+            message = `A user with this ${fields} already exists.`;
+        }
+
+    }
+
     if (err.isJoi) {
         statusCode = 400;
         const error = err.details.map(detail => ({
@@ -31,7 +41,7 @@ const errorHandler = (err, req, res, next) => {
         return res.status(statusCode).json({
             status: 'error',
             message: 'Validation failed',
-            errors: err,
+            errors: error,
         });
     }
 

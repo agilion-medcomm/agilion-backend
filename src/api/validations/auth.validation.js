@@ -12,7 +12,7 @@ const registerSchema = Joi.object({
         'date.format': 'Invalid date format. Use YYYY-MM-DD.',
     }),
     email: Joi.string().email().required(),
-    phone: Joi.string().required(),
+    phoneNumber: Joi.string().required(),
     password: Joi.string().min(8).required(),
 });
 
