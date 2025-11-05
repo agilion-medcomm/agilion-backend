@@ -31,7 +31,7 @@ const errorHandler = (err, req, res, next) => {
         return res.status(statusCode).json({
             status: 'error',
             message: 'Validation failed',
-            errors: errors,
+            errors: err,
         });
     }
 

@@ -30,7 +30,7 @@ model User {
   firstName  String
   tckn  String   @unique // TCKN
   lastName   String
-  phone      String?  @unique // '?' means optional
+  phoneNumber      String?  @unique // '?' means optional
   dateOfBirth DateTime?
 
   createdAt DateTime @default(now())
