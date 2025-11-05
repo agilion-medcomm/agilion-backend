@@ -22,11 +22,11 @@ app.get('/api/v1/health', (req, res) => {
 });
 
 // TODO: We will later import and mount our main router here
-// const mainRouter = require('./api/routes/index.js');
-// app.use('/api/v1', mainRouter);
+const mainRouter = require('./api/routes/index.js');
+app.use('/api/v1', mainRouter);
 
 
 // --- Error Handling Middleware ---
 // TODO: We will add a global error handler here
-
+app.use(errorHandler);
 module.exports = app; // Export the configured app

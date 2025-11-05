@@ -28,9 +28,10 @@ model User {
   password   String // We will store a hashed password
   role       UserRole @default(PATIENT)
   firstName  String
-  nationalId String   @unique // TCKN
+  tckn  String   @unique // TCKN
   lastName   String
   phone      String?  @unique // '?' means optional
+  dateOfBirth DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -53,7 +54,6 @@ model Patient {
   user   User @relation(fields: [userId], references: [id])
 
   // Patient-specific fields
-  dateOfBirth DateTime?
   // medicalHistory String? // We can add more fields later
 
   // --- Relationships ---
