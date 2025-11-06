@@ -1,4 +1,3 @@
-// src/server.js
 const app = require('./app'); // Import the configured app
 // TODO: We will import our database connection here later
 

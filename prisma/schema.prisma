@@ -23,13 +23,15 @@ enum UserRole {
 
 // Base User model for login and common info
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String   // We will store a hashed password
-  role      UserRole @default(PATIENT)
-  firstName String
-  lastName  String
-  phone     String?  @unique // '?' means optional
+  id         Int      @id @default(autoincrement())
+  email      String   @unique
+  password   String // We will store a hashed password
+  role       UserRole @default(PATIENT)
+  firstName  String
+  tckn  String   @unique // TCKN
+  lastName   String
+  phoneNumber      String?  @unique // '?' means optional
+  dateOfBirth DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -52,7 +54,6 @@ model Patient {
   user   User @relation(fields: [userId], references: [id])
 
   // Patient-specific fields
-  dateOfBirth DateTime?
   // medicalHistory String? // We can add more fields later
 
   // --- Relationships ---
@@ -93,19 +94,19 @@ model Admin {
 
 // Appointment model
 model Appointment {
-  id          Int       @id @default(autoincrement())
-  patientId   Int
-  patient     Patient   @relation(fields: [patientId], references: [id])
-  doctorId    Int
-  doctor      Doctor    @relation(fields: [doctorId], references: [id])
-  
-  startTime   DateTime
-  endTime     DateTime
-  status      String    // e.g., "SCHEDULED", "COMPLETED", "CANCELLED"
-  reason      String?
+  id        Int     @id @default(autoincrement())
+  patientId Int
+  patient   Patient @relation(fields: [patientId], references: [id])
+  doctorId  Int
+  doctor    Doctor  @relation(fields: [doctorId], references: [id])
 
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  startTime DateTime
+  endTime   DateTime
+  status    String // e.g., "SCHEDULED", "COMPLETED", "CANCELLED"
+  reason    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // We add an index to prevent a doctor from being double-booked
   @@unique([doctorId, startTime])
