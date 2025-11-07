@@ -1,7 +1,6 @@
 const authService = require("../../services/auth.service");
 const { ApiError } = require("../middlewares/errorHandler");
 
-
 const register = async (req, res, next) => {
 
     try {
@@ -10,20 +9,18 @@ const register = async (req, res, next) => {
 
         res.status(201).json({
             status: 'success',
-            message: "User registered successfully.",
+            message: 'User registered successfully.',
             data: {
-                userId: user.id, // Or 'userId: user.userId' depending on your model
+                userId: user.userUuid,
                 email: user.email,
                 firstName: user.firstName,
                 role: user.role,
             },
-
         });
     } catch (error) {
         next(error);
     }
 }
-
 
 const login = async (req, res, next) => {
 
@@ -32,10 +29,9 @@ const login = async (req, res, next) => {
 
         const token = await authService.loginUser(tckn, password);
 
-
         res.status(200).json({
-            status: "success",
-            message: "Login successful.",
+            status: 'success',
+            message: 'Login successful.',
             data: {
                 token: token,
             },
@@ -45,11 +41,7 @@ const login = async (req, res, next) => {
     }
 };
 
-
-
 module.exports = {
     register,
     login,
 };
-
-
