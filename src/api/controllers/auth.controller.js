@@ -11,7 +11,7 @@ const register = async (req, res, next) => {
             status: 'success',
             message: 'User registered successfully.',
             data: {
-                userId: user.userUuid,
+                userId: user.id, // Or 'userId: user.userId' depending on your model
                 email: user.email,
                 firstName: user.firstName,
                 role: user.role,

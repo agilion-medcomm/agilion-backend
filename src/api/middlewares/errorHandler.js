@@ -57,6 +57,6 @@ const errorHandler = (err, req, res, next) => {
 };
 
 module.exports = {
-    ApiError, 
+    ApiError,
     errorHandler,
 };

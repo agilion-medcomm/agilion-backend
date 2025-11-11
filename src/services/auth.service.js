@@ -48,10 +48,10 @@ const loginUser = async (tckn, password) => {
         throw new ApiError(401, 'Invalid TCKN or password.');
     }
 
-    // create jwt - use UUID as external identifier for consistency
+    // create jwt
     const token = jwt.sign(
         {
-            userId: user.userUuid, // expose UUID instead of internal integer id
+            userId: user.id,
             role: user.role,
             tckn: user.tckn,
         },

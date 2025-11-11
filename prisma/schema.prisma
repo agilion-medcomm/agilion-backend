@@ -24,7 +24,6 @@ enum UserRole {
 // Base User model for login and common info
 model User {
   id         Int      @id @default(autoincrement())
-  userUuid   String   @unique @default(uuid())
   email      String   @unique
   password   String // We will store a hashed password
   role       UserRole @default(PATIENT)
