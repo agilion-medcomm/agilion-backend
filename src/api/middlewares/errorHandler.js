@@ -9,8 +9,6 @@ class ApiError extends Error {
 
         Error.captureStackTrace(this, this.constructor);
     }
-
-
 }
 
 // Global Error Handler
@@ -20,15 +18,20 @@ const errorHandler = (err, req, res, next) => {
     let message = err.message || "Internal Server Error";
 
     // --- Handle Specific Known Errors ---
-
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
         // P2002 stands for unique constraint failed
         if (err.code === 'P2002') {
             statusCode = 409;
-            const fields = err.meta.target.join(', ');
-            message = `A user with this ${fields} already exists.`;
+            const targets = Array.isArray(err.meta?.target) ? err.meta.target : [err.meta?.target].filter(Boolean);
+            // Contract requires a unified message for email or TCKN conflicts
+            const isEmailOrTckn = targets.includes('email') || targets.includes('tckn');
+            if (isEmailOrTckn) {
+                message = 'A user with this TCKN or email already exists.';
+            } else {
+                const fields = targets.length ? targets.join(', ') : 'field(s)';
+                message = `A user with this ${fields} already exists.`;
+            }
         }
-
     }
 
     if (err.isJoi) {
@@ -40,7 +43,7 @@ const errorHandler = (err, req, res, next) => {
 
         return res.status(statusCode).json({
             status: 'error',
-            message: 'Validation failed',
+            message: 'Validation failed.',
             errors: error,
         });
     }
@@ -53,11 +56,7 @@ const errorHandler = (err, req, res, next) => {
     });
 };
 
-
 module.exports = {
     ApiError,
     errorHandler,
 };
-
-
-
