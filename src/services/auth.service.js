@@ -22,6 +22,7 @@ const registerUser = async (userData) => {
             firstName: userData.firstName,
             lastName: userData.lastName,
             tckn: userData.tckn,
+            role: userData.role,
             dateOfBirth: dateOfBirthObject,
             email: userData.email,
             phoneNumber: userData.phoneNumber,
@@ -62,7 +63,42 @@ const loginUser = async (tckn, password) => {
     return token;
 };
 
+const loginPersonnel = async (tckn, password) => {
+    // find user by tckn
+    const user = await userRepository.findUserByTckn(tckn);
+
+    // check if user exists and password is correct
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+        throw new ApiError(401, 'Invalid TCKN or password.');
+    }
+
+    // create jwt
+    const token = jwt.sign(
+        {
+            userId: user.id,
+            role: user.role,
+            tckn: user.tckn,
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: '30m' } // token duration
+    );
+
+    const userWithoutPassword = {
+        id: user.id,
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        tckn: user.tckn,
+        dateOfBirth: user.dateOfBirth
+    };
+
+    return { token, user: userWithoutPassword };
+};
+
 module.exports = {
     registerUser,
     loginUser,
+    loginPersonnel,
 }
