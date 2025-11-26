@@ -41,7 +41,29 @@ const login = async (req, res, next) => {
     }
 };
 
+const personnelLogin = async (req, res, next) => {
+
+    try {
+        console.log("--> KAPI ÇALINDI! Controller'ın içine girildi.");
+        const { tckn, password } = req.body;
+
+        const { token, user } = await authService.loginPersonnel(tckn, password);
+
+        res.status(200).json({
+            status: 'success',
+            message: 'Login successful.',
+            data: {
+                token: token,
+                user: user,
+            },
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     register,
     login,
+    personnelLogin
 };
