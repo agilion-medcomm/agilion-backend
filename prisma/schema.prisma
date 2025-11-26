@@ -33,6 +33,10 @@ model User {
   phoneNumber      String?  @unique // '?' means optional
   dateOfBirth DateTime?
 
+  // Password reset fields
+  resetToken        String?   @unique
+  resetTokenExpiry  DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -76,6 +80,8 @@ model Doctor {
   // --- Relationships ---
   // A doctor can have MANY appointments
   appointments Appointment[]
+  // A doctor can have MANY leave requests
+  leaveRequests LeaveRequest[]
 
   @@map("doctors")
 }
@@ -100,15 +106,32 @@ model Appointment {
   doctorId  Int
   doctor    Doctor  @relation(fields: [doctorId], references: [id])
 
-  startTime DateTime
-  endTime   DateTime
-  status    String // e.g., "SCHEDULED", "COMPLETED", "CANCELLED"
-  reason    String?
+  date      String  // Format: DD.MM.YYYY (e.g., "25.11.2025")
+  time      String  // Format: HH:MM (e.g., "10:00")
+  status    String  // "PENDING", "APPROVED", "CANCELLED", "COMPLETED"
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // We add an index to prevent a doctor from being double-booked
-  @@unique([doctorId, startTime])
   @@map("appointments")
+}
+
+// Leave Request model for doctors
+model LeaveRequest {
+  id        Int     @id @default(autoincrement())
+  doctorId  Int
+  doctor    Doctor  @relation(fields: [doctorId], references: [id])
+
+  startDate String  // Format: YYYY-MM-DD
+  startTime String  // Format: HH:MM
+  endDate   String  // Format: YYYY-MM-DD
+  endTime   String  // Format: HH:MM
+  reason    String
+
+  status    String  // "PENDING", "APPROVED", "REJECTED"
+
+  requestedAt DateTime @default(now())
+  resolvedAt  DateTime?
+
+  @@map("leave_requests")
 }
