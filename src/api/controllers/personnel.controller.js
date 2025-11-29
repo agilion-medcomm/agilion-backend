@@ -39,8 +39,9 @@ const createPersonnel = async (req, res, next) => {
  */
 const updatePersonnel = async (req, res, next) => {
     try {
-        const { id } = req.params;
-        const user = await personnelService.updatePersonnel(id, req.body);
+        // Use targetUserId set by requireAdminOrSelf middleware
+        const userId = req.targetUserId;
+        const user = await personnelService.updatePersonnel(userId, req.body);
 
         res.json({
             status: 'success',

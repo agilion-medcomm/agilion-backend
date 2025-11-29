@@ -6,7 +6,12 @@ const app = express();
 
 // --- Core Middleware ---
 // 1. Enable CORS (Cross-Origin Resource Sharing)
-app.use(cors()); // In production, configure this with specific origins
+app.use(cors({
+    origin: ['http://localhost:5173', 'http://localhost:5174'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // 2. Enable JSON body parsing
 app.use(express.json());

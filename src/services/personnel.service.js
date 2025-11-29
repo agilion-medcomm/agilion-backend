@@ -45,16 +45,36 @@ const getAllPersonnel = async () => {
  * Update personnel details
  */
 const updatePersonnel = async (personnelId, updates) => {
+    const userId = parseInt(personnelId);
+    
+    // Separate user fields from doctor-specific fields
+    const { specialization, ...userUpdates } = updates;
+    
     // Hash password if provided
-    if (updates.password) {
+    if (userUpdates.password) {
         const salt = await bcrypt.genSalt(10);
-        updates.password = await bcrypt.hash(updates.password, salt);
+        userUpdates.password = await bcrypt.hash(userUpdates.password, salt);
     }
 
+    // Update user fields
     const user = await prisma.user.update({
-        where: { id: parseInt(personnelId) },
-        data: updates,
+        where: { id: userId },
+        data: userUpdates,
     });
+
+    // Update doctor specialization if provided
+    if (specialization !== undefined) {
+        const doctor = await prisma.doctor.findUnique({
+            where: { userId: userId }
+        });
+        
+        if (doctor) {
+            await prisma.doctor.update({
+                where: { id: doctor.id },
+                data: { specialization }
+            });
+        }
+    }
 
     // Remove password from response
     const { password, ...userWithoutPass } = user;
