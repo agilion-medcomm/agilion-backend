@@ -10,24 +10,22 @@ const findUserByTckn = async (tckn) => {
 };
 
 /*
- * Finds a single user by their ID
- */
-const findUserById = async (id) => {
-    return prisma.user.findUnique({
-        where: { id },
-    });
-};
-
-/*
  * Creates a new user in the database
  * If role is PATIENT, also creates Patient record
  * */
 const createUser = async (userData) => {
+    const userDataWithDefaults = {
+        ...userData,
+        isEmailVerified: userData.isEmailVerified ?? false,
+        emailToken: userData.emailToken || null,
+        emailTokenExpiry: userData.emailTokenExpiry || null,
+    };
+
     if (userData.role === 'PATIENT') {
         const patient = await prisma.patient.create({
             data: {
                 user: {
-                    create: userData,
+                    create: userDataWithDefaults,
                 },
             },
             include: {
@@ -38,7 +36,7 @@ const createUser = async (userData) => {
     }
     
     return prisma.user.create({
-        data: userData,
+        data: userDataWithDefaults,
     });
 };
 
@@ -92,7 +90,6 @@ const createPersonnelWithUser = async (data) => {
 
 module.exports = {
     findUserByTckn,
-    findUserById,
     createUser,
     createPersonnelWithUser,
 };

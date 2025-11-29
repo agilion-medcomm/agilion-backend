@@ -120,6 +120,30 @@ const resetPassword = async (req, res, next) => {
     }
 };
 
+// POST /api/v1/auth/verify-email
+// Verify email with token
+const verifyEmail = async (req, res, next) => {
+    try {
+        const { token } = req.body;
+        const result = await authService.verifyEmail(token);
+        res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+};
+
+// POST /api/v1/auth/resend-verification
+// Resend verification email with optional email update
+const resendVerificationEmail = async (req, res, next) => {
+    try {
+        const { tckn, email } = req.body;
+        const result = await authService.resendVerificationEmail(tckn, email);
+        res.status(200).json(result);
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     register,
     login,
@@ -128,4 +152,6 @@ module.exports = {
     getMe,
     requestPasswordReset,
     resetPassword,
+    verifyEmail,
+    resendVerificationEmail,
 };

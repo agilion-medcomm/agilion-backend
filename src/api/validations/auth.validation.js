@@ -67,10 +67,23 @@ const resetPasswordSchema = Joi.object({
     }),
 });
 
+// Schema for POST /api/v1/auth/resend-verification
+const resendVerificationSchema = Joi.object({
+    tckn: Joi.string().length(11).pattern(/^[0-9]+$/).required().messages({
+        'string.length': 'TCKN must be 11 digits.',
+        'string.pattern.base': 'TCKN must only contain digits.',
+        'any.required': 'TCKN is required.',
+    }),
+    email: Joi.string().email().optional().messages({
+        'string.email': 'Please provide a valid email address.',
+    }),
+});
+
 module.exports = {
     registerSchema,
     loginSchema,
     personnelRegisterSchema,
     requestPasswordResetSchema,
     resetPasswordSchema,
+    resendVerificationSchema,
 };

@@ -16,7 +16,7 @@ app.use(express.urlencoded({ extended: true }));
 
 
 // --- API Routes ---
-// A simple test route
+// Health check endpoint
 app.get('/api/v1/health', (req, res) => {
     res.status(200).json({ status: 'UP', service: 'Hospital API' });
 });

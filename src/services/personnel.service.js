@@ -63,14 +63,40 @@ const updatePersonnel = async (personnelId, updates) => {
 };
 
 /**
- * Delete personnel
+ * Delete personnel with cascading deletes
+ * Deletes in order: appointments -> leave requests -> doctor/admin profile -> user
  */
 const deletePersonnel = async (personnelId) => {
-    await prisma.user.delete({
-        where: { id: parseInt(personnelId) },
-    });
+    const id = parseInt(personnelId);
 
-    return { id: parseInt(personnelId) };
+    await prisma.$transaction([
+        // 1. Delete appointments linked to this doctor
+        prisma.appointment.deleteMany({
+            where: { doctor: { userId: id } }
+        }),
+
+        // 2. Delete leave requests linked to this doctor
+        prisma.leaveRequest.deleteMany({
+            where: { doctor: { userId: id } }
+        }),
+
+        // 3. Delete doctor profile (if exists)
+        prisma.doctor.deleteMany({
+            where: { userId: id }
+        }),
+
+        // 4. Delete admin profile (if exists)
+        prisma.admin.deleteMany({
+            where: { userId: id }
+        }),
+
+        // 5. Finally delete the user record
+        prisma.user.delete({
+            where: { id: id },
+        })
+    ]);
+
+    return { id: id };
 };
 
 module.exports = {
