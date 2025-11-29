@@ -15,7 +15,7 @@ const findUserByTckn = async (tckn) => {
  * */
 const createUser = async (userData) => {
     if (userData.role === 'PATIENT') {
-        return prisma.patient.create({
+        const patient = await prisma.patient.create({
             data: {
                 user: {
                     create: userData,
@@ -24,7 +24,8 @@ const createUser = async (userData) => {
             include: {
                 user: true,
             },
-        }).then(patient => patient.user);
+        });
+        return patient.user;
     }
     
     return prisma.user.create({

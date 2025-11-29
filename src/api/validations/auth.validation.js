@@ -1,4 +1,5 @@
 const Joi = require('joi');
+const { joiISODateValidator } = require('../../utils/dateTimeValidator');
 
 // Schema for POST /api/v1/auth/register
 const registerSchema = Joi.object({
@@ -9,24 +10,11 @@ const registerSchema = Joi.object({
         'string.pattern.base': 'TCKN must only contain digits.',
     }),
     role: Joi.string().valid('PATIENT', 'DOCTOR', 'ADMIN'),
-    // Enforce format AND real calendar date (no 2025-13-40)
+    // Enforce format AND real calendar date using centralized validator
     dateOfBirth: Joi.string()
         .pattern(/^\d{4}-\d{2}-\d{2}$/)
         .required()
-        .custom((value, helpers) => {
-            // Basic format already ensured by pattern; now validate calendar correctness
-            const [y, m, d] = value.split('-').map(Number);
-            const date = new Date(Date.UTC(y, m - 1, d));
-            const isValid =
-                date.getUTCFullYear() === y &&
-                date.getUTCMonth() === (m - 1) &&
-                date.getUTCDate() === d;
-
-            if (!isValid) {
-                return helpers.error('any.invalid');
-            }
-            return value;
-        }, 'Calendar date validation')
+        .custom(joiISODateValidator, 'ISO date validation')
         .messages({
             'string.pattern.base': 'Invalid date format. Use YYYY-MM-DD.',
             'any.invalid': 'Invalid date format. Use YYYY-MM-DD.',
@@ -53,7 +41,7 @@ const personnelRegisterSchema = Joi.object({
     phoneNumber: Joi.string().allow('').optional(),
     email: Joi.string().email().allow('').optional(),
     dateOfBirth: Joi.alternatives().try(
-        Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/),
+        Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).custom(joiISODateValidator, 'ISO date validation'),
         Joi.valid(null)
     ).optional(),
     // specialization is required for DOCTOR, should be empty for ADMIN; service can enforce if needed.

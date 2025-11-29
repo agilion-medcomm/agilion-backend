@@ -1,13 +1,73 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const prisma = require('../config/db');
 const userRepository = require('../repositories/user.repository');
 const { ApiError } = require('../api/middlewares/errorHandler');
 const emailService = require('./email.service');
+const { isoDateToObject } = require('../utils/dateTimeValidator');
 
 /**
  * Handles business logic
  */
+
+/**
+ * Get current user profile by ID
+ */
+const getUserProfile = async (userId) => {
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            tckn: true,
+            email: true,
+            phoneNumber: true,
+            dateOfBirth: true,
+            role: true,
+            doctor: {
+                select: {
+                    id: true,
+                    specialization: true,
+                },
+            },
+            admin: {
+                select: {
+                    id: true,
+                },
+            },
+            patient: {
+                select: {
+                    id: true,
+                },
+            },
+        },
+    });
+
+    if (!user) {
+        throw new ApiError(404, 'User not found.');
+    }
+
+    // Format response based on role
+    const response = {
+        id: user.doctor?.id || user.admin?.id || user.patient?.id || user.id,
+        userId: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        tckn: user.tckn,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        dateOfBirth: user.dateOfBirth,
+        role: user.role,
+    };
+
+    if (user.doctor) {
+        response.specialization = user.doctor.specialization;
+    }
+
+    return response;
+};
 
 const registerUser = async (userData) => {
 
@@ -16,7 +76,7 @@ const registerUser = async (userData) => {
     const hashedPassword = await bcrypt.hash(userData.password, salt);
 
     // dateOfBirth is provided as YYYY-MM-DD; construct Date object safely
-    const dateOfBirthObject = userData.dateOfBirth ? new Date(`${userData.dateOfBirth}T00:00:00.000Z`) : null;
+    const dateOfBirthObject = isoDateToObject(userData.dateOfBirth);
 
     // create user
     try {
@@ -54,9 +114,7 @@ const registerPersonnel = async (personnelData) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(personnelData.password, salt);
 
-    const dateOfBirthObject = personnelData.dateOfBirth
-        ? new Date(`${personnelData.dateOfBirth}T00:00:00.000Z`)
-        : null;
+    const dateOfBirthObject = isoDateToObject(personnelData.dateOfBirth);
 
     try {
         const created = await userRepository.createPersonnelWithUser({
@@ -134,7 +192,6 @@ const loginUser = async (tckn, password) => {
 
 const loginPersonnel = async (tckn, password) => {
     // find user by tckn with doctor/admin relations
-    const prisma = require('../config/db');
     const user = await prisma.user.findUnique({
         where: { tckn },
         include: {
@@ -182,8 +239,6 @@ const loginPersonnel = async (tckn, password) => {
  * @param {string} email - User's email address
  */
 const requestPasswordReset = async (email) => {
-    const prisma = require('../config/db');
-
     // Find user by email
     const user = await prisma.user.findUnique({
         where: { email },
@@ -257,8 +312,6 @@ const requestPasswordReset = async (email) => {
  * @param {string} newPassword - New password
  */
 const resetPassword = async (token, newPassword) => {
-    const prisma = require('../config/db');
-
     // Hash the provided token to match against database
     const hashedToken = crypto
         .createHash('sha256')
@@ -300,6 +353,7 @@ const resetPassword = async (token, newPassword) => {
 };
 
 module.exports = {
+    getUserProfile,
     registerUser,
     registerPersonnel,
     loginUser,
