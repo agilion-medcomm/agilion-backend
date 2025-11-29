@@ -8,7 +8,7 @@ const registerSchema = Joi.object({
         'string.length': 'TCKN must be 11 digits.',
         'string.pattern.base': 'TCKN must only contain digits.',
     }),
-    role: Joi.string().valid('PATIENT', 'DOCTOR', 'ADMIN'),
+    role: Joi.string().valid('PATIENT').default('PATIENT'), // Only PATIENT allowed for public registration
     // Enforce format AND real calendar date (no 2025-13-40)
     dateOfBirth: Joi.string()
         .pattern(/^\d{4}-\d{2}-\d{2}$/)
