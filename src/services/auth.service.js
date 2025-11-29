@@ -84,7 +84,7 @@ const registerUser = async (userData) => {
             firstName: userData.firstName,
             lastName: userData.lastName,
             tckn: userData.tckn,
-            role: userData.role,
+            role: userData.role || 'PATIENT', // Explicitly default to PATIENT for registration
             dateOfBirth: dateOfBirthObject,
             email: userData.email,
             phoneNumber: userData.phoneNumber,
