@@ -122,7 +122,7 @@ PORT=5000
 EMAIL_SERVICE="gmail"
 EMAIL_USER="your-email@gmail.com"
 EMAIL_PASSWORD="your-app-specific-password"
-FRONTEND_URL="http://localhost:5173"
+FRONTEND_URL="http://localhost:5174"
 
 # Initial Admin Credentials (for bootstrap script)
 INITIAL_ADMIN_TCKN=99999999999
@@ -889,7 +889,7 @@ npm run dev
 #### Test Steps
 
 1. **Navigate to Login:**
-   - Open: `http://localhost:5173/login`
+   - Open: `http://localhost:5174/login`
 
 2. **Request Reset:**
    - Click: "Şifremi Unuttum"
@@ -903,7 +903,7 @@ npm run dev
    - Copy reset URL or token
 
 4. **Reset Password:**
-   - Visit: `http://localhost:5173/reset-password?token=YOUR_TOKEN`
+   - Visit: `http://localhost:5174/reset-password?token=YOUR_TOKEN`
    - Enter new password (twice)
    - Submit form
    - See success message
@@ -1132,7 +1132,7 @@ PORT=5000
 EMAIL_SERVICE="gmail"
 EMAIL_USER="your-email@gmail.com"
 EMAIL_PASSWORD="app-password"
-FRONTEND_URL="http://localhost:5173"
+FRONTEND_URL="http://localhost:5174"
 
 # Bootstrap Admin (optional)
 INITIAL_ADMIN_TCKN=99999999999

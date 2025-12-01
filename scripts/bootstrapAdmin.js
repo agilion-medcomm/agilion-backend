@@ -41,6 +41,7 @@ async function bootstrapAdmin() {
                         email,
                         password: hashedPassword,
                         role: 'ADMIN',
+                        isEmailVerified: true,
                     },
                 },
             },
