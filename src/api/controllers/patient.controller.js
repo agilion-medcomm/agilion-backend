@@ -39,6 +39,11 @@ const getPatients = async (req, res, next) => {
     }
 };
 
+const updateProfile = async (req, res, next) => {
+
+};
+
 module.exports = {
     getPatients,
+    updateProfile,
 };

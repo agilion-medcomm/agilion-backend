@@ -27,4 +27,18 @@ const authMiddleware = async (req, res, next) => {
     }
 };
 
-module.exports = authMiddleware;
+const authorize = (...roles) => {
+    return (req, res, next) => {
+
+        if (!req.user || !roles.includes(req.user.role)) {
+
+            return next(new ApiError(401, 'You are not authorized to perform this action'));
+        }
+        next();
+    };
+};
+
+module.exports = {
+    authMiddleware,
+    authorize
+};
