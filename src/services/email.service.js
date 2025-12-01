@@ -8,7 +8,6 @@ const nodemailer = require('nodemailer');
 const createTransporter = () => {
     // Check if we have email configuration
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-        console.warn('Email configuration missing. Password reset emails will not be sent.');
         return null;
     }
 
@@ -28,19 +27,12 @@ const createTransporter = () => {
  * @param {string} firstName - User's first name
  */
 const sendPasswordResetEmail = async (email, resetToken, firstName) => {
-    console.log(`[PASSWORD RESET] Request for email: ${email}`);
-    
     const transporter = createTransporter();
 
     if (!transporter) {
-        console.error('Email transporter not configured. Cannot send password reset email.');
-        // In development, just log the token
-        console.log(`Password reset token for ${email}: ${resetToken}`);
-        console.log(`Reset URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`);
+        // Email not configured - in development, check console or email service logs
         return;
     }
-    
-    console.log(`[PASSWORD RESET] Email transporter configured, attempting to send email...`);
 
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`;
 
@@ -82,17 +74,56 @@ Eğer şifre sıfırlama talebinde bulunmadıysanız, bu e-postayı görmezden g
 
     try {
         await transporter.sendMail(mailOptions);
-        console.log(`[PASSWORD RESET] ✅ Email successfully sent to ${email}`);
     } catch (error) {
-        console.error('[PASSWORD RESET] ❌ Error sending email:', error.message);
-        console.error('Full error:', error);
-        // Log token to console as fallback
-        console.log(`[PASSWORD RESET] Fallback - Token for ${email}: ${resetToken}`);
-        console.log(`[PASSWORD RESET] Reset URL: ${resetUrl}`);
+        // In production, log to monitoring service instead of console
         throw new Error('Failed to send password reset email.');
+    }
+};
+
+/**
+ * Send email verification email
+ * @param {string} email - Recipient email
+ * @param {string} token - Verification token
+ * @param {string} firstName - User's first name
+ */
+const sendVerificationEmail = async (email, token, firstName) => {
+    const transporter = createTransporter();
+
+    if (!transporter) {
+        // Email not configured - in development, check console or email service logs
+        return;
+    }
+
+    const verifyUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email?token=${token}`;
+
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Hesabınızı Doğrulayın - Agilion MedComm',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #0e2b4b;">Hoş Geldiniz ${firstName}!</h2>
+                <p>Agilion MedComm'a kayıt olduğunuz için teşekkür ederiz.</p>
+                <p>Hesabınızı güvenle kullanabilmek için lütfen e-posta adresinizi doğrulayın:</p>
+                <div style="margin: 30px 0;">
+                    <a href="${verifyUrl}" 
+                       style="background-color: #45b5c4; color: white; padding: 14px 20px; text-decoration: none; border-radius: 4px; display: inline-block; font-weight: bold;">
+                        Hesabımı Doğrula
+                    </a>
+                </div>
+                <p style="color: #666; font-size: 14px;">Bu bağlantı 24 saat geçerlidir.</p>
+            </div>
+        `,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+    } catch (error) {
+        // In production, log to monitoring service
     }
 };
 
 module.exports = {
     sendPasswordResetEmail,
+    sendVerificationEmail,
 };

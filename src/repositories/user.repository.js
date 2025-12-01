@@ -14,21 +14,29 @@ const findUserByTckn = async (tckn) => {
  * If role is PATIENT, also creates Patient record
  * */
 const createUser = async (userData) => {
+    const userDataWithDefaults = {
+        ...userData,
+        isEmailVerified: userData.isEmailVerified ?? false,
+        emailToken: userData.emailToken || null,
+        emailTokenExpiry: userData.emailTokenExpiry || null,
+    };
+
     if (userData.role === 'PATIENT') {
-        return prisma.patient.create({
+        const patient = await prisma.patient.create({
             data: {
                 user: {
-                    create: userData,
+                    create: userDataWithDefaults,
                 },
             },
             include: {
                 user: true,
             },
-        }).then(patient => patient.user);
+        });
+        return patient.user;
     }
     
     return prisma.user.create({
-        data: userData,
+        data: userDataWithDefaults,
     });
 };
 
@@ -47,6 +55,7 @@ const createPersonnelWithUser = async (data) => {
         email: data.email,
         phoneNumber: data.phoneNumber,
         password: data.password,
+        isEmailVerified: data.isEmailVerified || false,
     };
 
     if (data.role === 'DOCTOR') {

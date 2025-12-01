@@ -1,5 +1,4 @@
-const leaveRequestRepository = require('../../repositories/leaveRequest.repository');
-const { ApiError } = require('../middlewares/errorHandler');
+const leaveRequestService = require('../../services/leaveRequest.service');
 
 /**
  * GET /api/v1/leave-requests
@@ -7,40 +6,8 @@ const { ApiError } = require('../middlewares/errorHandler');
  */
 const getLeaveRequests = async (req, res, next) => {
     try {
-        const filters = {};
-        
-        // If not admin, only show own requests
-        if (req.user.role !== 'ADMIN' && req.user.role === 'DOCTOR') {
-            // Find doctor ID from userId
-            const prisma = require('../../config/db');
-            const doctor = await prisma.doctor.findUnique({
-                where: { userId: req.user.userId },
-            });
-            if (doctor) {
-                filters.doctorId = doctor.id;
-            }
-        }
-
-        const requests = await leaveRequestRepository.getLeaveRequests(filters);
-        
-        // Map to frontend format
-        const formatted = requests.map(req => ({
-            id: req.id,
-            personnelId: req.doctorId,
-            personnelFirstName: req.doctor.user.firstName,
-            personnelLastName: req.doctor.user.lastName,
-            personnelRole: req.doctor.user.role,
-            startDate: req.startDate,
-            startTime: req.startTime,
-            endDate: req.endDate,
-            endTime: req.endTime,
-            reason: req.reason,
-            status: req.status,
-            requestedAt: req.requestedAt,
-            resolvedAt: req.resolvedAt,
-        }));
-
-        res.json({ status: 'success', data: formatted });
+        const requests = await leaveRequestService.getLeaveRequests(req.user.role, req.user.userId);
+        res.json({ status: 'success', data: requests });
     } catch (error) {
         next(error);
     }
@@ -52,29 +19,12 @@ const getLeaveRequests = async (req, res, next) => {
  */
 const createLeaveRequest = async (req, res, next) => {
     try {
-        const { personnelId, startDate, startTime, endDate, endTime, reason } = req.body;
-
-        if (!personnelId || !startDate || !startTime || !endDate || !endTime || !reason) {
-            throw new ApiError(400, 'Missing required fields.');
-        }
-
-        const leaveRequest = await leaveRequestRepository.createLeaveRequest({
-            doctorId: personnelId,
-            startDate,
-            startTime,
-            endDate,
-            endTime,
-            reason,
-        });
+        const leaveRequest = await leaveRequestService.createLeaveRequest(req.body);
 
         res.status(201).json({
             status: 'success',
             message: 'Leave request submitted successfully.',
-            data: {
-                id: leaveRequest.id,
-                personnelId: leaveRequest.doctorId,
-                status: leaveRequest.status,
-            },
+            data: leaveRequest,
         });
     } catch (error) {
         next(error);
@@ -90,20 +40,12 @@ const updateLeaveRequestStatus = async (req, res, next) => {
         const { id } = req.params;
         const { status } = req.body;
 
-        if (!['APPROVED', 'REJECTED'].includes(status)) {
-            throw new ApiError(400, 'Invalid status. Must be APPROVED or REJECTED.');
-        }
-
-        const leaveRequest = await leaveRequestRepository.updateLeaveRequestStatus(id, status);
+        const leaveRequest = await leaveRequestService.updateLeaveRequestStatus(id, status);
 
         res.json({
             status: 'success',
             message: `Leave request ${status.toLowerCase()}.`,
-            data: {
-                id: leaveRequest.id,
-                status: leaveRequest.status,
-                resolvedAt: leaveRequest.resolvedAt,
-            },
+            data: leaveRequest,
         });
     } catch (error) {
         next(error);
