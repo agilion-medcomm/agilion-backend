@@ -123,7 +123,61 @@ const sendVerificationEmail = async (email, token, firstName) => {
     }
 };
 
+/**
+ * Send contact reply email
+ * @param {string} email - Recipient email
+ * @param {string} name - User's name
+ * @param {string} subject - Original subject
+ * @param {string} replyMessage - Admin's reply message
+ */
+const sendContactReplyEmail = async (email, name, subject, replyMessage) => {
+    const transporter = createTransporter();
+
+    if (!transporter) {
+        // Email not configured - in development, check console or email service logs
+        return;
+    }
+
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: `Re: ${subject} - Agilion MedComm`,
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #0e2b4b;">İletişim Formunuza Yanıt</h2>
+                <p>Merhaba ${name},</p>
+                <p>Bizimle iletişime geçtiğiniz için teşekkür ederiz. İletinize yanıtımız aşağıdadır:</p>
+                <div style="background-color: #f5f5f5; padding: 20px; border-left: 4px solid #45b5c4; margin: 20px 0;">
+                    <p style="margin: 0; white-space: pre-wrap;">${replyMessage}</p>
+                </div>
+                <p style="color: #666;">Başka sorularınız varsa, lütfen bizimle iletişime geçmekten çekinmeyin.</p>
+                <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+                <p style="color: #999; font-size: 12px;">© 2025 Agilion MedComm. Tüm hakları saklıdır.</p>
+            </div>
+        `,
+        text: `
+Merhaba ${name},
+
+Bizimle iletişime geçtiğiniz için teşekkür ederiz. İletinize yanıtımız aşağıdadır:
+
+${replyMessage}
+
+Başka sorularınız varsa, lütfen bizimle iletişime geçmekten çekinmeyin.
+
+© 2025 Agilion MedComm
+        `,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+    } catch (error) {
+        // In production, log to monitoring service instead of console
+        throw new Error('Failed to send contact reply email.');
+    }
+};
+
 module.exports = {
     sendPasswordResetEmail,
     sendVerificationEmail,
+    sendContactReplyEmail,
 };
