@@ -19,6 +19,12 @@ enum UserRole {
   ADMIN
 }
 
+// Defines the status of a contact issue
+enum IssueStatus {
+  PENDING
+  REPLIED
+}
+
 // --- Model Definitions ---
 
 // Base User model for login and common info
@@ -143,4 +149,21 @@ model LeaveRequest {
   resolvedAt  DateTime?
 
   @@map("leave_requests")
+}
+
+// Contact Issue model for visitor contact forms
+model ContactIssue {
+  id           Int         @id @default(autoincrement())
+  name         String
+  email        String
+  phone        String
+  subject      String
+  message      String
+  status       IssueStatus @default(PENDING)
+  replyMessage String?     // Admin's reply message
+  repliedAt    DateTime?   // When the admin replied
+
+  createdAt    DateTime    @default(now())
+
+  @@map("contact_issues")
 }
