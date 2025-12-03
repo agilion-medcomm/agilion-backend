@@ -61,6 +61,7 @@ const getAllPatients = async () => {
 
     return patients.map(pat => ({
         id: pat.user.id,
+        patientId: pat.id,  // Patient table ID - for appointments
         tckn: pat.user.tckn,
         firstName: pat.user.firstName,
         lastName: pat.user.lastName,

@@ -25,6 +25,7 @@ const getAppointmentsList = async (filters) => {
         date: app.date,
         time: app.time,
         status: app.status,
+        department: app.doctor.specialization || '-',
         createdAt: app.createdAt,
     }));
 };
