@@ -3,7 +3,7 @@ const express = require("express");
 const router = express.Router();
 
 const validate = require("../middlewares/validate");
-const authMiddleware = require("../middlewares/authMiddleware");
+const  authMiddleware  = require("../middlewares/authMiddleware");
 
 const { registerSchema, loginSchema, personnelRegisterSchema, requestPasswordResetSchema, resetPasswordSchema, resendVerificationSchema } = require("../validations/auth.validation");
 

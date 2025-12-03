@@ -63,6 +63,10 @@ model Patient {
   user   User @relation(fields: [userId], references: [id])
 
   // Patient-specific fields
+  address          String?
+  emergencyContact String?
+  bloodType        String?
+
   // medicalHistory String? // We can add more fields later
 
   // --- Relationships ---
