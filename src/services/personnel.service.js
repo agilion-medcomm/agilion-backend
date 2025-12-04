@@ -2,15 +2,18 @@ const prisma = require('../config/db');
 const bcrypt = require('bcrypt');
 
 /**
- * Get all personnel (doctors and admins) with formatted data
+ * Get all personnel (doctors, admins, and cashiers) with formatted data
  */
 const getAllPersonnel = async () => {
-    const [doctors, admins] = await Promise.all([
+    const [doctors, admins, cashiers] = await Promise.all([
         prisma.doctor.findMany({
             include: { user: true },
         }),
         prisma.admin.findMany({
             include: { user: true },
+        }),
+        prisma.user.findMany({
+            where: { role: 'CASHIER' },
         }),
     ]);
 
@@ -35,6 +38,16 @@ const getAllPersonnel = async () => {
             phoneNumber: a.user.phoneNumber,
             role: a.user.role,
             dateOfBirth: a.user.dateOfBirth,
+        })),
+        ...cashiers.map(c => ({
+            id: c.id,
+            tckn: c.tckn,
+            firstName: c.firstName,
+            lastName: c.lastName,
+            email: c.email,
+            phoneNumber: c.phoneNumber,
+            role: c.role,
+            dateOfBirth: c.dateOfBirth,
         })),
     ];
 
