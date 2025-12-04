@@ -91,8 +91,16 @@ const updateProfile = async (userId, updateData) => {
     if (firstName) userUpdateData.firstName = firstName;
     if (lastName) userUpdateData.lastName = lastName;
     if (phoneNumber) userUpdateData.phoneNumber = phoneNumber;
-    if (email) userUpdateData.email = email;
     if (dateOfBirth) userUpdateData.dateOfBirth = isoDateToObject(dateOfBirth);
+    if (email)
+    {
+        const existingUser = await prisma.user.findUnique({ where: { email }})
+        if (existingUser && existingUser.id !== userId)
+        {
+            throw new ApiError(409, "A user with this email already exists");
+        }
+        userUpdateData.email = email;
+    }
 
     // Prepare patient update data
     const patientUpdateData = {};
