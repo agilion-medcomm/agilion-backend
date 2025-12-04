@@ -83,9 +83,16 @@ const getBookedTimesForDoctor = async (doctorId, date) => {
 
 /**
  * Create a new appointment
+ * @param {number} userId - The authenticated user's ID
+ * @param {string} role - The authenticated user's role (PATIENT, CASHIER)
+ * @param {object} appointmentData - Appointment data including doctorId, date, time, status, patientId (for CASHIER)
  */
-const createAppointment = async (userId, appointmentData) => {
-    const { doctorId, date, time, status } = appointmentData;
+const createAppointment = async (userId, role, appointmentData) => {
+    const { doctorId, date, time, status, patientId: patientIdFromBody } = appointmentData;
+
+    if (!role) {
+        throw new ApiError(400, 'User role is required.');
+    }
 
     if (!doctorId || !date || !time) {
         throw new ApiError(400, 'Missing required fields.');
@@ -100,19 +107,46 @@ const createAppointment = async (userId, appointmentData) => {
         throw new ApiError(400, 'Invalid time format. Expected HH:MM (e.g., 10:00).');
     }
 
-    // Get patientId from authenticated user
-    const user = await prisma.user.findUnique({
-        where: { id: userId },
-        include: { patient: true },
-    });
+    let patientId;
 
-    if (!user || !user.patient) {
-        throw new ApiError(400, 'Patient profile not found.');
+    // CASHIER must provide patientId - they create appointments for patients
+    if (role === 'CASHIER') {
+        if (!patientIdFromBody) {
+            throw new ApiError(400, 'Patient ID is required for cashier appointments.');
+        }
+        
+        // Verify the patient exists
+        const patient = await prisma.patient.findUnique({
+            where: { id: parseInt(patientIdFromBody) },
+        });
+        
+        if (!patient) {
+            throw new ApiError(404, 'Patient not found.');
+        }
+        
+        patientId = patient.id;
+    }
+    // PATIENT creates appointment for themselves
+    else if (role === 'PATIENT') {
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: { patient: true },
+        });
+
+        if (!user || !user.patient) {
+            throw new ApiError(400, 'Patient profile not found.');
+        }
+        
+        patientId = user.patient.id;
+    }
+    // Other roles cannot create appointments
+    else {
+        throw new ApiError(403, 'Only patients and cashiers can create appointments.');
     }
 
     const appointment = await appointmentRepository.createAppointment({
         doctorId,
-        patientId: user.patient.id,
+        patientId,
         date,
         time,
         status: status || 'APPROVED',
