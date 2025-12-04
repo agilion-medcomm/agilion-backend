@@ -46,6 +46,7 @@ const updateProfile = async (req, res, next) => {
             firstName: updatedPatient.user.firstName,
             lastName: updatedPatient.user.lastName,
             email: updatedPatient.user.email,
+            dateOfBirth: updatedPatient.user.dateOfBirth,
             phoneNumber: updatedPatient.user.phoneNumber,
             address: updatedPatient.address,
             emergencyContact: updatedPatient.emergencyContact,

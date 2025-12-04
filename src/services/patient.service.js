@@ -2,6 +2,7 @@ const prisma = require('../config/db');
 const bcrypt = require('bcryptjs'); 
 
 const { ApiError } = require('../api/middlewares/errorHandler');
+const { isoDateToObject } = require('../utils/dateTimeValidator');
 
 const changePassword = async (userId, currentPassword, newPassword) => {
 
@@ -78,28 +79,34 @@ const updateProfile = async (userId, updateData) => {
         firstName, 
         lastName, 
         phoneNumber, 
+        email,
+        dateOfBirth,
         address, 
         emergencyContact, 
         bloodType 
     } = updateData;
 
+    // Prepare user update data
+    const userUpdateData = {};
+    if (firstName) userUpdateData.firstName = firstName;
+    if (lastName) userUpdateData.lastName = lastName;
+    if (phoneNumber) userUpdateData.phoneNumber = phoneNumber;
+    if (email) userUpdateData.email = email;
+    if (dateOfBirth) userUpdateData.dateOfBirth = isoDateToObject(dateOfBirth);
+
+    // Prepare patient update data
+    const patientUpdateData = {};
+    if (address !== undefined) patientUpdateData.address = address;
+    if (emergencyContact !== undefined) patientUpdateData.emergencyContact = emergencyContact;
+    if (bloodType !== undefined) patientUpdateData.bloodType = bloodType;
+
+    if (Object.keys(userUpdateData).length > 0) {
+        patientUpdateData.user = { update: userUpdateData };
+    }
 
     const updatedPatient = await prisma.patient.update({
         where: { userId: userId },
-        data: {
-
-            address,
-            emergencyContact,
-            bloodType,
-
-            user: {
-                update: {
-                    firstName,
-                    lastName,
-                    phoneNumber
-                }
-            }
-        },
+        data: patientUpdateData,
         include: {
             user: true 
         }
