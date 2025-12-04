@@ -35,10 +35,17 @@ const getAppointments = async (req, res, next) => {
 /**
  * POST /api/v1/appointments
  * Create new appointment
+ * - PATIENT: creates appointment for themselves
+ * - CASHIER: creates appointment for a patient (patientId required in body)
+ * - ADMIN/DOCTOR: can create for themselves or specify patientId
  */
 const createAppointment = async (req, res, next) => {
     try {
-        const appointment = await appointmentService.createAppointment(req.user.userId, req.body);
+        const appointment = await appointmentService.createAppointment(
+            req.user.userId,
+            req.user.role,
+            req.body
+        );
 
         res.status(201).json({
             status: 'success',

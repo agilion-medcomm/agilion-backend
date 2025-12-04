@@ -115,8 +115,31 @@ const updateProfile = async (userId, updateData) => {
     return updatedPatient;
 };
 
+/**
+ * Get patient by TCKN (for cashier/admin/doctor search)
+ */
+const getPatientByTCKN = async (tckn) => {
+    const user = await prisma.user.findUnique({
+        where: { tckn },
+        include: {
+            patient: true,
+        },
+    });
+
+    if (!user || !user.patient) {
+        throw new ApiError(404, 'Patient not found.');
+    }
+
+    return {
+        patientId: user.patient.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+    };
+};
+
 module.exports = {
     getAllPatients,
     changePassword,
-    updateProfile
+    updateProfile,
+    getPatientByTCKN,
 };

@@ -17,6 +17,7 @@ enum UserRole {
   PATIENT
   DOCTOR
   ADMIN
+  CASHIER
 }
 
 // Defines the status of a contact issue

@@ -85,6 +85,14 @@ const createPersonnelWithUser = async (data) => {
         });
     }
 
+    // CASHIER doesn't have a separate profile table, just create the user
+    if (data.role === 'CASHIER') {
+        const user = await prisma.user.create({
+            data: baseUser,
+        });
+        return { user };
+    }
+
     throw new Error(`Unsupported personnel role for creation: ${data.role}`);
 };
 
