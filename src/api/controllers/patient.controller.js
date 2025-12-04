@@ -64,8 +64,35 @@ const updateProfile = async (req, res, next) => {
         next(error);
     }
 };
+/**
+ * GET /api/v1/patients/search?tckn=...
+ * Search patient by TCKN (for cashier/admin/doctor)
+ */
+const getPatientByTCKN = async (req, res, next) => {
+    try {
+        const { tckn } = req.query;
+
+        if (!tckn) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'TCKN is required.',
+            });
+        }
+
+        const patient = await patientService.getPatientByTCKN(tckn);
+
+        res.json({
+            status: 'success',
+            data: patient,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     getPatients,
     updateProfile,
-    changePassword
+    changePassword,
+    getPatientByTCKN,
 };
