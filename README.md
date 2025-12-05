@@ -25,8 +25,9 @@
 Agilion MedComm is a comprehensive hospital management system backend built with Node.js, Express, Prisma, and PostgreSQL. It features multi-role authentication, appointment management, doctor leave tracking, patient registration, and a complete password reset system for patients.
 
 ### Key Capabilities
-- ✅ Multi-role authentication (Patient, Doctor, Admin)
+- ✅ Multi-role authentication (Patient, Doctor, Admin, Cashier, Laborant)
 - ✅ **Password reset for patients via email**
+- ✅ **Medical files system with soft delete (tombstone)**
 - ✅ Appointment management with leave request integration
 - ✅ Doctor leave/time-off system
 - ✅ Personnel management (CRUD operations)
@@ -34,6 +35,7 @@ Agilion MedComm is a comprehensive hospital management system backend built with
 - ✅ Automatic slot blocking based on approved leaves
 - ✅ Role-based access control
 - ✅ Secure token-based password reset
+- ✅ File upload (PDF, JPG, PNG) with validation
 
 ---
 
@@ -55,11 +57,11 @@ Agilion MedComm is a comprehensive hospital management system backend built with
 ## ✨ Features
 
 ### Authentication & Authorization
-- Multi-role system (PATIENT, DOCTOR, ADMIN)
-- JWT-based authentication
+- Multi-role system (PATIENT, DOCTOR, ADMIN, CASHIER, LABORANT)
+- JWT-based authentication with role-specific IDs
 - Role-based access control
 - **Password reset via email (patient only)**
-- Personnel login with extended user data
+- Personnel login with extended user data (doctorId, adminId, laborantId)
 
 ### Appointment Management
 - Create and manage appointments
@@ -86,6 +88,15 @@ Agilion MedComm is a comprehensive hospital management system backend built with
 - One-time use tokens
 - Patient-only restriction
 - No email enumeration (security)
+
+### Medical Files System (Laborant)
+- File upload (PDF, JPG, PNG up to 10MB)
+- Soft delete with audit trail (tombstone method)
+- Role-based file access control
+- Patient test result management
+- File metadata tracking (test name, date, description)
+- Secure file storage with validation
+- Recovery capability for deleted files
 
 ---
 
@@ -676,6 +687,140 @@ bu e-postayı görmezden gelebilirsiniz.
 
 ---
 
+## 🏥 Medical Files API
+
+### Overview
+The Medical Files System allows laborants to upload patient test results (PDF, JPG, PNG) with full audit trail using soft delete (tombstone method).
+
+### Endpoints
+
+#### 1. Upload Medical File
+**POST** `/api/v1/medical-files`
+
+**Authorization:** Laborant only  
+**Content-Type:** `multipart/form-data`
+
+```bash
+curl -X POST http://localhost:5001/api/v1/medical-files \
+  -H "Authorization: Bearer <laborant_token>" \
+  -F "file=@test.pdf" \
+  -F "patientId=5" \
+  -F "testName=Hemogram" \
+  -F "testDate=2025-12-04" \
+  -F "description=Normal values"
+```
+
+**Response (201):**
+```json
+{
+  "status": "success",
+  "message": "Medical file uploaded successfully.",
+  "data": {
+    "id": 1,
+    "patientId": 5,
+    "laborantId": 3,
+    "fileName": "test.pdf",
+    "fileUrl": "/uploads/medical-files/1733341731123.pdf",
+    "fileType": "application/pdf",
+    "fileSizeKB": 192.5,
+    "testName": "Hemogram",
+    "testDate": "2025-12-04T00:00:00.000Z",
+    "description": "Normal values",
+    "createdAt": "2025-12-04T21:28:51.123Z"
+  }
+}
+```
+
+#### 2. Get My Medical Files
+**GET** `/api/v1/medical-files/my`
+
+**Authorization:** Patient only
+
+```bash
+curl -X GET http://localhost:5001/api/v1/medical-files/my \
+  -H "Authorization: Bearer <patient_token>"
+```
+
+#### 3. Get Patient Medical Files
+**GET** `/api/v1/medical-files/patient/:patientId`
+
+**Authorization:** Doctor or Admin only
+
+```bash
+curl -X GET http://localhost:5001/api/v1/medical-files/patient/5 \
+  -H "Authorization: Bearer <doctor_token>"
+```
+
+#### 4. Get Single File
+**GET** `/api/v1/medical-files/:fileId`
+
+**Authorization:** Required (role-based access)
+
+#### 5. Get Laborant's Files
+**GET** `/api/v1/medical-files/laborant/:laborantId`
+
+**Authorization:** Admin only
+
+#### 6. Delete File (Soft Delete)
+**DELETE** `/api/v1/medical-files/:fileId`
+
+**Authorization:** Laborant (own files) or Admin
+
+```bash
+curl -X DELETE http://localhost:5001/api/v1/medical-files/1 \
+  -H "Authorization: Bearer <laborant_token>"
+```
+
+**Note:** Files are soft-deleted (tombstone method) - `deletedAt` timestamp is set instead of removing the record.
+
+#### 7. Download File
+**GET** `/uploads/medical-files/:filename`
+
+Static file serving - no authentication required for direct file access.
+
+### File Upload Configuration
+- **Allowed Types:** PDF, JPG, PNG
+- **Max Size:** 10MB
+- **Storage:** Local filesystem (`/uploads/medical-files/`)
+- **Naming:** Timestamp-based unique filenames
+
+### Soft Delete (Tombstone)
+Files are not permanently deleted. Instead:
+- `deletedAt` timestamp is set
+- Files hidden from all queries
+- Physical files preserved for audit/recovery
+- Can be restored by setting `deletedAt = NULL`
+
+### Authorization Matrix
+
+| Role | Upload | View Own | View Patient | View All | Delete Own | Delete Any |
+|------|--------|----------|--------------|----------|------------|------------|
+| PATIENT | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| DOCTOR | ❌ | N/A | ✅ | ✅ | ❌ | ❌ |
+| ADMIN | ❌ | N/A | ✅ | ✅ | ❌ | ✅ |
+| LABORANT | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ |
+
+### Testing Medical Files
+
+#### Create Test Laborant
+```bash
+node scripts/createTestLaborant.js
+```
+
+This creates:
+- Email: laborant.test@hospital.com
+- TCKN: 12345678901
+- Password: password123
+
+#### Login as Laborant
+```bash
+curl -X POST http://localhost:5001/api/v1/auth/personnel/login \
+  -H "Content-Type: application/json" \
+  -d '{"tckn": "12345678901", "password": "password123"}'
+```
+
+---
+
 ## 🗄 Database Schema
 
 ```prisma
@@ -683,6 +828,8 @@ enum UserRole {
   PATIENT
   DOCTOR
   ADMIN
+  CASHIER
+  LABORANT
 }
 
 model User {
@@ -706,6 +853,7 @@ model User {
   patient          Patient?
   doctor           Doctor?
   admin            Admin?
+  laborant         Laborant?
 }
 
 model Patient {
@@ -713,6 +861,7 @@ model Patient {
   userId       Int           @unique
   user         User          @relation(fields: [userId], references: [id])
   appointments Appointment[]
+  medicalFiles MedicalFile[]
 }
 
 model Doctor {
@@ -728,6 +877,31 @@ model Admin {
   id     Int  @id @default(autoincrement())
   userId Int  @unique
   user   User @relation(fields: [userId], references: [id])
+}
+
+model Laborant {
+  id           Int           @id @default(autoincrement())
+  userId       Int           @unique
+  user         User          @relation(fields: [userId], references: [id])
+  medicalFiles MedicalFile[]
+}
+
+model MedicalFile {
+  id          Int       @id @default(autoincrement())
+  patientId   Int
+  patient     Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  laborantId  Int
+  laborant    Laborant  @relation(fields: [laborantId], references: [id], onDelete: SetNull)
+  fileName    String
+  fileUrl     String
+  fileType    String
+  fileSizeKB  Float
+  testName    String
+  testDate    DateTime
+  description String?
+  deletedAt   DateTime? // Soft delete (tombstone)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model Appointment {
@@ -759,10 +933,12 @@ model LeaveRequest {
 ```
 
 ### Relationships
-- `User` → one-to-one → `Patient | Doctor | Admin`
+- `User` → one-to-one → `Patient | Doctor | Admin | Laborant`
 - `Doctor` → one-to-many → `Appointments`
 - `Doctor` → one-to-many → `LeaveRequests`
 - `Patient` → one-to-many → `Appointments`
+- `Patient` → one-to-many → `MedicalFiles`
+- `Laborant` → one-to-many → `MedicalFiles`
 
 ---
 
@@ -775,7 +951,8 @@ agilion-backend/
 │   └── migrations/                # Migration history
 │       └── 20251126120053_add_password_reset_fields/
 ├── scripts/
-│   └── bootstrapAdmin.js          # Initial admin creation
+│   ├── bootstrapAdmin.js          # Initial admin creation
+│   └── createTestLaborant.js      # Create test laborant user
 ├── src/
 │   ├── api/
 │   │   ├── controllers/           # Route handlers
@@ -784,12 +961,14 @@ agilion-backend/
 │   │   │   ├── doctor.controller.js
 │   │   │   ├── leaveRequest.controller.js
 │   │   │   ├── patient.controller.js
-│   │   │   └── personnel.controller.js
+│   │   │   ├── personnel.controller.js
+│   │   │   └── medicalFile.controller.js
 │   │   ├── middlewares/           # Auth, validation, errors
 │   │   │   ├── authMiddleware.js
 │   │   │   ├── errorHandler.js
 │   │   │   ├── requireAdmin.js
-│   │   │   └── validate.js
+│   │   │   ├── validate.js
+│   │   │   └── upload.js         # Multer file upload
 │   │   ├── routes/                # Express routes
 │   │   │   ├── index.js
 │   │   │   ├── auth.routes.js
@@ -797,20 +976,26 @@ agilion-backend/
 │   │   │   ├── doctor.routes.js
 │   │   │   ├── leaveRequest.routes.js
 │   │   │   ├── patient.routes.js
-│   │   │   └── personnel.routes.js
+│   │   │   ├── personnel.routes.js
+│   │   │   └── medicalFile.routes.js
 │   │   └── validations/           # Joi schemas
-│   │       └── auth.validation.js
+│   │       ├── auth.validation.js
+│   │       └── medicalFile.validation.js
 │   ├── config/
 │   │   └── db.js                  # Prisma client
 │   ├── repositories/              # Database access
 │   │   ├── appointment.repository.js
 │   │   ├── leaveRequest.repository.js
-│   │   └── user.repository.js
+│   │   ├── user.repository.js
+│   │   └── medicalFile.repository.js
 │   ├── services/                  # Business logic
 │   │   ├── auth.service.js
-│   │   └── email.service.js       # Password reset emails
+│   │   ├── email.service.js       # Password reset emails
+│   │   └── medicalFile.service.js # Medical files management
 │   ├── app.js                     # Express app setup
 │   └── server.js                  # Server entry point
+├── uploads/
+│   └── medical-files/             # Uploaded medical files storage
 ├── .env                           # Environment variables
 ├── .env.example                   # Environment template
 ├── docker-compose.yml             # PostgreSQL container
@@ -1154,6 +1339,7 @@ INITIAL_ADMIN_LASTNAME=User
 - `dotenv` - Environment variables
 - `nodemailer` - Email service
 - `pg` - PostgreSQL driver
+- `multer` - File upload handling
 
 **Development:**
 - `nodemon` - Auto-restart on changes
@@ -1177,6 +1363,9 @@ After setup, verify everything works:
 - [ ] Can login with new password
 - [ ] Can create appointment (`POST /appointments`)
 - [ ] Can list doctors (`GET /doctors`)
+- [ ] Can create test laborant (`node scripts/createTestLaborant.js`)
+- [ ] Laborant can upload medical file (`POST /medical-files`)
+- [ ] Patient can view own medical files (`GET /medical-files/my`)
 
 ---
 
@@ -1203,6 +1392,6 @@ For issues or questions:
 
 ---
 
-**Last Updated:** November 26, 2025
+**Last Updated:** December 5, 2025
 
-**Version:** 2.0.0 (with Password Reset)
+**Version:** 2.1.0 (with Medical Files System & Soft Delete)

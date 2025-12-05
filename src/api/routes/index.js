@@ -6,6 +6,7 @@ const doctorRouter = require("./doctor.routes.js");
 const patientRouter = require("./patient.routes.js");
 const personnelRouter = require("./personnel.routes.js");
 const contactRouter = require("./contact.routes.js");
+const medicalFileRouter = require("./medicalFile.routes.js");
 
 const router = express.Router();
 
@@ -16,5 +17,6 @@ router.use("/doctors", doctorRouter);
 router.use("/patients", patientRouter);
 router.use("/personnel", personnelRouter);
 router.use("/contact", contactRouter);
+router.use("/medical-files", medicalFileRouter);
 
 module.exports = router;

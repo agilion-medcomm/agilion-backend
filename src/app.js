@@ -19,6 +19,8 @@ app.use(express.json());
 // 3. Enable URL-encoded body parsing
 app.use(express.urlencoded({ extended: true }));
 
+// 4. Serve static files for uploads
+app.use('/uploads', express.static('src/uploads'));
 
 // --- API Routes ---
 // Health check endpoint

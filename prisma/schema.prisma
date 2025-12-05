@@ -18,6 +18,7 @@ enum UserRole {
   DOCTOR
   ADMIN
   CASHIER
+  LABORANT
 }
 
 // Defines the status of a contact issue
@@ -59,6 +60,8 @@ model User {
   doctor  Doctor?
   // A user can be ONE admin (1-to-1)
   admin   Admin?
+  // A user can be ONE laborant (1-to-1)
+  laborant Laborant?
 
   @@map("users") // Maps this model to the "users" table in Postgres
 }
@@ -79,6 +82,8 @@ model Patient {
   // --- Relationships ---
   // A patient can have MANY appointments
   appointments Appointment[]
+  // A patient can have MANY medical files
+  medicalFiles MedicalFile[]
 
   @@map("patients")
 }
@@ -167,4 +172,42 @@ model ContactIssue {
   createdAt    DateTime    @default(now())
 
   @@map("contact_issues")
+}
+
+// Laborant model, linked to a User
+model Laborant {
+  id     Int  @id @default(autoincrement())
+  userId Int  @unique // Foreign key
+  user   User @relation(fields: [userId], references: [id])
+
+  // --- Relationships ---
+  // A laborant can upload MANY medical files
+  medicalFiles MedicalFile[]
+
+  @@map("laborants")
+}
+
+// Medical File model for patient test results
+model MedicalFile {
+  id          Int      @id @default(autoincrement())
+  patientId   Int
+  patient     Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  laborantId  Int?
+  laborant    Laborant? @relation(fields: [laborantId], references: [id], onDelete: SetNull)
+  
+  fileName    String       // Original file name
+  fileUrl     String       // Cloudinary URL or local path
+  fileType    String       // MIME type (application/pdf, image/jpeg)
+  fileSizeKB  Float        // File size in KB
+  
+  testName    String       // Test name (Hemogram, Kan Tahlili, etc.)
+  testDate    DateTime     // Test date
+  description String?      // Optional description
+  
+  deletedAt   DateTime?    // Soft delete timestamp (tombstone)
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("medical_files")
 }
