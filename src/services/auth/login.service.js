@@ -14,8 +14,12 @@ const { ApiError } = require('../../api/middlewares/errorHandler');
  */
 const loginUser = async (tckn, password) => {
     // find user by tckn
-    const user = await userRepository.findUserByTckn(tckn);
-
+    const user = await prisma.user.findUnique({
+        where: { tckn },
+        include: {
+            patient: true,
+        },
+    });
     // check if user exists and password is correct
     if (!user || !(await bcrypt.compare(password, user.password))) {
         throw new ApiError(401, 'Invalid TCKN or password.');
@@ -32,6 +36,7 @@ const loginUser = async (tckn, password) => {
             userId: user.id,
             role: user.role,
             tckn: user.tckn,
+            patientId: user.patient?.id,
         },
         process.env.JWT_SECRET,
         { expiresIn: '30m' } // token duration
@@ -49,20 +54,22 @@ const loginUser = async (tckn, password) => {
             phoneNumber: user.phoneNumber,
             tckn: user.tckn,
             dateOfBirth: user.dateOfBirth,
+            patientId: user.patient?.id,
         },
     };
 };
 
 /**
- * Login for personnel (doctors/admins)
+ * Login for personnel (doctors/admins/laborants)
  */
 const loginPersonnel = async (tckn, password) => {
-    // find user by tckn with doctor/admin relations
+    // find user by tckn with doctor/admin/laborant relations
     const user = await prisma.user.findUnique({
         where: { tckn },
         include: {
             doctor: true,
             admin: true,
+            laborant: true,
         },
     });
 
@@ -71,13 +78,27 @@ const loginPersonnel = async (tckn, password) => {
         throw new ApiError(401, 'Invalid TCKN or password.');
     }
 
+    // Prepare token payload with role-specific IDs
+    const tokenPayload = {
+        userId: user.id,
+        role: user.role,
+        tckn: user.tckn,
+    };
+
+    // Add role-specific ID to token payload
+    if (user.doctor) {
+        tokenPayload.doctorId = user.doctor.id;
+    }
+    if (user.admin) {
+        tokenPayload.adminId = user.admin.id;
+    }
+    if (user.laborant) {
+        tokenPayload.laborantId = user.laborant.id;
+    }
+
     // create jwt
     const token = jwt.sign(
-        {
-            userId: user.id,
-            role: user.role,
-            tckn: user.tckn,
-        },
+        tokenPayload,
         process.env.JWT_SECRET,
         { expiresIn: '30m' } // token duration
     );
@@ -91,9 +112,10 @@ const loginPersonnel = async (tckn, password) => {
         phoneNumber: user.phoneNumber,
         tckn: user.tckn,
         dateOfBirth: user.dateOfBirth,
-        // Add doctor/admin IDs if they exist
+        // Add doctor/admin/laborant IDs if they exist
         doctorId: user.doctor?.id || null,
         adminId: user.admin?.id || null,
+        laborantId: user.laborant?.id || null,
         specialization: user.doctor?.specialization || null,
     };
 
