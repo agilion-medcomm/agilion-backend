@@ -33,6 +33,17 @@ router.get(
 );
 
 /**
+ * GET /api/v1/medical-files/my-uploads
+ * Get files uploaded by the authenticated laborant
+ */
+router.get(
+    '/my-uploads',
+    authMiddleware,
+    authorize('LABORANT'),
+    medicalFileController.getMyUploads
+);
+
+/**
  * GET /api/v1/medical-files/patient/:patientId
  * Get medical files for a specific patient (Doctor/Admin)
  */
@@ -52,6 +63,17 @@ router.get(
     authMiddleware,
     authorize('ADMIN'),
     medicalFileController.getLaborantMedicalFiles
+);
+
+/**
+ * GET /api/v1/medical-files/:fileId/download
+ * Download a medical file (protected - requires authentication and authorization)
+ * SECURITY: This replaces the public static file serving to prevent unauthorized access
+ */
+router.get(
+    '/:fileId/download',
+    authMiddleware,
+    medicalFileController.downloadMedicalFile
 );
 
 /**
