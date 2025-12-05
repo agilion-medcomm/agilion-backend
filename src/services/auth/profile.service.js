@@ -35,6 +35,9 @@ const getUserProfile = async (userId) => {
             patient: {
                 select: {
                     id: true,
+                    address: true,
+                    emergencyContact: true,
+                    bloodType: true,
                 },
             },
         },
@@ -59,6 +62,12 @@ const getUserProfile = async (userId) => {
 
     if (user.doctor) {
         response.specialization = user.doctor.specialization;
+    }
+
+    if (user.patient) {
+        response.address = user.patient.address;
+        response.emergencyContact = user.patient.emergencyContact;
+        response.bloodType = user.patient.bloodType;
     }
 
     return response;
