@@ -53,15 +53,15 @@ const registerUser = async (userData) => {
 };
 
 /**
- * Register new personnel (doctor/admin)
+ * Register new personnel (doctor/admin/laborant)
  * Admin authentication is handled by middleware (authMiddleware + requireAdmin)
  */
 const registerPersonnel = async (personnelData) => {
-    // Determine target role from request (ADMIN, DOCTOR, etc.)
+    // Determine target role from request (ADMIN, DOCTOR, LABORANT, etc.)
     const targetRole = personnelData.role;
 
     // Validate role
-    if (!['DOCTOR', 'ADMIN', 'CASHIER'].includes(targetRole)) {
+    if (!['DOCTOR', 'ADMIN', 'CASHIER', 'LABORANT'].includes(targetRole)) {
         throw new ApiError(400, 'Unsupported personnel role.');
     }
 
