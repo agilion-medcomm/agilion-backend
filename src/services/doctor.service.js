@@ -2,9 +2,18 @@ const prisma = require('../config/db');
 
 /**
  * Get all doctors with formatted data
+ * @param {string} department - Optional department filter (specialization)
  */
-const getAllDoctors = async () => {
+const getAllDoctors = async (department) => {
+    const where = {};
+
+    // If department filter is provided, filter by specialization
+    if (department) {
+        where.specialization = department;
+    }
+
     const doctors = await prisma.doctor.findMany({
+        where,
         include: {
             user: {
                 select: {

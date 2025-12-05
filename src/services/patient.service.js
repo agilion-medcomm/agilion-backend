@@ -139,9 +139,14 @@ const getPatientByTCKN = async (tckn) => {
     }
 
     return {
+        id: user.id,
         patientId: user.patient.id,
         firstName: user.firstName,
         lastName: user.lastName,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        dateOfBirth: user.dateOfBirth,
+        tckn: user.tckn,
     };
 };
 
