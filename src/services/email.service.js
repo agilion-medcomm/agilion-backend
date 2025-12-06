@@ -271,9 +271,101 @@ Randevunuza zamanında gelmenizi rica ederiz. Herhangi bir değişiklik için l�
     }
 };
 
+/**
+ * Send appointment cancellation email
+ * @param {string} email - Patient's email
+ * @param {object} appointmentDetails - Appointment details
+ * @param {string} appointmentDetails.patientFirstName - Patient's first name
+ * @param {string} appointmentDetails.patientLastName - Patient's last name
+ * @param {string} appointmentDetails.doctorName - Doctor's full name
+ * @param {string} appointmentDetails.department - Doctor's specialization/department
+ * @param {string} appointmentDetails.date - Appointment date (DD.MM.YYYY)
+ * @param {string} appointmentDetails.time - Appointment time (HH:MM)
+ */
+const sendAppointmentCancellationEmail = async (email, appointmentDetails) => {
+    const transporter = createTransporter();
+
+    if (!transporter) {
+        // Email not configured - in development, check console or email service logs
+        return;
+    }
+
+    const {
+        patientFirstName,
+        patientLastName,
+        doctorName,
+        department,
+        date,
+        time,
+    } = appointmentDetails;
+
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Randevunuz İptal Edildi - Agilion MedComm',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #dc3545;">Randevunuz İptal Edildi</h2>
+                <p>Merhaba ${patientFirstName} ${patientLastName},</p>
+                <p>Aşağıdaki randevunuz iptal edilmiştir:</p>
+                <div style="background-color: #f5f5f5; padding: 20px; border-left: 4px solid #dc3545; margin: 20px 0;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 8px 0; color: #666; width: 120px;"><strong>Doktor:</strong></td>
+                            <td style="padding: 8px 0; color: #333;">${doctorName}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666;"><strong>Klinik:</strong></td>
+                            <td style="padding: 8px 0; color: #333;">${department}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666;"><strong>Tarih:</strong></td>
+                            <td style="padding: 8px 0; color: #333;">${date}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666;"><strong>Saat:</strong></td>
+                            <td style="padding: 8px 0; color: #333;">${time}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666;"><strong>Durum:</strong></td>
+                            <td style="padding: 8px 0; color: #dc3545; font-weight: bold;">İptal Edildi</td>
+                        </tr>
+                    </table>
+                </div>
+                <p style="color: #666;">Yeni bir randevu almak için lütfen sistemimizi kullanın veya bizimle iletişime geçin.</p>
+                <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+                <p style="color: #999; font-size: 12px;">© 2025 Agilion MedComm. Tüm hakları saklıdır.</p>
+            </div>
+        `,
+        text: `
+Merhaba ${patientFirstName} ${patientLastName},
+
+Aşağıdaki randevunuz iptal edilmiştir:
+
+Doktor: ${doctorName}
+Klinik: ${department}
+Tarih: ${date}
+Saat: ${time}
+Durum: İptal Edildi
+
+Yeni bir randevu almak için lütfen sistemimizi kullanın veya bizimle iletişime geçin.
+
+© 2025 Agilion MedComm
+        `,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+    } catch (error) {
+        // In production, log to monitoring service instead of console
+        throw new Error('Failed to send appointment cancellation email.');
+    }
+};
+
 module.exports = {
     sendPasswordResetEmail,
     sendVerificationEmail,
     sendContactReplyEmail,
     sendAppointmentNotificationEmail,
+    sendAppointmentCancellationEmail,
 };
