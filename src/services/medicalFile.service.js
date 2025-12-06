@@ -4,9 +4,7 @@ const prisma = require('../config/db');
 const fs = require('fs').promises;
 const FileType = require('file-type');
 const logger = require('../utils/logger');
-
-// Allowed MIME types for medical files
-const ALLOWED_MIME_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
+const { FILE_UPLOAD } = require('../config/constants');
 
 /**
  * Safely delete file with error logging
@@ -46,7 +44,7 @@ const uploadMedicalFile = async (laborantId, fileData, uploadedFile) => {
     // Validate file content using magic number detection
     // This prevents malicious files with fake extensions
     const fileType = await validateFileContent(uploadedFile.path);
-    if (!fileType || !ALLOWED_MIME_TYPES.includes(fileType.mime)) {
+    if (!fileType || !FILE_UPLOAD.ALLOWED_MEDICAL_FILE_TYPES.includes(fileType.mime)) {
         // Delete the uploaded file since it's invalid
         await safeDeleteFile(uploadedFile.path);
         throw new ApiError(400, 'Invalid file content. File signature does not match allowed types (PDF, JPEG, PNG).');
