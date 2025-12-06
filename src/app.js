@@ -4,6 +4,7 @@ const cors = require('cors'); // We'll need this for React
 const { errorHandler } = require("./api/middlewares/errorHandler");
 const prisma = require('./config/db');
 const app = express();
+const { TIMEOUT } = require('./config/constants');
 
 // --- Core Middleware ---
 // 1. Enable CORS (Cross-Origin Resource Sharing)
@@ -22,7 +23,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // 4. Request timeout middleware
 app.use((req, res, next) => {
-    req.setTimeout(30000); // 30 seconds
+    req.setTimeout(TIMEOUT.REQUEST_MS);
     next();
 });
 
