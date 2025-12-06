@@ -153,7 +153,8 @@ const createAppointment = async (userId, role, appointmentData) => {
         status: status || 'APPROVED',
     });
 
-    // Send appointment notification email to patient
+    // Send appointment notification email to patient (fire-and-forget)
+    // Email is sent asynchronously to not block the API response
     const patientEmail = appointment.patient.user.email;
     const appointmentDetails = {
         patientFirstName: appointment.patient.user.firstName,
@@ -165,7 +166,10 @@ const createAppointment = async (userId, role, appointmentData) => {
         status: appointment.status,
     };
 
-    await sendAppointmentNotificationEmail(patientEmail, appointmentDetails);
+    sendAppointmentNotificationEmail(patientEmail, appointmentDetails).catch((error) => {
+        // Log error but don't fail the appointment creation
+        console.error('Failed to send appointment notification email:', error.message);
+    });
 
     return {
         id: appointment.id,
