@@ -20,7 +20,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // 4. Serve static files for uploads
-app.use('/uploads', express.static('src/uploads'));
+app.use('/uploads', express.static('uploads'));
 
 // --- API Routes ---
 // Health check endpoint
