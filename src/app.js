@@ -2,6 +2,7 @@
 const express = require('express');
 const cors = require('cors'); // We'll need this for React
 const { errorHandler } = require("./api/middlewares/errorHandler");
+const prisma = require('./config/db');
 const app = express();
 
 // --- Core Middleware ---
@@ -19,21 +20,39 @@ app.use(express.json());
 // 3. Enable URL-encoded body parsing
 app.use(express.urlencoded({ extended: true }));
 
-// 4. Serve static files for uploads
-app.use('/uploads', express.static('src/uploads'));
-
-// --- API Routes ---
-// Health check endpoint
-app.get('/api/v1/health', (req, res) => {
-    res.status(200).json({ status: 'UP', service: 'Hospital API' });
+// 4. Request timeout middleware
+app.use((req, res, next) => {
+    req.setTimeout(30000); // 30 seconds
+    next();
 });
 
-// TODO: We will later import and mount our main router here
+// SECURITY: Do NOT serve static files for medical uploads
+// Medical files must go through authenticated API endpoints
+// See: GET /api/v1/medical-files/:fileId/download
+
+// --- API Routes ---
+// Health check endpoint with database connectivity check
+app.get('/api/v1/health', async (req, res) => {
+    try {
+        await prisma.$queryRaw`SELECT 1`;
+        res.status(200).json({ 
+            status: 'UP', 
+            service: 'Hospital API',
+            database: 'connected'
+        });
+    } catch (error) {
+        res.status(503).json({ 
+            status: 'DOWN', 
+            service: 'Hospital API',
+            database: 'disconnected'
+        });
+    }
+});
+
 const mainRouter = require('./api/routes/index.js');
 app.use('/api/v1', mainRouter);
 
-
 // --- Error Handling Middleware ---
-// TODO: We will add a global error handler here
 app.use(errorHandler);
-module.exports = app; // Export the configured app
+
+module.exports = app;
