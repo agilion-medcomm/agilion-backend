@@ -8,7 +8,7 @@ const {
     validateTimeFormat,
     createDateTimeFromISO,
 } = require('../utils/dateTimeValidator');
-const { sendAppointmentNotificationEmail } = require('./email.service');
+const { sendAppointmentNotificationEmail, sendAppointmentCancellationEmail } = require('./email.service');
 
 /**
  * Get appointments list for doctor/admin panel
@@ -195,21 +195,25 @@ const updateAppointmentStatus = async (appointmentId, status) => {
 
     const appointment = await appointmentRepository.updateAppointmentStatus(appointmentId, status);
 
-    // Send notification email when appointment is approved (fire-and-forget)
-    if (status === 'APPROVED') {
-        const patientEmail = appointment.patient.user.email;
-        const appointmentDetails = {
-            patientFirstName: appointment.patient.user.firstName,
-            patientLastName: appointment.patient.user.lastName,
-            doctorName: `${appointment.doctor.user.firstName} ${appointment.doctor.user.lastName}`,
-            department: appointment.doctor.specialization || '-',
-            date: appointment.date,
-            time: appointment.time,
-            status: appointment.status,
-        };
+    // Send notification email based on status change (fire-and-forget)
+    const patientEmail = appointment.patient.user.email;
+    const appointmentDetails = {
+        patientFirstName: appointment.patient.user.firstName,
+        patientLastName: appointment.patient.user.lastName,
+        doctorName: `${appointment.doctor.user.firstName} ${appointment.doctor.user.lastName}`,
+        department: appointment.doctor.specialization || '-',
+        date: appointment.date,
+        time: appointment.time,
+        status: appointment.status,
+    };
 
+    if (status === 'APPROVED') {
         sendAppointmentNotificationEmail(patientEmail, appointmentDetails).catch((error) => {
             console.error('Failed to send appointment approval email:', error.message);
+        });
+    } else if (status === 'CANCELLED') {
+        sendAppointmentCancellationEmail(patientEmail, appointmentDetails).catch((error) => {
+            console.error('Failed to send appointment cancellation email:', error.message);
         });
     }
 
