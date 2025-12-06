@@ -85,6 +85,32 @@ const createPersonnelWithUser = async (data) => {
         });
     }
 
+    if (data.role === 'LABORANT') {
+        return prisma.laborant.create({
+            data: {
+                user: {
+                    create: baseUser,
+                },
+            },
+            include: {
+                user: true,
+            },
+        });
+    }
+
+    if (data.role === 'CLEANER') {
+        return prisma.cleaner.create({
+            data: {
+                user: {
+                    create: baseUser,
+                },
+            },
+            include: {
+                user: true,
+            },
+        });
+    }
+
     // CASHIER doesn't have a separate profile table, just create the user
     if (data.role === 'CASHIER') {
         const user = await prisma.user.create({

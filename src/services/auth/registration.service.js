@@ -61,7 +61,7 @@ const registerPersonnel = async (personnelData) => {
     const targetRole = personnelData.role;
 
     // Validate role
-    if (!['DOCTOR', 'ADMIN', 'CASHIER'].includes(targetRole)) {
+    if (!['DOCTOR', 'ADMIN', 'CASHIER', 'LABORANT', 'CLEANER'].includes(targetRole)) {
         throw new ApiError(400, 'Unsupported personnel role.');
     }
 
