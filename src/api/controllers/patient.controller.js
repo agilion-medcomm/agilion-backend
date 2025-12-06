@@ -1,5 +1,5 @@
 const patientService = require('../../services/patient.service');
-const prisma = require('../../config/db');
+const { sendSuccess, sendError } = require('../../utils/responseFormatter');
 
 
 /**
@@ -9,7 +9,7 @@ const prisma = require('../../config/db');
 const getPatients = async (req, res, next) => {
     try {
         const patients = await patientService.getAllPatients();
-        res.json({ users: patients });
+        sendSuccess(res, { users: patients });
     } catch (error) {
         next(error);
     }
@@ -25,10 +25,7 @@ const changePassword = async (req, res, next) => {
 
         await patientService.changePassword(userId, currentPassword, newPassword);
 
-        res.status(200).json({
-            success: true,
-            message: "Password changed successfully"
-        });
+        sendSuccess(res, null, "Password changed successfully");
 
     } catch (error) {
         next(error);
@@ -54,11 +51,7 @@ const updateProfile = async (req, res, next) => {
             updatedAt: new Date().toISOString()
         };
 
-        res.status(200).json({
-            success: true,
-            data: responseData,
-            message: "Profile updated successfully"
-        });
+        sendSuccess(res, responseData, "Profile updated successfully");
 
     } catch (error) {
         next(error);
@@ -73,18 +66,12 @@ const getPatientByTCKN = async (req, res, next) => {
         const { tckn } = req.query;
 
         if (!tckn) {
-            return res.status(400).json({
-                status: 'error',
-                message: 'TCKN is required.',
-            });
+            return sendError(res, 'TCKN is required.', 400);
         }
 
         const patient = await patientService.getPatientByTCKN(tckn);
 
-        res.json({
-            status: 'success',
-            data: patient,
-        });
+        sendSuccess(res, patient);
     } catch (error) {
         next(error);
     }

@@ -1,8 +1,8 @@
-const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const prisma = require('../../config/db');
-const userRepository = require('../../repositories/user.repository');
 const { ApiError } = require('../../api/middlewares/errorHandler');
+const { comparePassword } = require('../../utils/passwordHelper');
+const { AUTH } = require('../../config/constants');
 
 /**
  * Login Service
@@ -21,7 +21,7 @@ const loginUser = async (tckn, password) => {
         },
     });
     // check if user exists and password is correct
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    if (!user || !(await comparePassword(password, user.password))) {
         throw new ApiError(401, 'Invalid TCKN or password.');
     }
 
@@ -39,7 +39,7 @@ const loginUser = async (tckn, password) => {
             patientId: user.patient?.id,
         },
         process.env.JWT_SECRET,
-        { expiresIn: '30m' } // token duration
+        { expiresIn: AUTH.JWT_EXPIRY }
     );
 
     // Return both token and user (like personnelLogin)
@@ -74,7 +74,7 @@ const loginPersonnel = async (tckn, password) => {
     });
 
     // check if user exists and password is correct
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    if (!user || !(await comparePassword(password, user.password))) {
         throw new ApiError(401, 'Invalid TCKN or password.');
     }
 
@@ -100,7 +100,7 @@ const loginPersonnel = async (tckn, password) => {
     const token = jwt.sign(
         tokenPayload,
         process.env.JWT_SECRET,
-        { expiresIn: '30m' } // token duration
+        { expiresIn: AUTH.JWT_EXPIRY }
     );
 
     const userWithoutPassword = {

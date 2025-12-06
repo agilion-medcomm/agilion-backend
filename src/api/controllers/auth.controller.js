@@ -1,5 +1,6 @@
 const authService = require("../../services/auth.service");
 const { ApiError } = require("../middlewares/errorHandler");
+const { sendSuccess, sendCreated } = require('../../utils/responseFormatter');
 
 const register = async (req, res, next) => {
 
@@ -7,16 +8,12 @@ const register = async (req, res, next) => {
         // Call authservice here
         const user = await authService.registerUser(req.body);
 
-        res.status(201).json({
-            status: 'success',
-            message: 'User registered successfully.',
-            data: {
-                userId: user.id, // Or 'userId: user.userId' depending on your model
-                email: user.email,
-                firstName: user.firstName,
-                role: user.role,
-            },
-        });
+        sendCreated(res, {
+            userId: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            role: user.role,
+        }, 'User registered successfully.');
     } catch (error) {
         next(error);
     }
@@ -29,14 +26,7 @@ const login = async (req, res, next) => {
 
         const { token, user } = await authService.loginUser(tckn, password);
 
-        res.status(200).json({
-            status: 'success',
-            message: 'Login successful.',
-            data: {
-                token: token,
-                user: user,
-            },
-        });
+        sendSuccess(res, { token, user }, 'Login successful.');
     } catch (error) {
         next(error);
     }
@@ -49,27 +39,7 @@ const personnelLogin = async (req, res, next) => {
 
         const { token, user } = await authService.loginPersonnel(tckn, password);
 
-        res.status(200).json({
-            status: 'success',
-            message: 'Login successful.',
-            data: {
-                token: token,
-                user: user,
-            },
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
-const personnelRegister = async (req, res, next) => {
-    try {
-        const result = await authService.registerPersonnel(req.body);
-
-        return res.status(201).json({
-            status: result.status,
-            message: result.message,
-        });
+        sendSuccess(res, { token, user }, 'Login successful.');
     } catch (error) {
         next(error);
     }
@@ -80,7 +50,7 @@ const personnelRegister = async (req, res, next) => {
 const getMe = async (req, res, next) => {
     try {
         const user = await authService.getUserProfile(req.user.userId);
-        res.json({ data: user });
+        sendSuccess(res, user);
     } catch (error) {
         next(error);
     }
@@ -94,10 +64,7 @@ const requestPasswordReset = async (req, res, next) => {
         
         const result = await authService.requestPasswordReset(email);
 
-        res.status(200).json({
-            status: result.status,
-            message: result.message,
-        });
+        sendSuccess(res, null, result.message);
     } catch (error) {
         next(error);
     }
@@ -111,10 +78,7 @@ const resetPassword = async (req, res, next) => {
         
         const result = await authService.resetPassword(token, newPassword);
 
-        res.status(200).json({
-            status: result.status,
-            message: result.message,
-        });
+        sendSuccess(res, null, result.message);
     } catch (error) {
         next(error);
     }
@@ -126,7 +90,7 @@ const verifyEmail = async (req, res, next) => {
     try {
         const { token } = req.body;
         const result = await authService.verifyEmail(token);
-        res.status(200).json(result);
+        sendSuccess(res, result.data, result.message);
     } catch (error) {
         next(error);
     }
@@ -138,7 +102,7 @@ const resendVerificationEmail = async (req, res, next) => {
     try {
         const { tckn, email } = req.body;
         const result = await authService.resendVerificationEmail(tckn, email);
-        res.status(200).json(result);
+        sendSuccess(res, result.data, result.message);
     } catch (error) {
         next(error);
     }
@@ -148,7 +112,6 @@ module.exports = {
     register,
     login,
     personnelLogin,
-    personnelRegister,
     getMe,
     requestPasswordReset,
     resetPassword,

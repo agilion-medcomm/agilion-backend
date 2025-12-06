@@ -1,4 +1,5 @@
 const doctorService = require('../../services/doctor.service');
+const { sendSuccess } = require('../../utils/responseFormatter');
 
 /**
  * GET /api/v1/doctors
@@ -10,7 +11,7 @@ const getDoctors = async (req, res, next) => {
     try {
         const { department } = req.query;
         const doctors = await doctorService.getAllDoctors(department);
-        res.json({ data: doctors });
+        sendSuccess(res, doctors);
     } catch (error) {
         next(error);
     }

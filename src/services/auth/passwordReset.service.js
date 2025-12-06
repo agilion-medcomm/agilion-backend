@@ -1,8 +1,8 @@
-const bcrypt = require('bcrypt');
-const crypto = require('crypto');
 const prisma = require('../../config/db');
 const { ApiError } = require('../../api/middlewares/errorHandler');
 const emailService = require('../email.service');
+const { hashPassword } = require('../../utils/passwordHelper');
+const { generateAndHashToken, generateTokenExpiry, hashToken } = require('../../utils/tokenHelper');
 
 /**
  * Password Reset Service
@@ -36,16 +36,10 @@ const requestPasswordReset = async (email) => {
     }
 
     // Generate a secure random token
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    
-    // Hash the token before storing (security best practice)
-    const hashedToken = crypto
-        .createHash('sha256')
-        .update(resetToken)
-        .digest('hex');
+    const { token: resetToken, hashedToken } = generateAndHashToken();
 
     // Set token expiry (1 hour from now)
-    const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    const resetTokenExpiry = generateTokenExpiry(1); // 1 hour
 
     // Update user with reset token and expiry
     await prisma.user.update({
@@ -81,10 +75,7 @@ const requestPasswordReset = async (email) => {
  */
 const resetPassword = async (token, newPassword) => {
     // Hash the provided token to match against database
-    const hashedToken = crypto
-        .createHash('sha256')
-        .update(token)
-        .digest('hex');
+    const hashedToken = hashToken(token);
 
     // Find user with valid reset token
     const user = await prisma.user.findFirst({
@@ -101,8 +92,7 @@ const resetPassword = async (token, newPassword) => {
     }
 
     // Hash the new password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    const hashedPassword = await hashPassword(newPassword);
 
     // Update password and clear reset token fields
     await prisma.user.update({

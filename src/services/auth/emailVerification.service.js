@@ -1,8 +1,8 @@
-const crypto = require('crypto');
 const prisma = require('../../config/db');
 const userRepository = require('../../repositories/user.repository');
 const { ApiError } = require('../../api/middlewares/errorHandler');
 const emailService = require('../email.service');
+const { hashToken, generateAndHashToken, generateTokenExpiry } = require('../../utils/tokenHelper');
 
 /**
  * Email Verification Service
@@ -15,7 +15,7 @@ const emailService = require('../email.service');
  */
 const verifyEmail = async (token) => {
     // Hash the token to match against database
-    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const hashedToken = hashToken(token);
 
     // Find user with valid token
     const user = await prisma.user.findFirst({
@@ -83,9 +83,8 @@ const resendVerificationEmail = async (tckn, newEmail = null) => {
     }
 
     // Generate new verification token
-    const emailToken = crypto.randomBytes(32).toString('hex');
-    const hashedEmailToken = crypto.createHash('sha256').update(emailToken).digest('hex');
-    const emailTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const { token: emailToken, hashedToken: hashedEmailToken } = generateAndHashToken();
+    const emailTokenExpiry = generateTokenExpiry(24); // 24 hours
 
     // Update user with new email (if changed) and new token
     await prisma.user.update({

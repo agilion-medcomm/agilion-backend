@@ -30,24 +30,6 @@ const loginSchema = Joi.object({
     password: Joi.string().required(),
 });
 
-const personnelRegisterSchema = Joi.object({
-    token: Joi.string().required(), // admin JWT, validated in service
-    tckn: Joi.string().length(11).pattern(/^[0-9]+$/).required(),
-    firstName: Joi.string().required(),
-    lastName: Joi.string().required(),
-    password: Joi.string().min(8).required(),
-    // Allow ADMIN, DOCTOR, CASHIER, and LABORANT roles.
-    role: Joi.string().valid('DOCTOR', 'ADMIN', 'CASHIER', 'LABORANT').required(),
-    phoneNumber: Joi.string().allow('').optional(),
-    email: Joi.string().email().allow('').optional(),
-    dateOfBirth: Joi.alternatives().try(
-        Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).custom(joiISODateValidator, 'ISO date validation'),
-        Joi.valid(null)
-    ).optional(),
-    // specialization is required for DOCTOR, should be empty for ADMIN; service can enforce if needed.
-    specialization: Joi.string().allow('').required(),
-});
-
 // Schema for POST /api/v1/auth/request-password-reset
 const requestPasswordResetSchema = Joi.object({
     email: Joi.string().email().required().messages({
@@ -82,7 +64,6 @@ const resendVerificationSchema = Joi.object({
 module.exports = {
     registerSchema,
     loginSchema,
-    personnelRegisterSchema,
     requestPasswordResetSchema,
     resetPasswordSchema,
     resendVerificationSchema,

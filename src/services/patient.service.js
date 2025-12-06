@@ -1,8 +1,7 @@
 const prisma = require('../config/db');
-const bcrypt = require('bcryptjs'); 
-
 const { ApiError } = require('../api/middlewares/errorHandler');
 const { isoDateToObject } = require('../utils/dateTimeValidator');
+const { comparePassword, hashPassword } = require('../utils/passwordHelper');
 
 const changePassword = async (userId, currentPassword, newPassword) => {
 
@@ -14,18 +13,17 @@ const changePassword = async (userId, currentPassword, newPassword) => {
         throw new ApiError(404, 'Kullanıcı bulunamadı.');
     }
 
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    const isMatch = await comparePassword(currentPassword, user.password);
     if (!isMatch) {
         throw new ApiError(401, 'Mevcut şifre hatalı.');
     }
 
-    const isSame = await bcrypt.compare(newPassword, user.password);
+    const isSame = await comparePassword(newPassword, user.password);
     if (isSame) {
-        throw new ApiError(400, 'Yeni şifre mevcut şifre ile aynı olamaz.'); // 422 de kullanılabilir
+        throw new ApiError(400, 'Yeni şifre mevcut şifre ile aynı olamaz.');
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    const hashedPassword = await hashPassword(newPassword);
 
 
     await prisma.user.update({

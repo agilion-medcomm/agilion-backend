@@ -142,3 +142,8 @@ vite.config.ts.timestamp-*
 /prisma/dev.db
 
 /src/generated/prisma
+
+# Uploads directory - local files only, never commit
+uploads/*
+!uploads/.gitkeep
+src/uploads/
