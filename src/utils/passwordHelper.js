@@ -60,5 +60,4 @@ module.exports = {
     hashPassword,
     comparePassword,
     validatePasswordStrength,
-    BCRYPT_SALT_ROUNDS,
 };
