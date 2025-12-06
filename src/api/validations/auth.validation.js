@@ -36,8 +36,8 @@ const personnelRegisterSchema = Joi.object({
     firstName: Joi.string().required(),
     lastName: Joi.string().required(),
     password: Joi.string().min(8).required(),
-    // Allow ADMIN, DOCTOR, CASHIER, and LABORANT roles.
-    role: Joi.string().valid('DOCTOR', 'ADMIN', 'CASHIER', 'LABORANT').required(),
+    // Allow ADMIN, DOCTOR, CASHIER, LABORANT, and CLEANER roles.
+    role: Joi.string().valid('DOCTOR', 'ADMIN', 'CASHIER', 'LABORANT', 'CLEANER').required(),
     phoneNumber: Joi.string().allow('').optional(),
     email: Joi.string().email().allow('').optional(),
     dateOfBirth: Joi.alternatives().try(
