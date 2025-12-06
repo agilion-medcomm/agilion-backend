@@ -20,6 +20,11 @@ module.exports = {
         EMAIL_VERIFICATION_TOKEN_EXPIRY_HOURS: 24,
     },
 
+    // Request Timeout Configuration
+    TIMEOUT: {
+        REQUEST_MS: 30000, // 30 seconds
+    },
+
     // File Upload Configuration
     FILE_UPLOAD: {
         MAX_SIZE_MB: 10,
@@ -33,38 +38,5 @@ module.exports = {
         DEFAULT_PAGE: 1,
         DEFAULT_LIMIT: 20,
         MAX_LIMIT: 100,
-    },
-
-    // Request Configuration
-    REQUEST: {
-        TIMEOUT_MS: 30000, // 30 seconds
-    },
-
-    // Status Values
-    STATUS: {
-        APPOINTMENT: {
-            PENDING: 'PENDING',
-            APPROVED: 'APPROVED',
-            CANCELLED: 'CANCELLED',
-            COMPLETED: 'COMPLETED',
-        },
-        LEAVE_REQUEST: {
-            PENDING: 'PENDING',
-            APPROVED: 'APPROVED',
-            REJECTED: 'REJECTED',
-        },
-        CONTACT: {
-            PENDING: 'PENDING',
-            REPLIED: 'REPLIED',
-        },
-    },
-
-    // User Roles
-    ROLES: {
-        PATIENT: 'PATIENT',
-        DOCTOR: 'DOCTOR',
-        ADMIN: 'ADMIN',
-        CASHIER: 'CASHIER',
-        LABORANT: 'LABORANT',
     },
 };

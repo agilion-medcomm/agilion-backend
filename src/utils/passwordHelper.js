@@ -1,12 +1,10 @@
 const bcrypt = require('bcrypt');
+const { AUTH } = require('../config/constants');
 
 /**
  * Centralized Password Hashing Utilities
  * Ensures consistent bcrypt configuration across the application
  */
-
-// Security best practice: 12 rounds provides good balance between security and performance
-const BCRYPT_SALT_ROUNDS = 12;
 
 /**
  * Hash a password using bcrypt
@@ -14,7 +12,7 @@ const BCRYPT_SALT_ROUNDS = 12;
  * @returns {Promise<string>} - Hashed password
  */
 const hashPassword = async (password) => {
-    const salt = await bcrypt.genSalt(BCRYPT_SALT_ROUNDS);
+    const salt = await bcrypt.genSalt(AUTH.BCRYPT_ROUNDS);
     return bcrypt.hash(password, salt);
 };
 

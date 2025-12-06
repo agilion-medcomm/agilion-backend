@@ -1,6 +1,6 @@
 const authService = require('../../services/auth.service');
 const personnelService = require('../../services/personnel.service');
-const { sendSuccess, sendCreated } = require('../../utils/responseFormatter');
+const { sendSuccess } = require('../../utils/responseFormatter');
 
 /**
  * GET /api/v1/personnel

@@ -2,6 +2,7 @@ const appointmentRepository = require('../repositories/appointment.repository');
 const leaveRequestRepository = require('../repositories/leaveRequest.repository');
 const { ApiError } = require('../api/middlewares/errorHandler');
 const prisma = require('../config/db');
+const { WORKING_HOURS } = require('../config/constants');
 const {
     parseAppointmentDate,
     validateAppointmentDateFormat,
@@ -43,11 +44,13 @@ const getBookedTimesForDoctor = async (doctorId, date) => {
     // Get approved leaves and calculate blocked slots
     const approvedLeaves = await leaveRequestRepository.getApprovedLeaves(doctorId);
     
-    // Generate daily time slots (09:00 to 17:00, 30-minute intervals)
+    // Generate daily time slots based on working hours configuration
     const dailySlots = [];
-    for (let h = 9; h <= 17; h++) {
-        for (let m of [0, 30]) {
-            if (h === 17 && m > 0) continue;
+    const { START, END, INTERVAL_MINUTES } = WORKING_HOURS;
+    
+    for (let h = START; h <= END; h++) {
+        for (let m = 0; m < 60; m += INTERVAL_MINUTES) {
+            if (h === END && m > 0) continue;
             dailySlots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
         }
     }
