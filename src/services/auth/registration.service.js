@@ -1,9 +1,9 @@
-const bcrypt = require('bcrypt');
-const crypto = require('crypto');
 const userRepository = require('../../repositories/user.repository');
 const { ApiError } = require('../../api/middlewares/errorHandler');
 const emailService = require('../email.service');
 const { isoDateToObject } = require('../../utils/dateTimeValidator');
+const { hashPassword } = require('../../utils/passwordHelper');
+const { generateAndHashToken, generateTokenExpiry } = require('../../utils/tokenHelper');
 
 /**
  * User Registration Service
@@ -15,16 +15,14 @@ const { isoDateToObject } = require('../../utils/dateTimeValidator');
  */
 const registerUser = async (userData) => {
     // hash the password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(userData.password, salt);
+    const hashedPassword = await hashPassword(userData.password);
 
     // dateOfBirth is provided as YYYY-MM-DD; construct Date object safely
     const dateOfBirthObject = isoDateToObject(userData.dateOfBirth);
 
     // Generate email verification token
-    const emailToken = crypto.randomBytes(32).toString('hex');
-    const hashedEmailToken = crypto.createHash('sha256').update(emailToken).digest('hex');
-    const emailTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const { token: emailToken, hashedToken: hashedEmailToken } = generateAndHashToken();
+    const emailTokenExpiry = generateTokenExpiry(24); // 24 hours
 
     // create user
     try {
@@ -66,8 +64,7 @@ const registerPersonnel = async (personnelData) => {
     }
 
     // Hash the password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(personnelData.password, salt);
+    const hashedPassword = await hashPassword(personnelData.password);
 
     const dateOfBirthObject = isoDateToObject(personnelData.dateOfBirth);
 

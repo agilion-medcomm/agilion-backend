@@ -69,7 +69,7 @@ const getBookedTimesForDoctor = async (doctorId, date) => {
                 
                 return slotDate >= leaveStart && slotDate < leaveEnd;
             } catch (error) {
-                console.error('Error parsing leave dates:', error.message);
+                require('../utils/logger').error('Error parsing leave dates', error);
                 return false;
             }
         });

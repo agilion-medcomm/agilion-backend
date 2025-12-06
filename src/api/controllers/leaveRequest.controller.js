@@ -1,4 +1,5 @@
 const leaveRequestService = require('../../services/leaveRequest.service');
+const { sendSuccess, sendCreated } = require('../../utils/responseFormatter');
 
 /**
  * GET /api/v1/leave-requests
@@ -7,7 +8,7 @@ const leaveRequestService = require('../../services/leaveRequest.service');
 const getLeaveRequests = async (req, res, next) => {
     try {
         const requests = await leaveRequestService.getLeaveRequests(req.user.role, req.user.userId);
-        res.json({ status: 'success', data: requests });
+        sendSuccess(res, requests);
     } catch (error) {
         next(error);
     }
@@ -21,11 +22,7 @@ const createLeaveRequest = async (req, res, next) => {
     try {
         const leaveRequest = await leaveRequestService.createLeaveRequest(req.body);
 
-        res.status(201).json({
-            status: 'success',
-            message: 'Leave request submitted successfully.',
-            data: leaveRequest,
-        });
+        sendCreated(res, leaveRequest, 'Leave request submitted successfully.');
     } catch (error) {
         next(error);
     }
@@ -42,11 +39,7 @@ const updateLeaveRequestStatus = async (req, res, next) => {
 
         const leaveRequest = await leaveRequestService.updateLeaveRequestStatus(id, status);
 
-        res.json({
-            status: 'success',
-            message: `Leave request ${status.toLowerCase()}.`,
-            data: leaveRequest,
-        });
+        sendSuccess(res, leaveRequest, `Leave request ${status.toLowerCase()}.`);
     } catch (error) {
         next(error);
     }

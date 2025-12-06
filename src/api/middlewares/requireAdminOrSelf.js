@@ -80,7 +80,7 @@ const requireAdminOrSelf = async (req, res, next) => {
         });
         
     } catch (error) {
-        console.error('Error in requireAdminOrSelf:', error);
+        require('../../utils/logger').error('Error in requireAdminOrSelf', error);
         return res.status(500).json({ 
             status: 'error', 
             message: 'Error verifying user identity.' 

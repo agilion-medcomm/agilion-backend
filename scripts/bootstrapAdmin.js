@@ -4,7 +4,7 @@
  */
 
 require('dotenv').config();
-const bcrypt = require('bcrypt');
+const { hashPassword } = require('../src/utils/passwordHelper');
 const prisma = require('../src/config/db');
 
 async function bootstrapAdmin() {
@@ -26,9 +26,8 @@ async function bootstrapAdmin() {
             process.exit(0);
         }
 
-        // Hash password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        // Hash the password
+        const hashedPassword = await hashPassword(password);
 
         // Create admin user and admin profile
         const admin = await prisma.admin.create({
