@@ -2,10 +2,11 @@ const jwt = require('jsonwebtoken');
 const { ApiError } = require('./errorHandler');
 
 /**
- * Middleware to extract and verify JWT from Authorization header
- * Attaches decoded user info to req.user
+ * Authentication Middleware
+ * Verifies JWT token and attaches decoded user to req.user
+ * Returns 401 if token is missing, invalid, or expired
  */
-const authMiddleware = async (req, res, next) => {
+const authMiddleware = (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
         

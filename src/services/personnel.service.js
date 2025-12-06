@@ -1,70 +1,38 @@
 const prisma = require('../config/db');
-const bcrypt = require('bcrypt');
+const { hashPassword } = require('../utils/passwordHelper');
+
+/**
+ * Map personnel user data to consistent format
+ */
+const mapPersonnelUser = (user, specialization = null) => ({
+    id: user.id,
+    tckn: user.tckn,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    phoneNumber: user.phoneNumber,
+    role: user.role,
+    dateOfBirth: user.dateOfBirth,
+    ...(specialization && { specialization }),
+});
 
 /**
  * Get all personnel (doctors, admins, cashiers, and laborants) with formatted data
  */
 const getAllPersonnel = async () => {
     const [doctors, admins, cashiers, laborants] = await Promise.all([
-        prisma.doctor.findMany({
-            include: { user: true },
-        }),
-        prisma.admin.findMany({
-            include: { user: true },
-        }),
-        prisma.user.findMany({
-            where: { role: 'CASHIER' },
-        }),
-        prisma.laborant.findMany({
-            include: { user: true },
-        }),
+        prisma.doctor.findMany({ include: { user: true } }),
+        prisma.admin.findMany({ include: { user: true } }),
+        prisma.user.findMany({ where: { role: 'CASHIER' } }),
+        prisma.laborant.findMany({ include: { user: true } }),
     ]);
 
-    const personnel = [
-        ...doctors.map(d => ({
-            id: d.user.id,
-            tckn: d.user.tckn,
-            firstName: d.user.firstName,
-            lastName: d.user.lastName,
-            email: d.user.email,
-            phoneNumber: d.user.phoneNumber,
-            role: d.user.role,
-            specialization: d.specialization,
-            dateOfBirth: d.user.dateOfBirth,
-        })),
-        ...admins.map(a => ({
-            id: a.user.id,
-            tckn: a.user.tckn,
-            firstName: a.user.firstName,
-            lastName: a.user.lastName,
-            email: a.user.email,
-            phoneNumber: a.user.phoneNumber,
-            role: a.user.role,
-            dateOfBirth: a.user.dateOfBirth,
-        })),
-        ...cashiers.map(c => ({
-            id: c.id,
-            tckn: c.tckn,
-            firstName: c.firstName,
-            lastName: c.lastName,
-            email: c.email,
-            phoneNumber: c.phoneNumber,
-            role: c.role,
-            dateOfBirth: c.dateOfBirth,
-        })),
-        ...laborants.map(l => ({
-            id: l.user.id,
-            tckn: l.user.tckn,
-            firstName: l.user.firstName,
-            lastName: l.user.lastName,
-            email: l.user.email,
-            phoneNumber: l.user.phoneNumber,
-            role: l.user.role,
-            dateOfBirth: l.user.dateOfBirth,
-        })),
+    return [
+        ...doctors.map(d => mapPersonnelUser(d.user, d.specialization)),
+        ...admins.map(a => mapPersonnelUser(a.user)),
+        ...cashiers.map(c => mapPersonnelUser(c)),
+        ...laborants.map(l => mapPersonnelUser(l.user)),
     ];
-
-    return personnel;
 };
 
 /**
@@ -78,8 +46,7 @@ const updatePersonnel = async (personnelId, updates) => {
     
     // Hash password if provided
     if (userUpdates.password) {
-        const salt = await bcrypt.genSalt(10);
-        userUpdates.password = await bcrypt.hash(userUpdates.password, salt);
+        userUpdates.password = await hashPassword(userUpdates.password);
     }
 
     // Update user fields

@@ -1,4 +1,5 @@
 const appointmentService = require('../../services/appointment.service');
+const { sendSuccess, sendCreated } = require('../../utils/responseFormatter');
 
 /**
  * GET /api/v1/appointments
@@ -17,16 +18,16 @@ const getAppointments = async (req, res, next) => {
             if (patientId) filters.patientId = patientId;
 
             const appointments = await appointmentService.getAppointmentsList(filters);
-            return res.json({ status: 'success', data: appointments });
+            return sendSuccess(res, appointments);
         }
 
         // B) Booked times for appointment creation (including leave-blocked slots)
         if (doctorId && date) {
             const bookedTimes = await appointmentService.getBookedTimesForDoctor(doctorId, date);
-            return res.json({ status: 'success', data: { bookedTimes } });
+            return sendSuccess(res, { bookedTimes });
         }
 
-        return res.json({ status: 'success', data: { bookedTimes: [] } });
+        return sendSuccess(res, { bookedTimes: [] });
     } catch (error) {
         next(error);
     }
@@ -47,11 +48,7 @@ const createAppointment = async (req, res, next) => {
             req.body
         );
 
-        res.status(201).json({
-            status: 'success',
-            message: 'Appointment created successfully.',
-            data: appointment,
-        });
+        sendCreated(res, appointment, 'Appointment created successfully.');
     } catch (error) {
         next(error);
     }
@@ -68,11 +65,7 @@ const updateAppointmentStatus = async (req, res, next) => {
 
         const appointment = await appointmentService.updateAppointmentStatus(id, status);
 
-        res.json({
-            status: 'success',
-            message: 'Appointment status updated.',
-            data: appointment,
-        });
+        sendSuccess(res, appointment, 'Appointment status updated.');
     } catch (error) {
         next(error);
     }

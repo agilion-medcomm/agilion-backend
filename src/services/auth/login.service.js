@@ -1,8 +1,7 @@
-const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const prisma = require('../../config/db');
-const userRepository = require('../../repositories/user.repository');
 const { ApiError } = require('../../api/middlewares/errorHandler');
+const { comparePassword } = require('../../utils/passwordHelper');
 
 /**
  * Login Service
@@ -21,7 +20,7 @@ const loginUser = async (tckn, password) => {
         },
     });
     // check if user exists and password is correct
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    if (!user || !(await comparePassword(password, user.password))) {
         throw new ApiError(401, 'Invalid TCKN or password.');
     }
 
@@ -74,7 +73,7 @@ const loginPersonnel = async (tckn, password) => {
     });
 
     // check if user exists and password is correct
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    if (!user || !(await comparePassword(password, user.password))) {
         throw new ApiError(401, 'Invalid TCKN or password.');
     }
 
