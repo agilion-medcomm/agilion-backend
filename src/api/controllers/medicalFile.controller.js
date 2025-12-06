@@ -62,7 +62,7 @@ const getMyMedicalFiles = async (req, res, next) => {
 const getPatientMedicalFiles = async (req, res, next) => {
     try {
         const patientId = parseInt(req.params.patientId);
-        if (isNaN(patientId)) {
+        if (isNaN(patientId) || patientId <= 0) {
             return res.status(400).json({
                 status: 'error',
                 message: 'Invalid patient ID.',
@@ -86,7 +86,7 @@ const getPatientMedicalFiles = async (req, res, next) => {
 const getMedicalFileById = async (req, res, next) => {
     try {
         const fileId = parseInt(req.params.fileId);
-        if (isNaN(fileId)) {
+        if (isNaN(fileId) || fileId <= 0) {
             return res.status(400).json({
                 status: 'error',
                 message: 'Invalid file ID.',
@@ -114,7 +114,7 @@ const getMedicalFileById = async (req, res, next) => {
 const getLaborantMedicalFiles = async (req, res, next) => {
     try {
         const laborantId = parseInt(req.params.laborantId);
-        if (isNaN(laborantId)) {
+        if (isNaN(laborantId) || laborantId <= 0) {
             return res.status(400).json({
                 status: 'error',
                 message: 'Invalid laborant ID.',
@@ -138,7 +138,7 @@ const getLaborantMedicalFiles = async (req, res, next) => {
 const deleteMedicalFile = async (req, res, next) => {
     try {
         const fileId = parseInt(req.params.fileId);
-        if (isNaN(fileId)) {
+        if (isNaN(fileId) || fileId <= 0) {
             return res.status(400).json({
                 status: 'error',
                 message: 'Invalid file ID.',
@@ -159,6 +159,63 @@ const deleteMedicalFile = async (req, res, next) => {
     }
 };
 
+/**
+ * GET /api/v1/medical-files/:fileId/download
+ * Download a medical file (protected - requires authentication)
+ */
+const downloadMedicalFile = async (req, res, next) => {
+    try {
+        const fileId = parseInt(req.params.fileId);
+        if (isNaN(fileId) || fileId <= 0) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Invalid file ID.',
+            });
+        }
+
+        const fileData = await medicalFileService.getFileForDownload(
+            fileId,
+            req.user.userId,
+            req.user.role
+        );
+
+        // Set appropriate headers for file download
+        res.setHeader('Content-Type', fileData.mimeType);
+        res.setHeader('Content-Disposition', `attachment; filename="${fileData.fileName}"`);
+        
+        // Stream the file
+        const fs = require('fs');
+        const fileStream = fs.createReadStream(fileData.path);
+        fileStream.pipe(res);
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * GET /api/v1/medical-files/my-uploads
+ * Get files uploaded by the authenticated laborant
+ */
+const getMyUploads = async (req, res, next) => {
+    try {
+        if (!req.user.laborantId) {
+            return res.status(403).json({
+                status: 'error',
+                message: 'Only laborants can access this endpoint.',
+            });
+        }
+
+        const files = await medicalFileService.getMyUploads(req.user.userId);
+
+        res.status(200).json({
+            status: 'success',
+            data: files,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     uploadMedicalFile,
     getMyMedicalFiles,
@@ -166,4 +223,6 @@ module.exports = {
     getMedicalFileById,
     getLaborantMedicalFiles,
     deleteMedicalFile,
+    downloadMedicalFile,
+    getMyUploads,
 };

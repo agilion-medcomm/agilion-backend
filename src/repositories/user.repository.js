@@ -42,8 +42,7 @@ const createUser = async (userData) => {
 
 /*
  * Creates a personnel user along with role-specific profile in a single transaction.
- * Currently supports DOCTOR (with Doctor profile) and ADMIN (with Admin profile).
- * Can be extended with more roles when needed.
+ * Supports DOCTOR (with Doctor profile), ADMIN (with Admin profile), LABORANT (with Laborant profile), and CASHIER.
  */
 const createPersonnelWithUser = async (data) => {
     const baseUser = {
@@ -74,6 +73,19 @@ const createPersonnelWithUser = async (data) => {
 
     if (data.role === 'ADMIN') {
         return prisma.admin.create({
+            data: {
+                user: {
+                    create: baseUser,
+                },
+            },
+            include: {
+                user: true,
+            },
+        });
+    }
+
+    if (data.role === 'LABORANT') {
+        return prisma.laborant.create({
             data: {
                 user: {
                     create: baseUser,

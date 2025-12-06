@@ -26,7 +26,6 @@ const fileFilter = (req, file, cb) => {
     const allowedMimeTypes = [
         'application/pdf',
         'image/jpeg',
-        'image/jpg',
         'image/png'
     ];
     const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png'];
