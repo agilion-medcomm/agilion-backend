@@ -123,7 +123,7 @@ const updatePersonnel = async (personnelId, updates) => {
 
 /**
  * Delete personnel with cascading deletes
- * Deletes in order: appointments -> leave requests -> doctor/admin profile -> user
+ * Deletes in order: appointments -> leave requests -> doctor/admin/laborant profile -> user
  */
 const deletePersonnel = async (personnelId) => {
     const id = parseInt(personnelId);
@@ -149,7 +149,12 @@ const deletePersonnel = async (personnelId) => {
             where: { userId: id }
         }),
 
-        // 5. Finally delete the user record
+        // 5. Delete laborant profile (if exists)
+        prisma.laborant.deleteMany({
+            where: { userId: id }
+        }),
+
+        // 6. Finally delete the user record
         prisma.user.delete({
             where: { id: id },
         })

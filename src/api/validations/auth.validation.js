@@ -36,8 +36,8 @@ const personnelRegisterSchema = Joi.object({
     firstName: Joi.string().required(),
     lastName: Joi.string().required(),
     password: Joi.string().min(8).required(),
-    // Allow ADMIN and DOCTOR for now; easy to extend with new roles later.
-    role: Joi.string().valid('DOCTOR', 'ADMIN').required(),
+    // Allow ADMIN, DOCTOR, CASHIER, and LABORANT roles.
+    role: Joi.string().valid('DOCTOR', 'ADMIN', 'CASHIER', 'LABORANT').required(),
     phoneNumber: Joi.string().allow('').optional(),
     email: Joi.string().email().allow('').optional(),
     dateOfBirth: Joi.alternatives().try(

@@ -208,6 +208,8 @@ model MedicalFile {
   id          Int      @id @default(autoincrement())
   patientId   Int
   patient     Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  // laborantId is nullable to preserve file records when a laborant account is deleted
+  // Historical/orphaned files with null laborantId can still be accessed by patients/doctors/admins
   laborantId  Int?
   laborant    Laborant? @relation(fields: [laborantId], references: [id], onDelete: SetNull)
   

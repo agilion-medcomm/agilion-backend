@@ -2,16 +2,16 @@ const prisma = require('../../config/db');
 
 /**
  * Middleware to allow admin OR the user updating their own profile
- * Maps Doctor/Admin profile ID to User ID and checks authorization
+ * Maps Doctor/Admin/Laborant profile ID to User ID and checks authorization
  * 
  * Must be used after authMiddleware
  */
 const requireAdminOrSelf = async (req, res, next) => {
-    const { id } = req.params; // This is the Doctor/Admin profile ID from the URL
+    const { id } = req.params; // This is the Doctor/Admin/Laborant profile ID from the URL
     const requestingUser = req.user; // From JWT: { userId, role, tckn }
     
     try {
-        // Find the user ID associated with this Doctor/Admin profile ID
+        // Find the user ID associated with this Doctor/Admin/Laborant profile ID
         let targetUserId = null;
         
         // Check if it's a doctor profile
@@ -31,6 +31,16 @@ const requireAdminOrSelf = async (req, res, next) => {
             
             if (admin) {
                 targetUserId = admin.userId;
+            } else {
+                // Check if it's a laborant profile
+                const laborant = await prisma.laborant.findUnique({
+                    where: { id: parseInt(id) },
+                    select: { userId: true }
+                });
+                
+                if (laborant) {
+                    targetUserId = laborant.userId;
+                }
             }
         }
         

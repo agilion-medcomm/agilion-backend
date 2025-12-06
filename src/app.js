@@ -19,7 +19,7 @@ app.use(express.json());
 // 3. Enable URL-encoded body parsing
 app.use(express.urlencoded({ extended: true }));
 
-// 4. Serve static files for uploads
+// 4. Serve static files for uploads (cleaning photos, etc)
 app.use('/uploads', express.static('uploads'));
 
 // --- API Routes ---
