@@ -8,6 +8,7 @@ const {
     validateTimeFormat,
     createDateTimeFromISO,
 } = require('../utils/dateTimeValidator');
+const { sendAppointmentNotificationEmail } = require('./email.service');
 
 /**
  * Get appointments list for doctor/admin panel
@@ -151,6 +152,20 @@ const createAppointment = async (userId, role, appointmentData) => {
         time,
         status: status || 'APPROVED',
     });
+
+    // Send appointment notification email to patient
+    const patientEmail = appointment.patient.user.email;
+    const appointmentDetails = {
+        patientFirstName: appointment.patient.user.firstName,
+        patientLastName: appointment.patient.user.lastName,
+        doctorName: `${appointment.doctor.user.firstName} ${appointment.doctor.user.lastName}`,
+        department: appointment.doctor.specialization || '-',
+        date: appointment.date,
+        time: appointment.time,
+        status: appointment.status,
+    };
+
+    await sendAppointmentNotificationEmail(patientEmail, appointmentDetails);
 
     return {
         id: appointment.id,
