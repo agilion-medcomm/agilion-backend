@@ -1,0 +1,3 @@
+# This directory stores uploaded medical files (PDFs, images)
+# Files in this directory are ignored by git (.gitignore)
+# Directory structure is preserved via this .gitkeep file
