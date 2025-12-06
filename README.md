@@ -270,8 +270,31 @@ curl -X POST http://localhost:5000/api/v1/auth/personnel/login \
 ## 📚 Documentation
 
 - **API Reference**: See endpoint examples above
-- **Code Review**: See `CODE_REVIEW.md` for refactoring details
+- **Code Review**: See Remaining Tasks below for details
 - **Utilities Guide**: Check `src/utils/` for helper functions
+
+---
+
+## ⚠️ Remaining Tasks
+
+1. **Rotate Exposed Credentials**
+   - Generate new JWT_SECRET: `openssl rand -base64 32`
+   - Revoke Gmail password, generate new
+   - Update .env file
+
+2. **Rate Limiting** (`npm install express-rate-limit`)
+   - /auth/login: 5 attempts per 15 min
+   - /auth/register: 3 attempts per hour
+
+3. **Fix Appointment Race Condition**
+   - Add unique constraint on (doctorId, date, time)
+   - Wrap creation in Prisma transaction
+
+4. **Enhancements**
+- Pagination support (patients, personnel, appointments)
+- Unit tests for utilities
+- API documentation (Swagger)
+- Winston logger upgrade
 
 ---
 
@@ -301,11 +324,11 @@ Before deploying:
 
 ---
 
-## 👥 Team
+## 👥 Backend Team
 
 - **Griffinxd** - Yunus Emre Manav
 - **Pikseel** - Mehmet Akif Çavuş
-- **Linaruu** - Linaruu
+- **Linaruu** - Uğur Anıl Güney
 
 ---
 
