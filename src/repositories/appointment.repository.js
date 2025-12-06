@@ -58,6 +58,10 @@ const updateAppointmentStatus = async (id, status) => {
     return prisma.appointment.update({
         where: { id: parseInt(id) },
         data: { status },
+        include: {
+            patient: { include: { user: true } },
+            doctor: { include: { user: true } },
+        },
     });
 };
 
