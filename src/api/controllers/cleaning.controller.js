@@ -46,7 +46,16 @@ const getCleaningRecords = async (req, res, next) => {
 
         if (date) filters.date = date;
         if (area) filters.area = area;
-        if (personnelId) filters.personnelId = parseInt(personnelId, 10);
+        if (personnelId) {
+            const parsedId = parseInt(personnelId, 10);
+            if (isNaN(parsedId)) {
+                return res.status(400).json({
+                    status: 'error',
+                    message: 'Invalid personnel ID.',
+                });
+            }
+            filters.personnelId = parsedId;
+        }
 
         const records = await cleaningService.getAllCleaningRecords(filters);
 
