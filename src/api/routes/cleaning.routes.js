@@ -3,44 +3,21 @@ const router = express.Router();
 const multer = require('multer');
 const path = require('path');
 
+// const multer = require('multer');
+// const path = require('path');
+
 const cleaningController = require('../controllers/cleaning.controller');
 const authMiddleware = require('../middlewares/authMiddleware');
 const authorize = require('../middlewares/authorize');
-
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'uploads/'); // Ensure this directory exists
-    },
-    filename: (req, file, cb) => {
-        const randomString = Math.random().toString(36).substring(2, 11);
-        const uniqueName = `${Date.now()}-${randomString}${path.extname(file.originalname)}`;
-        cb(null, uniqueName);
-    },
-});
-
-const upload = multer({
-    storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
-    fileFilter: (req, file, cb) => {
-        const allowedMimeTypes = ['image/jpeg', 'image/png'];
-        const allowedExtensions = ['.jpg', '.jpeg', '.png'];
-        const ext = path.extname(file.originalname).toLowerCase();
-        if (allowedMimeTypes.includes(file.mimetype) && allowedExtensions.includes(ext)) {
-            cb(null, true);
-        } else {
-            cb(new Error('Invalid file type. Only JPEG and PNG images are allowed.'));
-        }
-    },
-});
-
+const { cleaningPhotoUpload, handleMulterError } = require('../middlewares/upload');
 // POST /api/v1/cleaning - Create a new cleaning record
 // Requires: authentication, CLEANER or ADMIN role, photo file
 router.post(
     '/',
     authMiddleware,
     authorize('CLEANER', 'ADMIN'),
-    upload.single('photo'),
+    cleaningPhotoUpload.single('photo'),
+    handleMulterError,
     cleaningController.createCleaningRecord
 );
 
