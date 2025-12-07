@@ -182,18 +182,27 @@ const deleteCleaningRecord = async (recordId, userId) => {
             throw new ApiError(404, 'Cleaning record not found.');
         }
 
-        // Get cleaner by userId
-        const cleaner = await prisma.cleaner.findUnique({
-            where: { userId },
+        // Get user by userId, including role and cleaner profile
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: { cleaner: true },
         });
 
-        if (!cleaner) {
-            throw new ApiError(404, 'Cleaner profile not found.');
+        if (!user) {
+            throw new ApiError(404, 'User not found.');
         }
 
-        // Check if the cleanerId matches (authorization)
-        if (record.cleanerId !== cleaner.id) {
-            throw new ApiError(403, 'You are not authorized to delete this record.');
+        // Admins can delete any record
+        if (user.role === 'ADMIN') {
+            // proceed to delete
+        } else {
+            // Cleaners can only delete their own records
+            if (!user.cleaner) {
+                throw new ApiError(404, 'Cleaner profile not found.');
+            }
+            if (record.cleanerId !== user.cleaner.id) {
+                throw new ApiError(403, 'You are not authorized to delete this record.');
+            }
         }
 
         await prisma.cleaningRecord.delete({
