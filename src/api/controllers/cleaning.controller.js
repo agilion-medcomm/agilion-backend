@@ -8,7 +8,7 @@ const createCleaningRecord = async (req, res, next) => {
     try {
         const userId = req.user.userId;
         const { area, time } = req.body;
-        const photoUrl = req.file ? `/uploads/${req.file.filename}` : null;
+        const photoUrl = req.file ? `/uploads/cleaning-photos/${req.file.filename}` : null;
 
         // Validate that photo is provided
         if (!req.file) {

@@ -23,6 +23,7 @@ const getAllDoctors = async (department) => {
                     tckn: true,
                     email: true,
                     phoneNumber: true,
+                    profilePhoto: true,
                 },
             },
         },
@@ -37,7 +38,7 @@ const getAllDoctors = async (department) => {
         specialization: doc.specialization,
         email: doc.user.email,
         phoneNumber: doc.user.phoneNumber,
-        img: '', // Can add photo URL field later
+        photoUrl: doc.user.profilePhoto,
         role: 'DOCTOR',
     }));
 };
