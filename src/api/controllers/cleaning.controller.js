@@ -117,9 +117,15 @@ const deleteCleaningRecord = async (req, res, next) => {
     try {
         const userId = req.user.userId;
         const { recordId } = req.params;
-
+        const parsedRecordId = parseInt(recordId, 10);
+        if (isNaN(parsedRecordId)) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Invalid record ID.',
+            });
+        }
         const result = await cleaningService.deleteCleaningRecord(
-            parseInt(recordId, 10),
+            parsedRecordId,
             userId
         );
 
