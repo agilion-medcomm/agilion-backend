@@ -2,10 +2,10 @@ const prisma = require('../config/db');
 const bcrypt = require('bcrypt');
 
 /**
- * Get all personnel (doctors, admins, cashiers, and laborants) with formatted data
+ * Get all personnel (doctors, admins, cashiers, laborants, and cleaners) with formatted data
  */
 const getAllPersonnel = async () => {
-    const [doctors, admins, cashiers, laborants] = await Promise.all([
+    const [doctors, admins, cashiers, laborants, cleaners] = await Promise.all([
         prisma.doctor.findMany({
             include: { user: true },
         }),
@@ -16,6 +16,9 @@ const getAllPersonnel = async () => {
             where: { role: 'CASHIER' },
         }),
         prisma.laborant.findMany({
+            include: { user: true },
+        }),
+        prisma.cleaner.findMany({
             include: { user: true },
         }),
     ]);
@@ -31,6 +34,7 @@ const getAllPersonnel = async () => {
             role: d.user.role,
             specialization: d.specialization,
             dateOfBirth: d.user.dateOfBirth,
+            photoUrl: d.user.profilePhoto,
         })),
         ...admins.map(a => ({
             id: a.user.id,
@@ -41,6 +45,7 @@ const getAllPersonnel = async () => {
             phoneNumber: a.user.phoneNumber,
             role: a.user.role,
             dateOfBirth: a.user.dateOfBirth,
+            photoUrl: a.user.profilePhoto,
         })),
         ...cashiers.map(c => ({
             id: c.id,
@@ -51,6 +56,7 @@ const getAllPersonnel = async () => {
             phoneNumber: c.phoneNumber,
             role: c.role,
             dateOfBirth: c.dateOfBirth,
+            photoUrl: c.profilePhoto,
         })),
         ...laborants.map(l => ({
             id: l.user.id,
@@ -61,6 +67,18 @@ const getAllPersonnel = async () => {
             phoneNumber: l.user.phoneNumber,
             role: l.user.role,
             dateOfBirth: l.user.dateOfBirth,
+            photoUrl: l.user.profilePhoto,
+        })),
+        ...cleaners.map(cl => ({
+            id: cl.user.id,
+            tckn: cl.user.tckn,
+            firstName: cl.user.firstName,
+            lastName: cl.user.lastName,
+            email: cl.user.email,
+            phoneNumber: cl.user.phoneNumber,
+            role: cl.user.role,
+            dateOfBirth: cl.user.dateOfBirth,
+            photoUrl: cl.user.profilePhoto,
         })),
     ];
 
@@ -150,8 +168,28 @@ const deletePersonnel = async (personnelId) => {
     return { id: id };
 };
 
+/**
+ * Update personnel photo
+ */
+const updatePersonnelPhoto = async (userId, photoUrl) => {
+    const updatedUser = await prisma.user.update({
+        where: { id: userId },
+        data: { profilePhoto: photoUrl },
+    });
+
+    return {
+        id: updatedUser.id,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        email: updatedUser.email,
+        profilePhoto: updatedUser.profilePhoto,
+        role: updatedUser.role,
+    };
+};
+
 module.exports = {
     getAllPersonnel,
     updatePersonnel,
     deletePersonnel,
+    updatePersonnelPhoto,
 };

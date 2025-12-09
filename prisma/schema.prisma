@@ -19,6 +19,7 @@ enum UserRole {
   ADMIN
   CASHIER
   LABORANT
+  CLEANER
 }
 
 // Defines the status of a contact issue
@@ -40,6 +41,7 @@ model User {
   lastName   String
   phoneNumber      String?  @unique // '?' means optional
   dateOfBirth DateTime?
+  profilePhoto     String?  // Optional profile photo URL
 
   // Password reset fields
   resetToken        String?   @unique
@@ -62,6 +64,8 @@ model User {
   admin   Admin?
   // A user can be ONE laborant (1-to-1)
   laborant Laborant?
+  // A user can be ONE cleaner (1-to-1)
+  cleaner Cleaner?
 
   @@map("users") // Maps this model to the "users" table in Postgres
 }
@@ -187,6 +191,19 @@ model Laborant {
   @@map("laborants")
 }
 
+// Cleaner model, linked to a User
+model Cleaner {
+  id     Int  @id @default(autoincrement())
+  userId Int  @unique // Foreign key
+  user   User @relation(fields: [userId], references: [id])
+
+  // --- Relationships ---
+  // A cleaner can have MANY cleaning records
+  cleaningRecords CleaningRecord[]
+
+  @@map("cleaners")
+}
+
 // Medical File model for patient test results
 model MedicalFile {
   id          Int      @id @default(autoincrement())
@@ -212,4 +229,22 @@ model MedicalFile {
   updatedAt   DateTime     @updatedAt
 
   @@map("medical_files")
+}
+
+// Cleaning Record model for cleaner personnel
+model CleaningRecord {
+  id        Int     @id @default(autoincrement())
+  cleanerId Int
+  cleaner   Cleaner @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
+  
+  area      String       // Cleaning area (e.g., "Zemin Kat Koridor")
+  time      String       // Time slot (e.g., "Sabah", "Öğle", "Akşam")
+  photoUrl  String?      // URL to uploaded cleaning photo
+  
+  date      String       // Date in YYYY-MM-DD format
+  
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@map("cleaning_records")
 }

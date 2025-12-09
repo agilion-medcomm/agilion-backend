@@ -80,4 +80,52 @@ const handleMulterError = (err, req, res, next) => {
     next(err);
 };
 
-module.exports = { upload, handleMulterError };
+// Create a separate multer instance for cleaning photos
+const cleaningPhotoStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const cleaningDir = path.join(__dirname, '../../uploads/cleaning-photos');
+        if (!fs.existsSync(cleaningDir)) {
+            fs.mkdirSync(cleaningDir, { recursive: true });
+        }
+        cb(null, cleaningDir);
+    },
+    filename: (req, file, cb) => {
+        const randomString = Math.random().toString(36).substring(2, 11);
+        const uniqueName = `${Date.now()}-${randomString}${path.extname(file.originalname)}`;
+        cb(null, uniqueName);
+    }
+});
+
+const cleaningPhotoUpload = multer({
+    storage: cleaningPhotoStorage,
+    fileFilter: fileFilter,
+    limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB max file size
+    }
+});
+
+// Create a separate multer instance for personnel photos
+const personnelPhotoStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const personnelDir = path.join(__dirname, '../../uploads/personnel-photos');
+        if (!fs.existsSync(personnelDir)) {
+            fs.mkdirSync(personnelDir, { recursive: true });
+        }
+        cb(null, personnelDir);
+    },
+    filename: (req, file, cb) => {
+        const randomString = Math.random().toString(36).substring(2, 11);
+        const uniqueName = `${Date.now()}-${randomString}${path.extname(file.originalname)}`;
+        cb(null, uniqueName);
+    }
+});
+
+const personnelPhotoUpload = multer({
+    storage: personnelPhotoStorage,
+    fileFilter: fileFilter,
+    limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB max file size
+    }
+});
+
+module.exports = { upload, handleMulterError, cleaningPhotoUpload, personnelPhotoUpload };

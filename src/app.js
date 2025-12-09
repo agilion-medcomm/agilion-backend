@@ -19,9 +19,8 @@ app.use(express.json());
 // 3. Enable URL-encoded body parsing
 app.use(express.urlencoded({ extended: true }));
 
-// SECURITY: Do NOT serve static files for medical uploads
-// Medical files must go through authenticated API endpoints
-// See: GET /api/v1/medical-files/:fileId/download
+// 4. Serve static files for uploads
+app.use('/uploads', express.static('src/uploads'));
 
 // --- API Routes ---
 // Health check endpoint

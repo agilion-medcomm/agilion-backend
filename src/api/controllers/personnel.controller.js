@@ -72,9 +72,75 @@ const deletePersonnel = async (req, res, next) => {
     }
 };
 
+/**
+ * POST /api/v1/personnel/:id/photo
+ * Upload photo for personnel
+ */
+const uploadPersonnelPhoto = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const userId = parseInt(id, 10);
+
+        if (isNaN(userId)) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Invalid personnel ID.',
+            });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Photo file is required.',
+            });
+        }
+
+        const photoUrl = `/uploads/personnel-photos/${req.file.filename}`;
+        const updatedPersonnel = await personnelService.updatePersonnelPhoto(userId, photoUrl);
+
+        res.json({
+            status: 'success',
+            message: 'Photo uploaded successfully.',
+            data: updatedPersonnel,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * DELETE /api/v1/personnel/:id/photo
+ * Delete photo for personnel
+ */
+const deletePersonnelPhoto = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const userId = parseInt(id, 10);
+
+        if (isNaN(userId)) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Invalid personnel ID.',
+            });
+        }
+
+        const updatedPersonnel = await personnelService.updatePersonnelPhoto(userId, null);
+
+        res.json({
+            status: 'success',
+            message: 'Photo deleted successfully.',
+            data: updatedPersonnel,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     getPersonnel,
     createPersonnel,
     updatePersonnel,
     deletePersonnel,
+    uploadPersonnelPhoto,
+    deletePersonnelPhoto,
 };
