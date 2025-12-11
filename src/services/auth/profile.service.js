@@ -60,7 +60,7 @@ const getUserProfile = async (userId) => {
 
     // Format response based on role
     const response = {
-        id: user.doctor?.id || user.admin?.id || user.laborant?.id || user.patient?.id || user.id,
+        id: user.doctor?.id || user.admin?.id || user.laborant?.id || user.cleaner?.id || user.patient?.id || user.id,
         userId: user.id,
         firstName: user.firstName,
         lastName: user.lastName,
