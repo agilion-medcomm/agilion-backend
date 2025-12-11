@@ -1,5 +1,6 @@
 const leaveRequestService = require('../../services/leaveRequest.service');
 const { sendSuccess, sendCreated } = require('../../utils/responseFormatter');
+const { parseAndValidateId } = require('../../utils/idValidator');
 
 /**
  * GET /api/v1/leave-requests
@@ -34,7 +35,7 @@ const createLeaveRequest = async (req, res, next) => {
  */
 const updateLeaveRequestStatus = async (req, res, next) => {
     try {
-        const { id } = req.params;
+        const id = parseAndValidateId(req.params.id, 'leave request ID');
         const { status } = req.body;
 
         const leaveRequest = await leaveRequestService.updateLeaveRequestStatus(id, status);

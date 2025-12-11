@@ -1,5 +1,6 @@
 const appointmentService = require('../../services/appointment.service');
 const { sendSuccess, sendCreated } = require('../../utils/responseFormatter');
+const { parseAndValidateId } = require('../../utils/idValidator');
 
 /**
  * GET /api/v1/appointments
@@ -60,7 +61,7 @@ const createAppointment = async (req, res, next) => {
  */
 const updateAppointmentStatus = async (req, res, next) => {
     try {
-        const { id } = req.params;
+        const id = parseAndValidateId(req.params.id, 'appointment ID');
         const { status } = req.body;
 
         const appointment = await appointmentService.updateAppointmentStatus(id, status);

@@ -1,4 +1,5 @@
 const prisma = require('../config/db');
+const { ROLES } = require('../config/constants');
 
 /**
  * Get all doctors with formatted data
@@ -38,8 +39,8 @@ const getAllDoctors = async (department) => {
         specialization: doc.specialization,
         email: doc.user.email,
         phoneNumber: doc.user.phoneNumber,
-        photoUrl: doc.user.profilePhoto,
-        role: 'DOCTOR',
+        img: doc.user.profilePhoto || '',
+        role: ROLES.DOCTOR,
     }));
 };
 

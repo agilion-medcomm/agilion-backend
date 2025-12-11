@@ -2,6 +2,7 @@ const leaveRequestRepository = require('../repositories/leaveRequest.repository'
 const { ApiError } = require('../api/middlewares/errorHandler');
 const prisma = require('../config/db');
 const { validateISODateFormat, validateTimeFormat } = require('../utils/dateTimeValidator');
+const { ROLES } = require('../config/constants');
 
 /**
  * Get leave requests (all for admin, own for doctor)
@@ -10,7 +11,7 @@ const getLeaveRequests = async (userRole, userId) => {
     const filters = {};
     
     // Only ADMIN and DOCTOR roles can access leave requests
-    if (userRole === 'DOCTOR') {
+    if (userRole === ROLES.DOCTOR) {
         // Doctors can only see their own requests
         const doctor = await prisma.doctor.findUnique({
             where: { userId },
@@ -19,7 +20,7 @@ const getLeaveRequests = async (userRole, userId) => {
             throw new ApiError(404, 'Doctor profile not found.');
         }
         filters.doctorId = doctor.id;
-    } else if (userRole !== 'ADMIN') {
+    } else if (userRole !== ROLES.ADMIN) {
         // Reject access for any other role (e.g., PATIENT)
         throw new ApiError(403, 'Access denied. Only doctors and admins can view leave requests.');
     }

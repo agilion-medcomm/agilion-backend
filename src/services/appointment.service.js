@@ -2,7 +2,7 @@ const appointmentRepository = require('../repositories/appointment.repository');
 const leaveRequestRepository = require('../repositories/leaveRequest.repository');
 const { ApiError } = require('../api/middlewares/errorHandler');
 const prisma = require('../config/db');
-const { WORKING_HOURS } = require('../config/constants');
+const { WORKING_HOURS, ROLES } = require('../config/constants');
 const {
     parseAppointmentDate,
     validateAppointmentDateFormat,
@@ -114,7 +114,7 @@ const createAppointment = async (userId, role, appointmentData) => {
     let patientId;
 
     // CASHIER must provide patientId - they create appointments for patients
-    if (role === 'CASHIER') {
+    if (role === ROLES.CASHIER) {
         if (!patientIdFromBody) {
             throw new ApiError(400, 'Patient ID is required for cashier appointments.');
         }
@@ -131,7 +131,7 @@ const createAppointment = async (userId, role, appointmentData) => {
         patientId = patient.id;
     }
     // PATIENT creates appointment for themselves
-    else if (role === 'PATIENT') {
+    else if (role === ROLES.PATIENT) {
         const user = await prisma.user.findUnique({
             where: { id: userId },
             include: { patient: true },

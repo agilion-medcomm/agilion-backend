@@ -1,5 +1,6 @@
 const contactService = require('../../services/contact.service');
 const { sendSuccess, sendCreated } = require('../../utils/responseFormatter');
+const { parseAndValidateId } = require('../../utils/idValidator');
 
 /**
  * POST /api/v1/contact
@@ -34,7 +35,7 @@ const getAllIssues = async (req, res, next) => {
  */
 const replyToIssue = async (req, res, next) => {
     try {
-        const { id } = req.params;
+        const id = parseAndValidateId(req.params.id, 'contact issue ID');
         const { replyMessage } = req.body;
 
         const result = await contactService.replyToIssue(id, replyMessage);

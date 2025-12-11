@@ -1,10 +1,11 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const { FILE_UPLOAD } = require('../../config/constants');
 
 // Ensure uploads directory exists
-const uploadDir = path.join(__dirname, '../../uploads/medical-files');
+const uploadDir = path.join(__dirname, '../../../uploads/medical-files');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -15,9 +16,9 @@ const storage = multer.diskStorage({
         cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
-        // Generate unique filename: timestamp + random string + original extension
-        const randomString = Math.random().toString(36).substring(2, 11);
-        const uniqueName = `${Date.now()}-${randomString}${path.extname(file.originalname)}`;
+        // Generate cryptographically secure unique filename
+        const randomString = crypto.randomBytes(16).toString('hex');
+        const uniqueName = `${Date.now()}-${randomString}${path.extname(file.originalname).toLowerCase()}`;
         cb(null, uniqueName);
     }
 });

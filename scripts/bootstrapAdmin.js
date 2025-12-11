@@ -3,7 +3,10 @@
  * Run with: node scripts/bootstrapAdmin.js
  */
 
-require('dotenv').config();
+const dotenv = require('dotenv');
+const dotenvExpand = require('dotenv-expand');
+dotenvExpand.expand(dotenv.config());
+
 const { hashPassword } = require('../src/utils/passwordHelper');
 const prisma = require('../src/config/db');
 

@@ -3,6 +3,7 @@ const userRepository = require('../../repositories/user.repository');
 const { ApiError } = require('../../api/middlewares/errorHandler');
 const emailService = require('../email.service');
 const { hashToken, generateAndHashToken, generateTokenExpiry } = require('../../utils/tokenHelper');
+const { AUTH, ROLES } = require('../../config/constants');
 
 /**
  * Email Verification Service
@@ -62,7 +63,7 @@ const resendVerificationEmail = async (tckn, newEmail = null) => {
     }
 
     // Only allow for PATIENT role (personnel are auto-verified)
-    if (user.role !== 'PATIENT') {
+    if (user.role !== ROLES.PATIENT) {
         throw new ApiError(403, 'Bu işlem sadece hasta hesapları için geçerlidir.');
     }
 
@@ -84,7 +85,7 @@ const resendVerificationEmail = async (tckn, newEmail = null) => {
 
     // Generate new verification token
     const { token: emailToken, hashedToken: hashedEmailToken } = generateAndHashToken();
-    const emailTokenExpiry = generateTokenExpiry(24); // 24 hours
+    const emailTokenExpiry = generateTokenExpiry(AUTH.EMAIL_VERIFICATION_TOKEN_EXPIRY_HOURS);
 
     // Update user with new email (if changed) and new token
     await prisma.user.update({

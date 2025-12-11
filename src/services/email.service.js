@@ -1,4 +1,6 @@
 const nodemailer = require('nodemailer');
+const { ApiError } = require('../api/middlewares/errorHandler');
+const logger = require('../utils/logger');
 
 /**
  * Email service for sending password reset emails
@@ -75,8 +77,8 @@ Eğer şifre sıfırlama talebinde bulunmadıysanız, bu e-postayı görmezden g
     try {
         await transporter.sendMail(mailOptions);
     } catch (error) {
-        // In production, log to monitoring service instead of console
-        throw new Error('Failed to send password reset email.');
+        logger.error('Failed to send password reset email', error);
+        throw new ApiError(500, 'Failed to send password reset email. Please try again later.');
     }
 };
 
@@ -119,7 +121,8 @@ const sendVerificationEmail = async (email, token, firstName) => {
     try {
         await transporter.sendMail(mailOptions);
     } catch (error) {
-        // In production, log to monitoring service
+        logger.error('Failed to send verification email', error);
+        // Don't throw - email verification failure shouldn't block registration
     }
 };
 
@@ -171,8 +174,8 @@ Başka sorularınız varsa, lütfen bizimle iletişime geçmekten çekinmeyin.
     try {
         await transporter.sendMail(mailOptions);
     } catch (error) {
-        // In production, log to monitoring service instead of console
-        throw new Error('Failed to send contact reply email.');
+        logger.error('Failed to send contact reply email', error);
+        throw new ApiError(500, 'Failed to send reply email. Please try again later.');
     }
 };
 

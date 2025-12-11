@@ -1,6 +1,7 @@
 const authService = require('../../services/auth.service');
 const personnelService = require('../../services/personnel.service');
-const { sendSuccess } = require('../../utils/responseFormatter');
+const { sendSuccess, sendCreated } = require('../../utils/responseFormatter');
+const { parseAndValidateId } = require('../../utils/idValidator');
 
 /**
  * GET /api/v1/personnel
@@ -24,11 +25,7 @@ const createPersonnel = async (req, res, next) => {
         // Middleware already verified admin role via authMiddleware + requireAdmin
         const result = await authService.registerPersonnel(req.body);
         
-        res.status(201).json({
-            status: result.status,
-            message: result.message,
-            data: result.data,
-        });
+        sendCreated(res, result.data, result.message);
     } catch (error) {
         next(error);
     }
@@ -56,7 +53,7 @@ const updatePersonnel = async (req, res, next) => {
  */
 const deletePersonnel = async (req, res, next) => {
     try {
-        const { id } = req.params;
+        const id = parseAndValidateId(req.params.id, 'personnel ID');
         const result = await personnelService.deletePersonnel(id);
 
         sendSuccess(res, result, 'Personnel deleted successfully.');

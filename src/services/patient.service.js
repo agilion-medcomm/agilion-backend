@@ -2,9 +2,15 @@ const prisma = require('../config/db');
 const { ApiError } = require('../api/middlewares/errorHandler');
 const { isoDateToObject } = require('../utils/dateTimeValidator');
 const { comparePassword, hashPassword } = require('../utils/passwordHelper');
+const { ROLES } = require('../config/constants');
 
+/**
+ * Change user password
+ * @param {number} userId - User ID
+ * @param {string} currentPassword - Current password
+ * @param {string} newPassword - New password
+ */
 const changePassword = async (userId, currentPassword, newPassword) => {
-
     const user = await prisma.user.findUnique({
         where: { id: userId }
     });
@@ -25,17 +31,12 @@ const changePassword = async (userId, currentPassword, newPassword) => {
 
     const hashedPassword = await hashPassword(newPassword);
 
-
     await prisma.user.update({
         where: { id: userId },
         data: { password: hashedPassword }
     });
 
-    return true; 
-};
-
-module.exports = {
-    changePassword
+    return true;
 };
 
 /**
@@ -67,7 +68,7 @@ const getAllPatients = async () => {
         email: pat.user.email,
         phoneNumber: pat.user.phoneNumber,
         dateOfBirth: pat.user.dateOfBirth,
-        role: 'PATIENT',
+        role: ROLES.PATIENT,
     }));
 };
 

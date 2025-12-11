@@ -3,6 +3,7 @@ const { ApiError } = require('../../api/middlewares/errorHandler');
 const emailService = require('../email.service');
 const { hashPassword } = require('../../utils/passwordHelper');
 const { generateAndHashToken, generateTokenExpiry, hashToken } = require('../../utils/tokenHelper');
+const { AUTH, ROLES } = require('../../config/constants');
 
 /**
  * Password Reset Service
@@ -28,7 +29,7 @@ const requestPasswordReset = async (email) => {
     }
 
     // Only allow password reset for patients (PATIENT role)
-    if (user.role !== 'PATIENT') {
+    if (user.role !== ROLES.PATIENT) {
         return {
             status: 'success',
             message: 'If the email exists, a password reset link has been sent.',
@@ -38,8 +39,8 @@ const requestPasswordReset = async (email) => {
     // Generate a secure random token
     const { token: resetToken, hashedToken } = generateAndHashToken();
 
-    // Set token expiry (1 hour from now)
-    const resetTokenExpiry = generateTokenExpiry(1); // 1 hour
+    // Set token expiry using configured hours
+    const resetTokenExpiry = generateTokenExpiry(AUTH.PASSWORD_RESET_TOKEN_EXPIRY_HOURS);
 
     // Update user with reset token and expiry
     await prisma.user.update({

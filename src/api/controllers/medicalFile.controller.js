@@ -146,18 +146,12 @@ const downloadMedicalFile = async (req, res, next) => {
 const getMyUploads = async (req, res, next) => {
     try {
         if (!req.user.laborantId) {
-            return res.status(403).json({
-                status: 'error',
-                message: 'Only laborants can access this endpoint.',
-            });
+            return sendError(res, 'Only laborants can access this endpoint.', 403);
         }
 
         const files = await medicalFileService.getMyUploads(req.user.userId);
 
-        res.status(200).json({
-            status: 'success',
-            data: files,
-        });
+        sendSuccess(res, files);
     } catch (error) {
         next(error);
     }

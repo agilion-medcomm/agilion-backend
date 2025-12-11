@@ -1,5 +1,6 @@
 const prisma = require('../config/db');
 const { hashPassword } = require('../utils/passwordHelper');
+const { ROLES } = require('../config/constants');
 
 /**
  * Map personnel user data to consistent format
@@ -23,7 +24,7 @@ const getAllPersonnel = async () => {
     const [doctors, admins, cashiers, laborants, cleaners] = await Promise.all([
         prisma.doctor.findMany({ include: { user: true } }),
         prisma.admin.findMany({ include: { user: true } }),
-        prisma.user.findMany({ where: { role: 'CASHIER' } }),
+        prisma.user.findMany({ where: { role: ROLES.CASHIER } }),
         prisma.laborant.findMany({ include: { user: true } }),
         prisma.cleaner.findMany({ include: { user: true } }),
     ]);

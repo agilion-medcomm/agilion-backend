@@ -4,7 +4,7 @@ const prisma = require('../config/db');
 const fs = require('fs').promises;
 const FileType = require('file-type');
 const logger = require('../utils/logger');
-const { FILE_UPLOAD } = require('../config/constants');
+const { FILE_UPLOAD, ROLES } = require('../config/constants');
 
 /**
  * Safely delete file with error logging
@@ -144,17 +144,17 @@ const getMedicalFileById = async (fileId, userId, userRole) => {
 
     // Authorization check
     // ADMIN can view all files
-    if (userRole === 'ADMIN') {
+    if (userRole === ROLES.ADMIN) {
         return file;
     }
 
     // DOCTOR can view all files (for their patients)
-    if (userRole === 'DOCTOR') {
+    if (userRole === ROLES.DOCTOR) {
         return file;
     }
 
     // PATIENT can only view their own files
-    if (userRole === 'PATIENT') {
+    if (userRole === ROLES.PATIENT) {
         const patient = await prisma.patient.findUnique({
             where: { userId: parseInt(userId) },
         });
@@ -166,7 +166,7 @@ const getMedicalFileById = async (fileId, userId, userRole) => {
     }
 
     // LABORANT can view files they uploaded
-    if (userRole === 'LABORANT') {
+    if (userRole === ROLES.LABORANT) {
         const laborant = await prisma.laborant.findUnique({
             where: { userId: parseInt(userId) },
         });
@@ -198,10 +198,10 @@ const deleteMedicalFile = async (fileId, userId, userRole) => {
     // Authorization check
     let canDelete = false;
 
-    if (userRole === 'ADMIN') {
+    if (userRole === ROLES.ADMIN) {
         // Admin can delete any file, including orphaned ones (laborantId = null)
         canDelete = true;
-    } else if (userRole === 'LABORANT') {
+    } else if (userRole === ROLES.LABORANT) {
         // Laborant can only delete files they uploaded
         // Note: Orphaned files (laborantId = null) cannot be deleted by laborants
         if (file.laborantId === null) {

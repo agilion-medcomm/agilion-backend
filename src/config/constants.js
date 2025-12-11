@@ -3,7 +3,35 @@
  * Centralizes magic numbers and configuration values
  */
 
+// User Roles - Mirrors Prisma UserRole enum
+const ROLES = Object.freeze({
+    PATIENT: 'PATIENT',
+    DOCTOR: 'DOCTOR',
+    ADMIN: 'ADMIN',
+    CASHIER: 'CASHIER',
+    LABORANT: 'LABORANT',
+    CLEANER: 'CLEANER',
+});
+
+// Role arrays for authorization checks
+const ROLE_GROUPS = Object.freeze({
+    ALL: Object.values(ROLES),
+    PERSONNEL: [ROLES.DOCTOR, ROLES.ADMIN, ROLES.CASHIER, ROLES.LABORANT, ROLES.CLEANER],
+    MEDICAL_STAFF: [ROLES.DOCTOR, ROLES.LABORANT],
+    CAN_VIEW_PATIENTS: [ROLES.ADMIN, ROLES.DOCTOR, ROLES.CASHIER],
+});
+
+// Blood Types
+const BLOOD_TYPES = Object.freeze([
+    'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'
+]);
+
 module.exports = {
+    // User Roles
+    ROLES,
+    ROLE_GROUPS,
+    BLOOD_TYPES,
+
     // Working Hours Configuration
     WORKING_HOURS: {
         START: 9,
@@ -18,6 +46,7 @@ module.exports = {
         PASSWORD_MIN_LENGTH: 8,
         PASSWORD_RESET_TOKEN_EXPIRY_HOURS: 1,
         EMAIL_VERIFICATION_TOKEN_EXPIRY_HOURS: 24,
+        TOKEN_BYTE_LENGTH: 32,
     },
 
     // Request Timeout Configuration
@@ -38,5 +67,23 @@ module.exports = {
         DEFAULT_PAGE: 1,
         DEFAULT_LIMIT: 20,
         MAX_LIMIT: 100,
+    },
+
+    // Rate Limiting Configuration
+    RATE_LIMIT: {
+        WINDOW_MS: 15 * 60 * 1000, // 15 minutes
+        MAX_REQUESTS: 100, // per window
+        LOGIN_MAX_ATTEMPTS: 5, // login attempts per window
+        PASSWORD_RESET_MAX_ATTEMPTS: 3, // password reset attempts per window
+    },
+
+    // Validation Patterns
+    VALIDATION: {
+        TCKN_LENGTH: 11,
+        TCKN_PATTERN: /^[0-9]{11}$/,
+        PHONE_PATTERN: /^\+?[0-9\s-]{10,15}$/,
+        DATE_ISO_PATTERN: /^\d{4}-\d{2}-\d{2}$/,
+        DATE_TR_PATTERN: /^\d{2}\.\d{2}\.\d{4}$/,
+        TIME_PATTERN: /^([0-1]\d|2[0-3]):([0-5]\d)$/,
     },
 };

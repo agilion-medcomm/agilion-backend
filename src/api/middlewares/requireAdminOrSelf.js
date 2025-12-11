@@ -1,4 +1,7 @@
 const prisma = require('../../config/db');
+const { ROLES } = require('../../config/constants');
+const { ApiError } = require('./errorHandler');
+const logger = require('../../utils/logger');
 
 /**
  * Middleware to allow admin OR the user updating their own profile
@@ -55,17 +58,14 @@ const requireAdminOrSelf = async (req, res, next) => {
         }
         
         if (!targetUserId) {
-            return res.status(404).json({ 
-                status: 'error', 
-                message: 'Personnel not found.' 
-            });
+            return next(new ApiError(404, 'Personnel not found.'));
         }
         
         // Attach the target user ID to the request for the controller to use
         req.targetUserId = targetUserId;
         
         // Allow if admin
-        if (requestingUser.role === 'ADMIN') {
+        if (requestingUser.role === ROLES.ADMIN) {
             return next();
         }
         
@@ -74,17 +74,11 @@ const requireAdminOrSelf = async (req, res, next) => {
             return next();
         }
         
-        return res.status(403).json({ 
-            status: 'error', 
-            message: 'You can only update your own profile.' 
-        });
+        return next(new ApiError(403, 'You can only update your own profile.'));
         
     } catch (error) {
-        require('../../utils/logger').error('Error in requireAdminOrSelf', error);
-        return res.status(500).json({ 
-            status: 'error', 
-            message: 'Error verifying user identity.' 
-        });
+        logger.error('Error in requireAdminOrSelf', error);
+        return next(new ApiError(500, 'Error verifying user identity.'));
     }
 };
 
