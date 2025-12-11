@@ -40,6 +40,16 @@ const requireAdminOrSelf = async (req, res, next) => {
                 
                 if (laborant) {
                     targetUserId = laborant.userId;
+                } else {
+                    // Check if it's a cleaner profile
+                    const cleaner = await prisma.cleaner.findUnique({
+                        where: { id: parseInt(id) },
+                        select: { userId: true }
+                    });
+                    
+                    if (cleaner) {
+                        targetUserId = cleaner.userId;
+                    }
                 }
             }
         }
