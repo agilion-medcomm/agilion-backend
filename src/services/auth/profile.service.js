@@ -21,6 +21,7 @@ const getUserProfile = async (userId) => {
             phoneNumber: true,
             dateOfBirth: true,
             role: true,
+            profilePhoto: true,
             doctor: {
                 select: {
                     id: true,
@@ -28,6 +29,11 @@ const getUserProfile = async (userId) => {
                 },
             },
             admin: {
+                select: {
+                    id: true,
+                },
+            },
+            cleaner: {
                 select: {
                     id: true,
                 },
@@ -54,7 +60,7 @@ const getUserProfile = async (userId) => {
 
     // Format response based on role
     const response = {
-        id: user.doctor?.id || user.admin?.id || user.laborant?.id || user.patient?.id || user.id,
+        id: user.doctor?.id || user.admin?.id || user.laborant?.id || user.cleaner?.id || user.patient?.id || user.id,
         userId: user.id,
         firstName: user.firstName,
         lastName: user.lastName,
@@ -62,6 +68,7 @@ const getUserProfile = async (userId) => {
         email: user.email,
         phoneNumber: user.phoneNumber,
         dateOfBirth: user.dateOfBirth,
+        photoUrl: user.profilePhoto,
         role: user.role,
     };
 
