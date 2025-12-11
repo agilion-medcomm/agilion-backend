@@ -93,6 +93,7 @@ const updateProfile = async (userId, updateData) => {
     if (dateOfBirth) userUpdateData.dateOfBirth = isoDateToObject(dateOfBirth);
     if (email)
     {
+        // Check if email is already taken by another user
         const existingUser = await prisma.user.findUnique({ where: { email }})
         if (existingUser && existingUser.id !== userId)
         {

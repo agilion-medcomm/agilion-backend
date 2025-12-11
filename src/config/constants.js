@@ -71,10 +71,41 @@ module.exports = {
 
     // Rate Limiting Configuration
     RATE_LIMIT: {
+        ENABLED: process.env.RATE_LIMIT_ENABLED !== 'false', // Disable with RATE_LIMIT_ENABLED=false
         WINDOW_MS: 15 * 60 * 1000, // 15 minutes
         MAX_REQUESTS: 100, // per window
         LOGIN_MAX_ATTEMPTS: 5, // login attempts per window
         PASSWORD_RESET_MAX_ATTEMPTS: 3, // password reset attempts per window
+    },
+
+    // Environment-based Feature Flags
+    FEATURES: {
+        // Email sending - disable for testing without email service
+        EMAIL_ENABLED: process.env.EMAIL_ENABLED !== 'false',
+    },
+
+    // Security Configuration - Environment-based
+    SECURITY: {
+        // Helmet configuration
+        HELMET_ENABLED: process.env.HELMET_ENABLED !== 'false',
+        
+        // Content Security Policy - more relaxed in development
+        CSP_ENABLED: process.env.CSP_ENABLED !== 'false',
+        
+        // CORS origins - comma-separated list or '*' for all
+        CORS_ORIGINS: process.env.CORS_ORIGINS 
+            ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
+            : ['http://localhost:5173', 'http://localhost:5174'],
+        
+        // Trust proxy (for production behind load balancer)
+        TRUST_PROXY: process.env.TRUST_PROXY === 'true',
+    },
+
+    // Environment Detection
+    ENV: {
+        IS_PRODUCTION: process.env.NODE_ENV === 'production',
+        IS_DEVELOPMENT: process.env.NODE_ENV === 'development' || !process.env.NODE_ENV,
+        IS_TEST: process.env.NODE_ENV === 'test',
     },
 
     // Validation Patterns

@@ -5,23 +5,30 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { errorHandler } = require("./api/middlewares/errorHandler");
 const prisma = require('./config/db');
-const { TIMEOUT, RATE_LIMIT } = require('./config/constants');
+const { TIMEOUT, RATE_LIMIT, SECURITY } = require('./config/constants');
 
 const app = express();
 
+// Trust proxy when behind load balancer (required for correct IP in rate limiting)
+if (SECURITY.TRUST_PROXY) {
+    app.set('trust proxy', 1);
+}
+
 // --- Security Middleware ---
-// Helmet - Security headers
-app.use(helmet({
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'"],
-            scriptSrc: ["'self'"],
-            imgSrc: ["'self'", "data:", "blob:"],
-        },
-    },
-    crossOriginEmbedderPolicy: false, // For file downloads
-}));
+// Helmet - Security headers (can be disabled for debugging)
+if (SECURITY.HELMET_ENABLED) {
+    app.use(helmet({
+        contentSecurityPolicy: SECURITY.CSP_ENABLED ? {
+            directives: {
+                defaultSrc: ["'self'"],
+                styleSrc: ["'self'", "'unsafe-inline'"],
+                scriptSrc: ["'self'"],
+                imgSrc: ["'self'", "data:", "blob:"],
+            },
+        } : false,
+        crossOriginEmbedderPolicy: false, // For file downloads
+    }));
+}
 
 // Rate Limiting - General API
 const apiLimiter = rateLimit({
@@ -41,16 +48,18 @@ const authLimiter = rateLimit({
     legacyHeaders: false,
 });
 
-// Apply rate limiters
-app.use('/api/v1', apiLimiter);
-app.use('/api/v1/auth/login', authLimiter);
-app.use('/api/v1/auth/personnel/login', authLimiter);
-app.use('/api/v1/auth/request-password-reset', authLimiter);
+// Apply rate limiters (can be disabled via RATE_LIMIT_ENABLED=false)
+if (RATE_LIMIT.ENABLED) {
+    app.use('/api/v1', apiLimiter);
+    app.use('/api/v1/auth/login', authLimiter);
+    app.use('/api/v1/auth/personnel/login', authLimiter);
+    app.use('/api/v1/auth/request-password-reset', authLimiter);
+}
 
 // --- Core Middleware ---
 // 1. Enable CORS (Cross-Origin Resource Sharing)
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:5174'],
+    origin: SECURITY.CORS_ORIGINS,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']

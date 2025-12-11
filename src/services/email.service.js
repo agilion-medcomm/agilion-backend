@@ -1,6 +1,7 @@
 const nodemailer = require('nodemailer');
 const { ApiError } = require('../api/middlewares/errorHandler');
 const logger = require('../utils/logger');
+const { FEATURES } = require('../config/constants');
 
 /**
  * Email service for sending password reset emails
@@ -8,6 +9,12 @@ const logger = require('../utils/logger');
 
 // Create transporter (reusable)
 const createTransporter = () => {
+    // Check if email is disabled via feature flag
+    if (!FEATURES.EMAIL_ENABLED) {
+        logger.info('Email sending is disabled via EMAIL_ENABLED=false');
+        return null;
+    }
+
     // Check if we have email configuration
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
         return null;
