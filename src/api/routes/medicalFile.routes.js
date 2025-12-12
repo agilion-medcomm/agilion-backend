@@ -6,7 +6,7 @@ const authorize = require('../middlewares/authorize');
 const { upload, handleMulterError } = require('../middlewares/upload');
 const validate = require('../middlewares/validate');
 const { uploadMedicalFileSchema } = require('../validations/medicalFile.validation');
-const { ROLES, ROLE_GROUPS } = require('../../config/constants');
+const { ROLES } = require('../../config/constants');
 
 /**
  * POST /api/v1/medical-files

@@ -99,12 +99,29 @@ const isEmpty = (str) => {
 
 /**
  * Check if value is a positive integer
+ * Validates that input is a clean integer string/number without whitespace or decimals
  * @param {*} value - Value to check
  * @returns {boolean} - True if positive integer
  */
 const isPositiveInteger = (value) => {
-    const num = parseInt(value, 10);
-    return !isNaN(num) && num > 0 && num.toString() === value.toString();
+    // Handle numbers directly
+    if (typeof value === 'number') {
+        return Number.isInteger(value) && value > 0;
+    }
+    // For strings, validate format strictly (no whitespace, no decimals, no leading zeros except for single '0')
+    if (typeof value === 'string') {
+        // Reject if has leading/trailing whitespace
+        if (value !== value.trim()) {
+            return false;
+        }
+        // Must match positive integer pattern (no leading zeros except "0")
+        if (!/^[1-9]\d*$/.test(value)) {
+            return false;
+        }
+        const num = parseInt(value, 10);
+        return !isNaN(num) && num > 0;
+    }
+    return false;
 };
 
 /**

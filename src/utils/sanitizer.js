@@ -130,7 +130,14 @@ const sanitizeUserInput = (data, options = {}) => {
 
 /**
  * Strip dangerous characters that could be used for SQL/NoSQL injection
- * Note: This is a defense-in-depth measure. Always use parameterized queries.
+ * 
+ * IMPORTANT: This is an OPTIONAL defense-in-depth measure, NOT the primary protection.
+ * The primary protection is Prisma's parameterized queries which automatically escape values.
+ * 
+ * This function is exported for cases where you need extra sanitization (e.g., dynamic queries,
+ * logging user input, or when building strings that will be evaluated). In most cases, you
+ * should NOT need to use this function - Prisma handles SQL injection protection automatically.
+ * 
  * @param {string} str - String to clean
  * @returns {string} - Cleaned string
  */

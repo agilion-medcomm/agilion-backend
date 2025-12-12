@@ -49,7 +49,7 @@ const validateEnv = () => {
     }
 
     // Check optional variables and set defaults
-    for (const { name, default: defaultValue, description } of OPTIONAL_ENV_VARS) {
+    for (const { name, default: defaultValue } of OPTIONAL_ENV_VARS) {
         if (!process.env[name]) {
             process.env[name] = defaultValue;
             logger.debug(`Using default for ${name}: ${defaultValue}`);

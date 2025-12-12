@@ -146,7 +146,6 @@ vite.config.ts.timestamp-*
 # Uploads directory - local files only, never commit
 uploads/*
 !uploads/.gitkeep
-src/uploads/
 
 # Frontend - separate repository
 front/

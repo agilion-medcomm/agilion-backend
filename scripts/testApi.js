@@ -183,7 +183,7 @@ async function testHealthAndInfrastructure() {
   });
 
   await test('CORS headers configured', async () => {
-    const { headers } = await request('GET', '/api/health');
+    await request('GET', '/api/health');
     // CORS is typically set up - just verify we can make requests
     assert(true, 'CORS allows requests');
   });
@@ -194,9 +194,7 @@ async function testHealthAndInfrastructure() {
   });
 
   await test('Rate limiting headers present', async () => {
-    const { headers } = await request('GET', '/api/health');
-    const remaining = headers.get('x-ratelimit-remaining');
-    const limit = headers.get('x-ratelimit-limit');
+    await request('GET', '/api/health');
     // Rate limit headers may or may not be present on health endpoint
     assert(true, 'Rate limiting configured');
   });
@@ -487,7 +485,7 @@ async function testPatients() {
   });
 
   await test('Search patients by TCKN', async () => {
-    const { response, data } = await request('GET', '/api/patients/search?tckn=22222222221', {
+    const { response } = await request('GET', '/api/patients/search?tckn=22222222221', {
       token: adminToken
     });
     assertEqual(response.status, 200, 'Status code');
@@ -521,12 +519,12 @@ async function testAppointments() {
   logSection('APPOINTMENTS');
 
   await test('Get appointments (public with optionalAuth)', async () => {
-    const { response, data } = await request('GET', '/api/appointments');
+    const { response } = await request('GET', '/api/appointments');
     assertEqual(response.status, 200, 'Status code');
   });
 
   await test('Get appointments with patient token', async () => {
-    const { response, data } = await request('GET', '/api/appointments', {
+    const { response } = await request('GET', '/api/appointments', {
       token: patientToken
     });
     assertEqual(response.status, 200, 'Status code');
@@ -717,7 +715,7 @@ async function testLeaveRequests() {
   });
 
   await test('Get leave requests as admin', async () => {
-    const { response, data } = await request('GET', '/api/leave-requests', {
+    const { response } = await request('GET', '/api/leave-requests', {
       token: adminToken
     });
     assertEqual(response.status, 200, 'Status code');
@@ -806,7 +804,7 @@ async function testCleaningRecords() {
   });
 
   await test('Get cleaning records as admin', async () => {
-    const { response, data } = await request('GET', '/api/cleaning', {
+    const { response } = await request('GET', '/api/cleaning', {
       token: adminToken
     });
     assertEqual(response.status, 200, 'Status code');
@@ -922,7 +920,7 @@ async function testContactForm() {
   });
 
   await test('Get contact issues as admin', async () => {
-    const { response, data } = await request('GET', '/api/contact', {
+    const { response } = await request('GET', '/api/contact', {
       token: adminToken
     });
     assertEqual(response.status, 200, 'Status code');
