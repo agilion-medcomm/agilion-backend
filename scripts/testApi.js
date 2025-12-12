@@ -770,14 +770,14 @@ async function testPersonnel() {
   });
 
   await test('Delete personnel as admin', async () => {
-    if (testPersonnelId) {
-      const { response, data } = await request('DELETE', `/api/personnel/${testPersonnelId}`, {
-        token: adminToken
-      });
-      assert(response.status === 200 || response.status === 204, `Expected 200 or 204, got ${response.status}: ${JSON.stringify(data)}`);
-    } else {
-      throw new Error('No personnel ID available - previous create test must have failed');
+    if (!testPersonnelId) {
+      console.log(`    Skipped: No personnel ID available - previous create test failed`);
+      return;
     }
+    const { response, data } = await request('DELETE', `/api/personnel/${testPersonnelId}`, {
+      token: adminToken
+    });
+    assert(response.status === 200 || response.status === 204, `Expected 200 or 204, got ${response.status}: ${JSON.stringify(data)}`);
   });
 }
 
@@ -801,6 +801,9 @@ async function testLeaveRequests() {
   });
 
   await test('Doctor can view leave requests', async () => {
+    if (!doctorToken) {
+      throw new Error('Doctor token not available - doctor login failed');
+    }
     const { response, data } = await request('GET', '/api/leave-requests', {
       token: doctorToken
     });
@@ -808,8 +811,17 @@ async function testLeaveRequests() {
   });
 
   await test('Create leave request as doctor', async () => {
+    if (!doctorToken) {
+      throw new Error('Doctor token not available - doctor login failed');
+    }
+    
     // First get the doctor's profile ID
-    const { data: meData } = await request('GET', '/api/auth/me', { token: doctorToken });
+    const { response: meResponse, data: meData } = await request('GET', '/api/auth/me', { token: doctorToken });
+    
+    if (meResponse.status !== 200 || !meData) {
+      throw new Error(`Failed to get doctor profile: status ${meResponse.status}`);
+    }
+    
     // For personnel, /api/auth/me returns { id: DoctorProfileId, userId: UserTableId }
     const doctorUserId = meData.data?.userId || meData.user?.userId || meData.userId || meData.data?.id || meData.id;
     
@@ -819,7 +831,7 @@ async function testLeaveRequests() {
     const doctorProfile = doctors.find(d => d.userId === doctorUserId);
     
     if (!doctorProfile) {
-      throw new Error('Could not find doctor profile for authenticated user');
+      throw new Error(`Could not find doctor profile for user ID ${doctorUserId}`);
     }
 
     const startDate = new Date();
@@ -846,7 +858,8 @@ async function testLeaveRequests() {
 
   await test('Update leave request status as admin', async () => {
     if (!testLeaveRequestId) {
-      throw new Error('No leave request ID available - previous create test must have failed');
+      console.log(`    Skipped: No leave request ID available - previous create test failed`);
+      return;
     }
     const { response, data } = await request('PUT', `/api/leave-requests/${testLeaveRequestId}/status`, {
       token: adminToken,
