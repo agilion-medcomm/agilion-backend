@@ -25,6 +25,11 @@ const loginUser = async (tckn, password) => {
         throw new ApiError(401, 'Invalid TCKN or password.');
     }
 
+    // Ensure user is a PATIENT (not personnel)
+    if (user.role !== 'PATIENT') {
+        throw new ApiError(403, 'This login is for patients only. Please use the personnel login.');
+    }
+
     // Check if email is verified
     if (!user.isEmailVerified) {
         throw new ApiError(403, 'Lütfen giriş yapmadan önce e-posta adresinizi doğrulayın.');
@@ -76,6 +81,11 @@ const loginPersonnel = async (tckn, password) => {
     // check if user exists and password is correct
     if (!user || !(await comparePassword(password, user.password))) {
         throw new ApiError(401, 'Invalid TCKN or password.');
+    }
+
+    // Ensure user is personnel (not a patient)
+    if (user.role === 'PATIENT') {
+        throw new ApiError(403, 'This login is for personnel only. Please use the patient login.');
     }
 
     // Prepare token payload with role-specific IDs
