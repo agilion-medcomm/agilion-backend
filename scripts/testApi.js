@@ -2,7 +2,7 @@
  * Comprehensive API Test Suite for Production Readiness
  * 
  * Run with: npm run test:api
- * Prerequisites: Server running on localhost:3000, database seeded with npm run db:seed
+ * Prerequisites: Server running on localhost:5001, database seeded with npm run db:seed
  * 
  * Tests ALL endpoints including:
  * - Authentication (register, login, verify, password reset)
@@ -456,8 +456,8 @@ async function testDoctors() {
     }
   });
 
-  await test('Get doctors with invalid department returns empty', async () => {
-    const { response, data } = await request('GET', '/api/doctors?department=NonExistentDept');
+  await test('Get doctors with invalid specialization returns empty', async () => {
+    const { response, data } = await request('GET', '/api/doctors?specialization=NonExistentDept');
     assertEqual(response.status, 200, 'Status code');
     const doctors = data.data || data;
     assert(Array.isArray(doctors), 'Returns array');
@@ -731,7 +731,8 @@ async function testLeaveRequests() {
   await test('Create leave request as doctor', async () => {
     // First get the doctor's profile ID
     const { data: meData } = await request('GET', '/api/auth/me', { token: doctorToken });
-    const doctorUserId = meData.data?.id || meData.user?.id || meData.id;
+    // For personnel, /api/auth/me returns { id: DoctorProfileId, userId: UserTableId }
+    const doctorUserId = meData.data?.userId || meData.user?.userId || meData.userId || meData.data?.id || meData.id;
     
     // Get doctor profile to find personnelId
     const { data: doctorsData } = await request('GET', '/api/doctors');
