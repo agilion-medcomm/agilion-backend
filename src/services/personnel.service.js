@@ -1,6 +1,7 @@
 const prisma = require('../config/db');
-const { hashPassword } = require('../utils/passwordHelper');
+const { hashPassword, comparePassword } = require('../utils/passwordHelper');
 const { ROLES } = require('../config/constants');
+const { ApiError } = require('../api/middlewares/errorHandler');
 
 /**
  * Map personnel user data to consistent format
@@ -45,10 +46,34 @@ const updatePersonnel = async (personnelId, updates) => {
     const userId = parseInt(personnelId);
     
     // Separate user fields from doctor-specific fields
-    const { specialization, ...userUpdates } = updates;
+    const { specialization, currentPassword, newPassword, ...userUpdates } = updates;
     
-    // Hash password if provided
-    if (userUpdates.password) {
+    // Handle password change with current password verification
+    if (newPassword) {
+        if (!currentPassword) {
+            throw new ApiError(400, 'Current password is required to change password.');
+        }
+        
+        // Get user to verify current password
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { password: true }
+        });
+        
+        if (!user) {
+            throw new ApiError(404, 'User not found.');
+        }
+        
+        // Verify current password
+        const isPasswordValid = await comparePassword(currentPassword, user.password);
+        if (!isPasswordValid) {
+            throw new ApiError(401, 'Current password is incorrect.');
+        }
+        
+        // Hash and set new password
+        userUpdates.password = await hashPassword(newPassword);
+    } else if (userUpdates.password) {
+        // Direct password update (admin use case)
         userUpdates.password = await hashPassword(userUpdates.password);
     }
 

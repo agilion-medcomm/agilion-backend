@@ -690,6 +690,60 @@ async function testPersonnel() {
     }
   });
 
+  await test('Laborant can change their own password', async () => {
+    // Get laborant profile ID from /api/auth/me
+    const { data: meData } = await request('GET', '/api/auth/me', { token: laborantToken });
+    const laborantProfileId = meData.data?.id || meData.id;
+    
+    const { response, data } = await request('PUT', `/api/personnel/${laborantProfileId}`, {
+      token: laborantToken,
+      body: {
+        currentPassword: 'Test1234!',
+        newPassword: 'NewTest1234!'
+      }
+    });
+    
+    assert(response.status === 200, `Expected 200, got ${response.status}: ${JSON.stringify(data)}`);
+    
+    // Change it back for other tests
+    await request('PUT', `/api/personnel/${laborantProfileId}`, {
+      token: laborantToken,
+      body: {
+        currentPassword: 'NewTest1234!',
+        newPassword: 'Test1234!'
+      }
+    });
+  });
+
+  await test('Doctor can update their own profile', async () => {
+    const { data: meData } = await request('GET', '/api/auth/me', { token: doctorToken });
+    const doctorProfileId = meData.data?.id || meData.id;
+    
+    const { response, data } = await request('PUT', `/api/personnel/${doctorProfileId}`, {
+      token: doctorToken,
+      body: {
+        phoneNumber: '5559998877'
+      }
+    });
+    
+    assert(response.status === 200, `Expected 200, got ${response.status}: ${JSON.stringify(data)}`);
+  });
+
+  await test('Personnel cannot update with wrong current password', async () => {
+    const { data: meData } = await request('GET', '/api/auth/me', { token: laborantToken });
+    const laborantProfileId = meData.data?.id || meData.id;
+    
+    const { response } = await request('PUT', `/api/personnel/${laborantProfileId}`, {
+      token: laborantToken,
+      body: {
+        currentPassword: 'WrongPassword',
+        newPassword: 'NewTest1234!'
+      }
+    });
+    
+    assert(response.status === 401, 'Should fail with wrong current password');
+  });
+
   await test('Delete personnel as admin', async () => {
     if (testPersonnelId) {
       const { response, data } = await request('DELETE', `/api/personnel/${testPersonnelId}`, {
