@@ -744,6 +744,31 @@ async function testPersonnel() {
     assert(response.status === 401, 'Should fail with wrong current password');
   });
 
+  await test('Cashier can change their own password', async () => {
+    // Cashiers don't have a profile table, so /api/auth/me returns user.id directly
+    const { data: meData } = await request('GET', '/api/auth/me', { token: cashierToken });
+    const cashierUserId = meData.data?.id || meData.id;
+    
+    const { response, data } = await request('PUT', `/api/personnel/${cashierUserId}`, {
+      token: cashierToken,
+      body: {
+        currentPassword: 'Test1234!',
+        newPassword: 'NewTest1234!'
+      }
+    });
+    
+    assert(response.status === 200, `Expected 200, got ${response.status}: ${JSON.stringify(data)}`);
+    
+    // Change it back
+    await request('PUT', `/api/personnel/${cashierUserId}`, {
+      token: cashierToken,
+      body: {
+        currentPassword: 'NewTest1234!',
+        newPassword: 'Test1234!'
+      }
+    });
+  });
+
   await test('Delete personnel as admin', async () => {
     if (testPersonnelId) {
       const { response, data } = await request('DELETE', `/api/personnel/${testPersonnelId}`, {
