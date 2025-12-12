@@ -276,7 +276,7 @@ Randevunuza zamanında gelmenizi rica ederiz. Herhangi bir değişiklik için l�
     try {
         await transporter.sendMail(mailOptions);
     } catch (error) {
-        // In production, log to monitoring service instead of console
+        logger.error('Failed to send appointment notification email', error);
         throw new Error('Failed to send appointment notification email.');
     }
 };
@@ -367,7 +367,7 @@ Yeni bir randevu almak için lütfen sistemimizi kullanın veya bizimle iletişi
     try {
         await transporter.sendMail(mailOptions);
     } catch (error) {
-        // In production, log to monitoring service instead of console
+        logger.error('Failed to send appointment cancellation email', error);
         throw new Error('Failed to send appointment cancellation email.');
     }
 };

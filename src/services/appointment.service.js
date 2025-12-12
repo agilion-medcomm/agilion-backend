@@ -2,6 +2,7 @@ const appointmentRepository = require('../repositories/appointment.repository');
 const leaveRequestRepository = require('../repositories/leaveRequest.repository');
 const { ApiError } = require('../api/middlewares/errorHandler');
 const prisma = require('../config/db');
+const logger = require('../utils/logger');
 const { WORKING_HOURS, ROLES } = require('../config/constants');
 const {
     parseAppointmentDate,
@@ -72,7 +73,7 @@ const getBookedTimesForDoctor = async (doctorId, date) => {
                 
                 return slotDate >= leaveStart && slotDate < leaveEnd;
             } catch (error) {
-                require('../utils/logger').error('Error parsing leave dates', error);
+                logger.error('Error parsing leave dates', error);
                 return false;
             }
         });
@@ -171,7 +172,7 @@ const createAppointment = async (userId, role, appointmentData) => {
 
     sendAppointmentNotificationEmail(patientEmail, appointmentDetails).catch((error) => {
         // Log error but don't fail the appointment creation
-        console.error('Failed to send appointment notification email:', error.message);
+        logger.error('Failed to send appointment notification email', error);
     });
 
     return {
@@ -212,11 +213,11 @@ const updateAppointmentStatus = async (appointmentId, status) => {
 
     if (status === 'APPROVED') {
         sendAppointmentNotificationEmail(patientEmail, appointmentDetails).catch((error) => {
-            console.error('Failed to send appointment approval email:', error.message);
+            logger.error('Failed to send appointment approval email', error);
         });
     } else if (status === 'CANCELLED') {
         sendAppointmentCancellationEmail(patientEmail, appointmentDetails).catch((error) => {
-            console.error('Failed to send appointment cancellation email:', error.message);
+            logger.error('Failed to send appointment cancellation email', error);
         });
     }
 
