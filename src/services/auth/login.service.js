@@ -68,13 +68,14 @@ const loginUser = async (tckn, password) => {
  * Login for personnel (doctors/admins/laborants)
  */
 const loginPersonnel = async (tckn, password) => {
-    // find user by tckn with doctor/admin/laborant relations
+    // find user by tckn with doctor/admin/laborant/cleaner relations
     const user = await prisma.user.findUnique({
         where: { tckn },
         include: {
             doctor: true,
             admin: true,
             laborant: true,
+            cleaner: true,
         },
     });
 
@@ -105,6 +106,9 @@ const loginPersonnel = async (tckn, password) => {
     if (user.laborant) {
         tokenPayload.laborantId = user.laborant.id;
     }
+    if (user.cleaner) {
+        tokenPayload.cleanerId = user.cleaner.id;
+    }
 
     // create jwt
     const token = jwt.sign(
@@ -122,10 +126,11 @@ const loginPersonnel = async (tckn, password) => {
         phoneNumber: user.phoneNumber,
         tckn: user.tckn,
         dateOfBirth: user.dateOfBirth,
-        // Add doctor/admin/laborant IDs if they exist
+        // Add doctor/admin/laborant/cleaner IDs if they exist
         doctorId: user.doctor?.id || null,
         adminId: user.admin?.id || null,
         laborantId: user.laborant?.id || null,
+        cleanerId: user.cleaner?.id || null,
         specialization: user.doctor?.specialization || null,
     };
 
