@@ -3,9 +3,18 @@ const { ApiError } = require('../api/middlewares/errorHandler');
 const prisma = require('../config/db');
 const fs = require('fs').promises;
 const FileType = require('file-type');
+const logger = require('../utils/logger');
+const { FILE_UPLOAD, ROLES } = require('../config/constants');
 
-// Allowed MIME types for medical files
-const ALLOWED_MIME_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
+/**
+ * Safely delete file with error logging
+ */
+const safeDeleteFile = async (filePath) => {
+    if (!filePath) return;
+    await fs.unlink(filePath).catch((err) => {
+        logger.fileOperationError('delete', filePath, err);
+    });
+};
 
 /**
  * Validate file content using magic number (file signature) detection
@@ -35,11 +44,9 @@ const uploadMedicalFile = async (laborantId, fileData, uploadedFile) => {
     // Validate file content using magic number detection
     // This prevents malicious files with fake extensions
     const fileType = await validateFileContent(uploadedFile.path);
-    if (!fileType || !ALLOWED_MIME_TYPES.includes(fileType.mime)) {
+    if (!fileType || !FILE_UPLOAD.ALLOWED_MEDICAL_FILE_TYPES.includes(fileType.mime)) {
         // Delete the uploaded file since it's invalid
-        await fs.unlink(uploadedFile.path).catch((err) => {
-            console.error(`Failed to delete invalid file: ${uploadedFile.path}`, err);
-        });
+        await safeDeleteFile(uploadedFile.path);
         throw new ApiError(400, 'Invalid file content. File signature does not match allowed types (PDF, JPEG, PNG).');
     }
 
@@ -47,11 +54,7 @@ const uploadMedicalFile = async (laborantId, fileData, uploadedFile) => {
     const patientExists = await medicalFileRepository.checkPatientExists(fileData.patientId);
     if (!patientExists) {
         // Delete uploaded file if patient doesn't exist
-        if (uploadedFile && uploadedFile.path) {
-            await fs.unlink(uploadedFile.path).catch((err) => {
-                console.error(`Failed to delete file after patient not found: ${uploadedFile.path}`, err);
-            });
-        }
+        await safeDeleteFile(uploadedFile?.path);
         throw new ApiError(404, 'Patient not found.');
     }
 
@@ -141,17 +144,17 @@ const getMedicalFileById = async (fileId, userId, userRole) => {
 
     // Authorization check
     // ADMIN can view all files
-    if (userRole === 'ADMIN') {
+    if (userRole === ROLES.ADMIN) {
         return file;
     }
 
     // DOCTOR can view all files (for their patients)
-    if (userRole === 'DOCTOR') {
+    if (userRole === ROLES.DOCTOR) {
         return file;
     }
 
     // PATIENT can only view their own files
-    if (userRole === 'PATIENT') {
+    if (userRole === ROLES.PATIENT) {
         const patient = await prisma.patient.findUnique({
             where: { userId: parseInt(userId) },
         });
@@ -163,7 +166,7 @@ const getMedicalFileById = async (fileId, userId, userRole) => {
     }
 
     // LABORANT can view files they uploaded
-    if (userRole === 'LABORANT') {
+    if (userRole === ROLES.LABORANT) {
         const laborant = await prisma.laborant.findUnique({
             where: { userId: parseInt(userId) },
         });
@@ -195,10 +198,10 @@ const deleteMedicalFile = async (fileId, userId, userRole) => {
     // Authorization check
     let canDelete = false;
 
-    if (userRole === 'ADMIN') {
+    if (userRole === ROLES.ADMIN) {
         // Admin can delete any file, including orphaned ones (laborantId = null)
         canDelete = true;
-    } else if (userRole === 'LABORANT') {
+    } else if (userRole === ROLES.LABORANT) {
         // Laborant can only delete files they uploaded
         // Note: Orphaned files (laborantId = null) cannot be deleted by laborants
         if (file.laborantId === null) {

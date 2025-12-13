@@ -1,15 +1,16 @@
 const Joi = require('joi');
 const { joiISODateValidator } = require('../../utils/dateTimeValidator');
+const { AUTH, VALIDATION, ROLES } = require('../../config/constants');
 
 // Schema for POST /api/v1/auth/register
 const registerSchema = Joi.object({
     firstName: Joi.string().required(),
     lastName: Joi.string().required(),
-    tckn: Joi.string().length(11).pattern(/^[0-9]+$/).required().messages({
-        'string.length': 'TCKN must be 11 digits.',
+    tckn: Joi.string().length(VALIDATION.TCKN_LENGTH).pattern(/^[0-9]+$/).required().messages({
+        'string.length': `TCKN must be ${VALIDATION.TCKN_LENGTH} digits.`,
         'string.pattern.base': 'TCKN must only contain digits.',
     }),
-    role: Joi.string().valid('PATIENT').default('PATIENT'), // Only PATIENT allowed for public registration
+    role: Joi.string().valid(ROLES.PATIENT).default(ROLES.PATIENT), // Only PATIENT allowed for public registration
     // Enforce format AND real calendar date using centralized validator
     dateOfBirth: Joi.string()
         .pattern(/^\d{4}-\d{2}-\d{2}$/)
@@ -21,12 +22,16 @@ const registerSchema = Joi.object({
         }),
     email: Joi.string().email().required(),
     phoneNumber: Joi.string().required(),
-    password: Joi.string().min(8).required(),
+    password: Joi.string().min(AUTH.PASSWORD_MIN_LENGTH).required().messages({
+        'string.min': `Password must be at least ${AUTH.PASSWORD_MIN_LENGTH} characters long.`,
+    }),
 });
 
 // Schema for POST /api/v1/auth/login
 const loginSchema = Joi.object({
-    tckn: Joi.string().length(11).required(),
+    tckn: Joi.string().length(VALIDATION.TCKN_LENGTH).required().messages({
+        'string.length': `TCKN must be ${VALIDATION.TCKN_LENGTH} digits.`,
+    }),
     password: Joi.string().required(),
 });
 
@@ -61,16 +66,16 @@ const resetPasswordSchema = Joi.object({
     token: Joi.string().required().messages({
         'any.required': 'Reset token is required.',
     }),
-    newPassword: Joi.string().min(8).required().messages({
-        'string.min': 'Password must be at least 8 characters long.',
+    newPassword: Joi.string().min(AUTH.PASSWORD_MIN_LENGTH).required().messages({
+        'string.min': `Password must be at least ${AUTH.PASSWORD_MIN_LENGTH} characters long.`,
         'any.required': 'New password is required.',
     }),
 });
 
 // Schema for POST /api/v1/auth/resend-verification
 const resendVerificationSchema = Joi.object({
-    tckn: Joi.string().length(11).pattern(/^[0-9]+$/).required().messages({
-        'string.length': 'TCKN must be 11 digits.',
+    tckn: Joi.string().length(VALIDATION.TCKN_LENGTH).pattern(/^[0-9]+$/).required().messages({
+        'string.length': `TCKN must be ${VALIDATION.TCKN_LENGTH} digits.`,
         'string.pattern.base': 'TCKN must only contain digits.',
         'any.required': 'TCKN is required.',
     }),

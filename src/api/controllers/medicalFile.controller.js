@@ -1,4 +1,6 @@
 const medicalFileService = require('../../services/medicalFile.service');
+const { parseAndValidateId } = require('../../utils/idValidator');
+const { sendSuccess, sendCreated, sendError } = require('../../utils/responseFormatter');
 
 /**
  * POST /api/v1/medical-files
@@ -8,18 +10,12 @@ const uploadMedicalFile = async (req, res, next) => {
     try {
         // Check if laborantId exists in token
         if (!req.user.laborantId) {
-            return res.status(403).json({
-                status: 'error',
-                message: 'Only laborants can upload medical files.',
-            });
+            return sendError(res, 'Only laborants can upload medical files.', 403);
         }
 
         // Check if file was uploaded
         if (!req.file) {
-            return res.status(400).json({
-                status: 'error',
-                message: 'File is required.',
-            });
+            return sendError(res, 'File is required.', 400);
         }
 
         const medicalFile = await medicalFileService.uploadMedicalFile(
@@ -28,11 +24,7 @@ const uploadMedicalFile = async (req, res, next) => {
             req.file
         );
 
-        res.status(201).json({
-            status: 'success',
-            message: 'Medical file uploaded successfully.',
-            data: medicalFile,
-        });
+        sendCreated(res, medicalFile, 'Medical file uploaded successfully.');
     } catch (error) {
         next(error);
     }
@@ -46,10 +38,7 @@ const getMyMedicalFiles = async (req, res, next) => {
     try {
         const files = await medicalFileService.getMyMedicalFiles(req.user.userId);
 
-        res.status(200).json({
-            status: 'success',
-            data: files,
-        });
+        sendSuccess(res, files);
     } catch (error) {
         next(error);
     }
@@ -61,19 +50,10 @@ const getMyMedicalFiles = async (req, res, next) => {
  */
 const getPatientMedicalFiles = async (req, res, next) => {
     try {
-        const patientId = parseInt(req.params.patientId);
-        if (isNaN(patientId) || patientId <= 0) {
-            return res.status(400).json({
-                status: 'error',
-                message: 'Invalid patient ID.',
-            });
-        }
+        const patientId = parseAndValidateId(req.params.patientId, 'patient ID');
         const files = await medicalFileService.getPatientMedicalFiles(patientId);
 
-        res.status(200).json({
-            status: 'success',
-            data: files,
-        });
+        sendSuccess(res, files);
     } catch (error) {
         next(error);
     }
@@ -85,23 +65,14 @@ const getPatientMedicalFiles = async (req, res, next) => {
  */
 const getMedicalFileById = async (req, res, next) => {
     try {
-        const fileId = parseInt(req.params.fileId);
-        if (isNaN(fileId) || fileId <= 0) {
-            return res.status(400).json({
-                status: 'error',
-                message: 'Invalid file ID.',
-            });
-        }
+        const fileId = parseAndValidateId(req.params.fileId, 'file ID');
         const file = await medicalFileService.getMedicalFileById(
             fileId,
             req.user.userId,
             req.user.role
         );
 
-        res.status(200).json({
-            status: 'success',
-            data: file,
-        });
+        sendSuccess(res, file);
     } catch (error) {
         next(error);
     }
@@ -113,19 +84,10 @@ const getMedicalFileById = async (req, res, next) => {
  */
 const getLaborantMedicalFiles = async (req, res, next) => {
     try {
-        const laborantId = parseInt(req.params.laborantId);
-        if (isNaN(laborantId) || laborantId <= 0) {
-            return res.status(400).json({
-                status: 'error',
-                message: 'Invalid laborant ID.',
-            });
-        }
+        const laborantId = parseAndValidateId(req.params.laborantId, 'laborant ID');
         const files = await medicalFileService.getLaborantMedicalFiles(laborantId);
 
-        res.status(200).json({
-            status: 'success',
-            data: files,
-        });
+        sendSuccess(res, files);
     } catch (error) {
         next(error);
     }
@@ -137,23 +99,14 @@ const getLaborantMedicalFiles = async (req, res, next) => {
  */
 const deleteMedicalFile = async (req, res, next) => {
     try {
-        const fileId = parseInt(req.params.fileId);
-        if (isNaN(fileId) || fileId <= 0) {
-            return res.status(400).json({
-                status: 'error',
-                message: 'Invalid file ID.',
-            });
-        }
+        const fileId = parseAndValidateId(req.params.fileId, 'file ID');
         const result = await medicalFileService.deleteMedicalFile(
             fileId,
             req.user.userId,
             req.user.role
         );
 
-        res.status(200).json({
-            status: 'success',
-            message: result.message,
-        });
+        sendSuccess(res, null, result.message);
     } catch (error) {
         next(error);
     }
@@ -165,13 +118,7 @@ const deleteMedicalFile = async (req, res, next) => {
  */
 const downloadMedicalFile = async (req, res, next) => {
     try {
-        const fileId = parseInt(req.params.fileId);
-        if (isNaN(fileId) || fileId <= 0) {
-            return res.status(400).json({
-                status: 'error',
-                message: 'Invalid file ID.',
-            });
-        }
+        const fileId = parseAndValidateId(req.params.fileId, 'file ID');
 
         const fileData = await medicalFileService.getFileForDownload(
             fileId,
@@ -199,18 +146,12 @@ const downloadMedicalFile = async (req, res, next) => {
 const getMyUploads = async (req, res, next) => {
     try {
         if (!req.user.laborantId) {
-            return res.status(403).json({
-                status: 'error',
-                message: 'Only laborants can access this endpoint.',
-            });
+            return sendError(res, 'Only laborants can access this endpoint.', 403);
         }
 
         const files = await medicalFileService.getMyUploads(req.user.userId);
 
-        res.status(200).json({
-            status: 'success',
-            data: files,
-        });
+        sendSuccess(res, files);
     } catch (error) {
         next(error);
     }

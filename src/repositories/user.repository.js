@@ -1,4 +1,5 @@
 const prisma = require("../config/db.js");
+const { ROLES } = require("../config/constants");
 
 /*
  * Finds a single user by their TCKN
@@ -21,7 +22,7 @@ const createUser = async (userData) => {
         emailTokenExpiry: userData.emailTokenExpiry || null,
     };
 
-    if (userData.role === 'PATIENT') {
+    if (userData.role === ROLES.PATIENT) {
         const patient = await prisma.patient.create({
             data: {
                 user: {
@@ -57,7 +58,7 @@ const createPersonnelWithUser = async (data) => {
         isEmailVerified: data.isEmailVerified || false,
     };
 
-    if (data.role === 'DOCTOR') {
+    if (data.role === ROLES.DOCTOR) {
         return prisma.doctor.create({
             data: {
                 specialization: data.specialization,
@@ -71,7 +72,7 @@ const createPersonnelWithUser = async (data) => {
         });
     }
 
-    if (data.role === 'ADMIN') {
+    if (data.role === ROLES.ADMIN) {
         return prisma.admin.create({
             data: {
                 user: {
@@ -84,7 +85,7 @@ const createPersonnelWithUser = async (data) => {
         });
     }
 
-    if (data.role === 'LABORANT') {
+    if (data.role === ROLES.LABORANT) {
         return prisma.laborant.create({
             data: {
                 user: {
@@ -111,7 +112,7 @@ const createPersonnelWithUser = async (data) => {
     }
 
     // CASHIER doesn't have a separate profile table, just create the user
-    if (data.role === 'CASHIER') {
+    if (data.role === ROLES.CASHIER) {
         const user = await prisma.user.create({
             data: baseUser,
         });

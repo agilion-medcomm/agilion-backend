@@ -1,4 +1,7 @@
 const nodemailer = require('nodemailer');
+const { ApiError } = require('../api/middlewares/errorHandler');
+const logger = require('../utils/logger');
+const { FEATURES } = require('../config/constants');
 
 /**
  * Email service for sending password reset emails
@@ -6,6 +9,12 @@ const nodemailer = require('nodemailer');
 
 // Create transporter (reusable)
 const createTransporter = () => {
+    // Check if email is disabled via feature flag
+    if (!FEATURES.EMAIL_ENABLED) {
+        logger.info('Email sending is disabled via EMAIL_ENABLED=false');
+        return null;
+    }
+
     // Check if we have email configuration
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
         return null;
@@ -75,8 +84,8 @@ Eğer şifre sıfırlama talebinde bulunmadıysanız, bu e-postayı görmezden g
     try {
         await transporter.sendMail(mailOptions);
     } catch (error) {
-        // In production, log to monitoring service instead of console
-        throw new Error('Failed to send password reset email.');
+        logger.error('Failed to send password reset email', error);
+        throw new ApiError(500, 'Failed to send password reset email. Please try again later.');
     }
 };
 
@@ -119,7 +128,8 @@ const sendVerificationEmail = async (email, token, firstName) => {
     try {
         await transporter.sendMail(mailOptions);
     } catch (error) {
-        // In production, log to monitoring service
+        logger.error('Failed to send verification email', error);
+        // Don't throw - email verification failure shouldn't block registration
     }
 };
 
@@ -171,8 +181,8 @@ Başka sorularınız varsa, lütfen bizimle iletişime geçmekten çekinmeyin.
     try {
         await transporter.sendMail(mailOptions);
     } catch (error) {
-        // In production, log to monitoring service instead of console
-        throw new Error('Failed to send contact reply email.');
+        logger.error('Failed to send contact reply email', error);
+        throw new ApiError(500, 'Failed to send reply email. Please try again later.');
     }
 };
 
@@ -266,7 +276,7 @@ Randevunuza zamanında gelmenizi rica ederiz. Herhangi bir değişiklik için l�
     try {
         await transporter.sendMail(mailOptions);
     } catch (error) {
-        // In production, log to monitoring service instead of console
+        logger.error('Failed to send appointment notification email', error);
         throw new Error('Failed to send appointment notification email.');
     }
 };
@@ -357,7 +367,7 @@ Yeni bir randevu almak için lütfen sistemimizi kullanın veya bizimle iletişi
     try {
         await transporter.sendMail(mailOptions);
     } catch (error) {
-        // In production, log to monitoring service instead of console
+        logger.error('Failed to send appointment cancellation email', error);
         throw new Error('Failed to send appointment cancellation email.');
     }
 };

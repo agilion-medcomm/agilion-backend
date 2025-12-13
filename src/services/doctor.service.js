@@ -1,15 +1,16 @@
 const prisma = require('../config/db');
+const { ROLES } = require('../config/constants');
 
 /**
  * Get all doctors with formatted data
- * @param {string} department - Optional department filter (specialization)
+ * @param {string} specialization - Optional specialization/department filter
  */
-const getAllDoctors = async (department) => {
+const getAllDoctors = async (specialization) => {
     const where = {};
 
-    // If department filter is provided, filter by specialization
-    if (department) {
-        where.specialization = department;
+    // If specialization filter is provided, filter by it
+    if (specialization) {
+        where.specialization = specialization;
     }
 
     const doctors = await prisma.doctor.findMany({
@@ -38,8 +39,8 @@ const getAllDoctors = async (department) => {
         specialization: doc.specialization,
         email: doc.user.email,
         phoneNumber: doc.user.phoneNumber,
-        photoUrl: doc.user.profilePhoto,
-        role: 'DOCTOR',
+        img: doc.user.profilePhoto || '',
+        role: ROLES.DOCTOR,
     }));
 };
 

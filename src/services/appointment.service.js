@@ -2,6 +2,8 @@ const appointmentRepository = require('../repositories/appointment.repository');
 const leaveRequestRepository = require('../repositories/leaveRequest.repository');
 const { ApiError } = require('../api/middlewares/errorHandler');
 const prisma = require('../config/db');
+const logger = require('../utils/logger');
+const { WORKING_HOURS, ROLES } = require('../config/constants');
 const {
     parseAppointmentDate,
     validateAppointmentDateFormat,
@@ -43,11 +45,13 @@ const getBookedTimesForDoctor = async (doctorId, date) => {
     // Get approved leaves and calculate blocked slots
     const approvedLeaves = await leaveRequestRepository.getApprovedLeaves(doctorId);
     
-    // Generate daily time slots (09:00 to 17:00, 30-minute intervals)
+    // Generate daily time slots based on working hours configuration
     const dailySlots = [];
-    for (let h = 9; h <= 17; h++) {
-        for (let m of [0, 30]) {
-            if (h === 17 && m > 0) continue;
+    const { START, END, INTERVAL_MINUTES } = WORKING_HOURS;
+    
+    for (let h = START; h <= END; h++) {
+        for (let m = 0; m < 60; m += INTERVAL_MINUTES) {
+            if (h === END && m > 0) continue;
             dailySlots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
         }
     }
@@ -69,7 +73,7 @@ const getBookedTimesForDoctor = async (doctorId, date) => {
                 
                 return slotDate >= leaveStart && slotDate < leaveEnd;
             } catch (error) {
-                console.error('Error parsing leave dates:', error.message);
+                logger.error('Error parsing leave dates', error);
                 return false;
             }
         });
@@ -111,7 +115,7 @@ const createAppointment = async (userId, role, appointmentData) => {
     let patientId;
 
     // CASHIER must provide patientId - they create appointments for patients
-    if (role === 'CASHIER') {
+    if (role === ROLES.CASHIER) {
         if (!patientIdFromBody) {
             throw new ApiError(400, 'Patient ID is required for cashier appointments.');
         }
@@ -128,7 +132,7 @@ const createAppointment = async (userId, role, appointmentData) => {
         patientId = patient.id;
     }
     // PATIENT creates appointment for themselves
-    else if (role === 'PATIENT') {
+    else if (role === ROLES.PATIENT) {
         const user = await prisma.user.findUnique({
             where: { id: userId },
             include: { patient: true },
@@ -168,7 +172,7 @@ const createAppointment = async (userId, role, appointmentData) => {
 
     sendAppointmentNotificationEmail(patientEmail, appointmentDetails).catch((error) => {
         // Log error but don't fail the appointment creation
-        console.error('Failed to send appointment notification email:', error.message);
+        logger.error('Failed to send appointment notification email', error);
     });
 
     return {
@@ -209,11 +213,11 @@ const updateAppointmentStatus = async (appointmentId, status) => {
 
     if (status === 'APPROVED') {
         sendAppointmentNotificationEmail(patientEmail, appointmentDetails).catch((error) => {
-            console.error('Failed to send appointment approval email:', error.message);
+            logger.error('Failed to send appointment approval email', error);
         });
     } else if (status === 'CANCELLED') {
         sendAppointmentCancellationEmail(patientEmail, appointmentDetails).catch((error) => {
-            console.error('Failed to send appointment cancellation email:', error.message);
+            logger.error('Failed to send appointment cancellation email', error);
         });
     }
 

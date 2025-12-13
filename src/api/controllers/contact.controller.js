@@ -1,4 +1,6 @@
 const contactService = require('../../services/contact.service');
+const { sendSuccess, sendCreated } = require('../../utils/responseFormatter');
+const { parseAndValidateId } = require('../../utils/idValidator');
 
 /**
  * POST /api/v1/contact
@@ -8,11 +10,7 @@ const submitIssue = async (req, res, next) => {
     try {
         const result = await contactService.submitIssue(req.body);
 
-        res.status(201).json({
-            status: 'success',
-            message: result.message,
-            data: { id: result.id },
-        });
+        sendCreated(res, { id: result.id }, result.message);
     } catch (error) {
         next(error);
     }
@@ -25,11 +23,7 @@ const submitIssue = async (req, res, next) => {
 const getAllIssues = async (req, res, next) => {
     try {
         const issues = await contactService.getAllIssues();
-
-        res.json({
-            status: 'success',
-            data: issues,
-        });
+        sendSuccess(res, issues);
     } catch (error) {
         next(error);
     }
@@ -41,16 +35,11 @@ const getAllIssues = async (req, res, next) => {
  */
 const replyToIssue = async (req, res, next) => {
     try {
-        const { id } = req.params;
+        const id = parseAndValidateId(req.params.id, 'contact issue ID');
         const { replyMessage } = req.body;
 
         const result = await contactService.replyToIssue(id, replyMessage);
-
-        res.json({
-            status: 'success',
-            message: 'Reply sent successfully.',
-            data: result,
-        });
+        sendSuccess(res, result, 'Reply sent successfully.');
     } catch (error) {
         next(error);
     }

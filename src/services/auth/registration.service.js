@@ -1,9 +1,10 @@
-const bcrypt = require('bcrypt');
-const crypto = require('crypto');
 const userRepository = require('../../repositories/user.repository');
 const { ApiError } = require('../../api/middlewares/errorHandler');
 const emailService = require('../email.service');
 const { isoDateToObject } = require('../../utils/dateTimeValidator');
+const { hashPassword } = require('../../utils/passwordHelper');
+const { generateAndHashToken, generateTokenExpiry } = require('../../utils/tokenHelper');
+const { AUTH, ROLES, ROLE_GROUPS } = require('../../config/constants');
 
 /**
  * User Registration Service
@@ -15,16 +16,14 @@ const { isoDateToObject } = require('../../utils/dateTimeValidator');
  */
 const registerUser = async (userData) => {
     // hash the password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(userData.password, salt);
+    const hashedPassword = await hashPassword(userData.password);
 
     // dateOfBirth is provided as YYYY-MM-DD; construct Date object safely
     const dateOfBirthObject = isoDateToObject(userData.dateOfBirth);
 
     // Generate email verification token
-    const emailToken = crypto.randomBytes(32).toString('hex');
-    const hashedEmailToken = crypto.createHash('sha256').update(emailToken).digest('hex');
-    const emailTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const { token: emailToken, hashedToken: hashedEmailToken } = generateAndHashToken();
+    const emailTokenExpiry = generateTokenExpiry(AUTH.EMAIL_VERIFICATION_TOKEN_EXPIRY_HOURS);
 
     // create user
     try {
@@ -32,7 +31,7 @@ const registerUser = async (userData) => {
             firstName: userData.firstName,
             lastName: userData.lastName,
             tckn: userData.tckn,
-            role: userData.role || 'PATIENT', // Explicitly default to PATIENT for registration
+            role: userData.role || ROLES.PATIENT, // Explicitly default to PATIENT for registration
             dateOfBirth: dateOfBirthObject,
             email: userData.email,
             phoneNumber: userData.phoneNumber,
@@ -60,14 +59,13 @@ const registerPersonnel = async (personnelData) => {
     // Determine target role from request (ADMIN, DOCTOR, LABORANT, etc.)
     const targetRole = personnelData.role;
 
-    // Validate role
-    if (!['DOCTOR', 'ADMIN', 'CASHIER', 'LABORANT', 'CLEANER'].includes(targetRole)) {
+    // Validate role using ROLE_GROUPS constant
+    if (!ROLE_GROUPS.PERSONNEL.includes(targetRole)) {
         throw new ApiError(400, 'Unsupported personnel role.');
     }
 
     // Hash the password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(personnelData.password, salt);
+    const hashedPassword = await hashPassword(personnelData.password);
 
     const dateOfBirthObject = isoDateToObject(personnelData.dateOfBirth);
 

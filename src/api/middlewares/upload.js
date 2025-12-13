@@ -1,9 +1,11 @@
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
+const { FILE_UPLOAD } = require('../../config/constants');
 
 // Ensure uploads directory exists
-const uploadDir = path.join(__dirname, '../../uploads/medical-files');
+const uploadDir = path.join(__dirname, '../../../uploads/medical-files');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -14,21 +16,17 @@ const storage = multer.diskStorage({
         cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
-        // Generate unique filename: timestamp + random string + original extension
-        const randomString = Math.random().toString(36).substring(2, 11);
-        const uniqueName = `${Date.now()}-${randomString}${path.extname(file.originalname)}`;
+        // Generate cryptographically secure unique filename
+        const randomString = crypto.randomBytes(16).toString('hex');
+        const uniqueName = `${Date.now()}-${randomString}${path.extname(file.originalname).toLowerCase()}`;
         cb(null, uniqueName);
     }
 });
 
 // File filter - only accept PDF, JPG, PNG
 const fileFilter = (req, file, cb) => {
-    const allowedMimeTypes = [
-        'application/pdf',
-        'image/jpeg',
-        'image/png'
-    ];
-    const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png'];
+    const allowedMimeTypes = FILE_UPLOAD.ALLOWED_MEDICAL_FILE_TYPES;
+    const allowedExtensions = FILE_UPLOAD.ALLOWED_EXTENSIONS;
     
     const ext = path.extname(file.originalname).toLowerCase();
     
@@ -44,7 +42,7 @@ const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
     limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB max file size
+        fileSize: FILE_UPLOAD.MAX_SIZE_BYTES,
     }
 });
 
@@ -54,7 +52,7 @@ const handleMulterError = (err, req, res, next) => {
         if (err.code === 'LIMIT_FILE_SIZE') {
             return res.status(400).json({
                 status: 'error',
-                message: 'File size too large. Maximum 10MB allowed.'
+                message: `File size too large. Maximum ${FILE_UPLOAD.MAX_SIZE_MB}MB allowed.`
             });
         }
         if (err.code === 'LIMIT_UNEXPECTED_FILE') {

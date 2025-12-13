@@ -1,4 +1,5 @@
 const Joi = require('joi');
+const { AUTH } = require('../../config/constants');
 
 const updateProfileSchema = Joi.object({
     firstName: Joi.string().min(2).max(50),
@@ -18,16 +19,16 @@ const changePasswordSchema = Joi.object({
     currentPassword: Joi.string().required(),
     
     newPassword: Joi.string()
-        .min(6)
-        .pattern(new RegExp('^(?=.*[a-zA-Z])(?=.*[0-9])')) // En az 1 harf ve 1 sayı
+        .min(AUTH.PASSWORD_MIN_LENGTH)
+        .pattern(new RegExp('^(?=.*[a-zA-Z])(?=.*[0-9])')) // At least 1 letter and 1 number
         .required()
         .messages({
-            'string.min': 'Yeni şifre en az 6 karakter olmalıdır.',
+            'string.min': `Yeni şifre en az ${AUTH.PASSWORD_MIN_LENGTH} karakter olmalıdır.`,
             'string.pattern.base': 'Yeni şifre en az bir harf ve bir sayı içermelidir.'
         }),
 
     confirmPassword: Joi.string()
-        .valid(Joi.ref('newPassword')) // newPassword ile aynısı olmalı
+        .valid(Joi.ref('newPassword')) // Must match newPassword
         .required()
         .messages({
             'any.only': 'Şifreler eşleşmiyor.'

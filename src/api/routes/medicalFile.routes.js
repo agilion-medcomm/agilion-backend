@@ -6,6 +6,7 @@ const authorize = require('../middlewares/authorize');
 const { upload, handleMulterError } = require('../middlewares/upload');
 const validate = require('../middlewares/validate');
 const { uploadMedicalFileSchema } = require('../validations/medicalFile.validation');
+const { ROLES } = require('../../config/constants');
 
 /**
  * POST /api/v1/medical-files
@@ -14,7 +15,7 @@ const { uploadMedicalFileSchema } = require('../validations/medicalFile.validati
 router.post(
     '/',
     authMiddleware,
-    authorize('LABORANT'),
+    authorize(ROLES.LABORANT),
     upload.single('file'),
     handleMulterError,
     validate(uploadMedicalFileSchema),
@@ -28,7 +29,7 @@ router.post(
 router.get(
     '/my',
     authMiddleware,
-    authorize('PATIENT'),
+    authorize(ROLES.PATIENT),
     medicalFileController.getMyMedicalFiles
 );
 
@@ -39,7 +40,7 @@ router.get(
 router.get(
     '/my-uploads',
     authMiddleware,
-    authorize('LABORANT'),
+    authorize(ROLES.LABORANT),
     medicalFileController.getMyUploads
 );
 
@@ -50,7 +51,7 @@ router.get(
 router.get(
     '/patient/:patientId',
     authMiddleware,
-    authorize('DOCTOR', 'ADMIN'),
+    authorize(ROLES.DOCTOR, ROLES.ADMIN),
     medicalFileController.getPatientMedicalFiles
 );
 
@@ -61,7 +62,7 @@ router.get(
 router.get(
     '/laborant/:laborantId',
     authMiddleware,
-    authorize('ADMIN'),
+    authorize(ROLES.ADMIN),
     medicalFileController.getLaborantMedicalFiles
 );
 
@@ -93,7 +94,7 @@ router.get(
 router.delete(
     '/:fileId',
     authMiddleware,
-    authorize('LABORANT', 'ADMIN'),
+    authorize(ROLES.LABORANT, ROLES.ADMIN),
     medicalFileController.deleteMedicalFile
 );
 

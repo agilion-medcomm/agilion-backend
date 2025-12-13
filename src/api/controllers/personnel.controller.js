@@ -1,5 +1,7 @@
 const authService = require('../../services/auth.service');
 const personnelService = require('../../services/personnel.service');
+const { sendSuccess, sendCreated } = require('../../utils/responseFormatter');
+const { parseAndValidateId } = require('../../utils/idValidator');
 
 /**
  * GET /api/v1/personnel
@@ -8,7 +10,7 @@ const personnelService = require('../../services/personnel.service');
 const getPersonnel = async (req, res, next) => {
     try {
         const personnel = await personnelService.getAllPersonnel();
-        res.json({ status: 'success', data: personnel });
+        sendSuccess(res, personnel);
     } catch (error) {
         next(error);
     }
@@ -23,11 +25,7 @@ const createPersonnel = async (req, res, next) => {
         // Middleware already verified admin role via authMiddleware + requireAdmin
         const result = await authService.registerPersonnel(req.body);
         
-        res.status(201).json({
-            status: result.status,
-            message: result.message,
-            data: result.data,
-        });
+        sendCreated(res, result.data, result.message);
     } catch (error) {
         next(error);
     }
@@ -43,11 +41,7 @@ const updatePersonnel = async (req, res, next) => {
         const userId = req.targetUserId;
         const user = await personnelService.updatePersonnel(userId, req.body);
 
-        res.json({
-            status: 'success',
-            message: 'Personnel updated successfully.',
-            data: user,
-        });
+        sendSuccess(res, user, 'Personnel updated successfully.');
     } catch (error) {
         next(error);
     }
@@ -59,14 +53,10 @@ const updatePersonnel = async (req, res, next) => {
  */
 const deletePersonnel = async (req, res, next) => {
     try {
-        const { id } = req.params;
+        const id = parseAndValidateId(req.params.id, 'personnel ID');
         const result = await personnelService.deletePersonnel(id);
 
-        res.json({
-            status: 'success',
-            message: 'Personnel deleted successfully.',
-            data: result,
-        });
+        sendSuccess(res, result, 'Personnel deleted successfully.');
     } catch (error) {
         next(error);
     }
