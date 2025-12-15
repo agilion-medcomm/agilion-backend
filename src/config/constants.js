@@ -26,11 +26,34 @@ const BLOOD_TYPES = Object.freeze([
     'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'
 ]);
 
+// Appointment Status - Mirrors Prisma AppointmentStatus enum
+const APPOINTMENT_STATUS = Object.freeze({
+    APPROVED: 'APPROVED',
+    CANCELLED: 'CANCELLED',
+    DONE: 'DONE',
+});
+
+// Leave Request Status
+const LEAVE_REQUEST_STATUS = Object.freeze({
+    PENDING: 'PENDING',
+    APPROVED: 'APPROVED',
+    REJECTED: 'REJECTED',
+});
+
+// Contact Issue Status
+const CONTACT_STATUS = Object.freeze({
+    PENDING: 'PENDING',
+    REPLIED: 'REPLIED',
+});
+
 module.exports = {
     // User Roles
     ROLES,
     ROLE_GROUPS,
     BLOOD_TYPES,
+    APPOINTMENT_STATUS,
+    LEAVE_REQUEST_STATUS,
+    CONTACT_STATUS,
 
     // Working Hours Configuration
     WORKING_HOURS: {
@@ -57,7 +80,7 @@ module.exports = {
     // File Upload Configuration
     FILE_UPLOAD: {
         MAX_SIZE_MB: 10,
-        MAX_SIZE_BYTES: 10 * 1024 * 1024, // 10 MB
+        MAX_SIZE_BYTES: 3 * 1024 * 1024, // 3 MB
         ALLOWED_MEDICAL_FILE_TYPES: ['application/pdf', 'image/jpeg', 'image/png'],
         ALLOWED_EXTENSIONS: ['.pdf', '.jpg', '.jpeg', '.png'],
     },
@@ -95,7 +118,7 @@ module.exports = {
         // CORS origins - comma-separated list or '*' for all
         CORS_ORIGINS: process.env.CORS_ORIGINS 
             ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
-            : ['http://localhost:5173', 'http://localhost:5174'],
+            : ['http://localhost:5173', 'http://localhost:5174', 'https://zeytinburnucerrahitipmerkezi.com', 'https://www.zeytinburnucerrahitipmerkezi.com'],
         
         // Trust proxy (for production behind load balancer)
         TRUST_PROXY: process.env.TRUST_PROXY === 'true',

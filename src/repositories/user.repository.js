@@ -98,7 +98,7 @@ const createPersonnelWithUser = async (data) => {
         });
     }
 
-    if (data.role === 'CLEANER') {
+    if (data.role === ROLES.CLEANER) {
         return prisma.cleaner.create({
             data: {
                 user: {

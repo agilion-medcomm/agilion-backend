@@ -28,6 +28,20 @@ enum IssueStatus {
   REPLIED
 }
 
+// Defines the status of an appointment
+enum AppointmentStatus {
+  APPROVED
+  CANCELLED
+  DONE
+}
+
+// Defines the status of a leave request
+enum LeaveRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 // --- Model Definitions ---
 
 // Base User model for login and common info
@@ -133,7 +147,7 @@ model Appointment {
 
   date      String  // Format: DD.MM.YYYY (e.g., "25.11.2025")
   time      String  // Format: HH:MM (e.g., "10:00")
-  status    String  // "PENDING", "APPROVED", "CANCELLED", "COMPLETED"
+  status    AppointmentStatus @default(APPROVED)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -153,7 +167,7 @@ model LeaveRequest {
   endTime   String  // Format: HH:MM
   reason    String
 
-  status    String  // "PENDING", "APPROVED", "REJECTED"
+  status    LeaveRequestStatus @default(PENDING)
 
   requestedAt DateTime @default(now())
   resolvedAt  DateTime?

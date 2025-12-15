@@ -2,7 +2,7 @@ const leaveRequestRepository = require('../repositories/leaveRequest.repository'
 const { ApiError } = require('../api/middlewares/errorHandler');
 const prisma = require('../config/db');
 const { validateISODateFormat, validateTimeFormat } = require('../utils/dateTimeValidator');
-const { ROLES } = require('../config/constants');
+const { ROLES, LEAVE_REQUEST_STATUS } = require('../config/constants');
 
 /**
  * Get leave requests (all for admin, own for doctor)
@@ -89,7 +89,7 @@ const createLeaveRequest = async (leaveData) => {
  * Update leave request status (admin only)
  */
 const updateLeaveRequestStatus = async (requestId, status) => {
-    if (!['APPROVED', 'REJECTED'].includes(status)) {
+    if (![LEAVE_REQUEST_STATUS.APPROVED, LEAVE_REQUEST_STATUS.REJECTED].includes(status)) {
         throw new ApiError(400, 'Invalid status. Must be APPROVED or REJECTED.');
     }
 

@@ -1,5 +1,5 @@
 const Joi = require('joi');
-const { AUTH } = require('../../config/constants');
+const { AUTH, BLOOD_TYPES } = require('../../config/constants');
 
 const updateProfileSchema = Joi.object({
     firstName: Joi.string().min(2).max(50),
@@ -12,7 +12,7 @@ const updateProfileSchema = Joi.object({
 
     dateOfBirth: Joi.date().iso(),
 
-    bloodType: Joi.string().valid('A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-')
+    bloodType: Joi.string().valid(...BLOOD_TYPES)
 });
 
 const changePasswordSchema = Joi.object({

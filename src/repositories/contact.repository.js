@@ -1,4 +1,5 @@
 const prisma = require('../config/db.js');
+const { CONTACT_STATUS } = require('../config/constants');
 
 /**
  * Create a new contact issue
@@ -11,7 +12,7 @@ const createContactIssue = async (data) => {
             phone: data.phone,
             subject: data.subject,
             message: data.message,
-            status: 'PENDING',
+            status: CONTACT_STATUS.PENDING,
         },
     });
 };
@@ -41,7 +42,7 @@ const replyToContactIssue = async (id, replyMessage) => {
     return prisma.contactIssue.update({
         where: { id: parseInt(id) },
         data: {
-            status: 'REPLIED',
+            status: CONTACT_STATUS.REPLIED,
             replyMessage,
             repliedAt: new Date(),
         },

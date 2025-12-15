@@ -349,14 +349,14 @@ async function createSampleAppointments(patients, doctors) {
                 doctorId: doctor.id,
                 date: tomorrowDate,
                 time: '10:00',
-                status: 'PENDING',
+                status: 'APPROVED',
             },
             {
                 patientId: patient.id,
                 doctorId: doctor.id,
                 date: dayAfterDate,
                 time: '14:30',
-                status: 'CONFIRMED',
+                status: 'APPROVED',
             },
         ],
     });

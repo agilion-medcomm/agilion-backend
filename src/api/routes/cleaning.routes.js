@@ -10,12 +10,13 @@ const cleaningController = require('../controllers/cleaning.controller');
 const authMiddleware = require('../middlewares/authMiddleware');
 const authorize = require('../middlewares/authorize');
 const { cleaningPhotoUpload, handleMulterError } = require('../middlewares/upload');
+const { ROLES } = require('../../config/constants');
 // POST /api/v1/cleaning - Create a new cleaning record
 // Requires: authentication, CLEANER or ADMIN role, photo file
 router.post(
     '/',
     authMiddleware,
-    authorize('CLEANER', 'ADMIN'),
+    authorize(ROLES.CLEANER, ROLES.ADMIN),
     cleaningPhotoUpload.single('photo'),
     handleMulterError,
     cleaningController.createCleaningRecord
@@ -48,7 +49,7 @@ router.get(
 router.delete(
     '/:recordId',
     authMiddleware,
-    authorize('CLEANER', 'ADMIN'),
+    authorize(ROLES.CLEANER, ROLES.ADMIN),
     cleaningController.deleteCleaningRecord
 );
 

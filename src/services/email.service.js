@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 const { ApiError } = require('../api/middlewares/errorHandler');
 const logger = require('../utils/logger');
-const { FEATURES } = require('../config/constants');
+const { FEATURES, APPOINTMENT_STATUS } = require('../config/constants');
 
 /**
  * Email service for sending password reset emails
@@ -216,7 +216,7 @@ const sendAppointmentNotificationEmail = async (email, appointmentDetails) => {
         status,
     } = appointmentDetails;
 
-    const statusText = status === 'APPROVED' ? 'Onaylandı' : 'Oluşturuldu';
+    const statusText = status === APPOINTMENT_STATUS.APPROVED ? 'Onaylandı' : 'Oluşturuldu';
 
     const mailOptions = {
         from: process.env.EMAIL_USER,

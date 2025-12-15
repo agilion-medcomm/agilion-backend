@@ -77,6 +77,12 @@ app.use((req, res, next) => {
     next();
 });
 
+// Serve static files for profile/personnel photos and cleaning photos (publicly accessible)
+const path = require('path');
+app.use('/uploads/profile-photos', express.static(path.join(process.cwd(), 'uploads/profile-photos')));
+app.use('/uploads/personnel-photos', express.static(path.join(process.cwd(), 'uploads/personnel-photos')));
+app.use('/uploads/cleaning-photos', express.static(path.join(process.cwd(), 'uploads/cleaning-photos')));
+
 // SECURITY: Do NOT serve static files for medical uploads
 // Medical files must go through authenticated API endpoints
 // See: GET /api/v1/medical-files/:fileId/download

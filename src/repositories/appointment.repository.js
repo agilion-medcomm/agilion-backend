@@ -1,4 +1,5 @@
 const prisma = require('../config/db.js');
+const { APPOINTMENT_STATUS } = require('../config/constants');
 
 /**
  * Creates a new appointment
@@ -10,7 +11,7 @@ const createAppointment = async (data) => {
             doctorId: data.doctorId,
             date: data.date,
             time: data.time,
-            status: data.status || 'APPROVED',
+            status: data.status || APPOINTMENT_STATUS.APPROVED,
         },
         include: {
             patient: { include: { user: true } },

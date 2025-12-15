@@ -2,7 +2,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
-const { FILE_UPLOAD } = require('../../config/constants');
+const { FILE_UPLOAD, AUTH } = require('../../config/constants');
 
 // Ensure uploads directory exists
 const uploadDir = path.join(process.cwd(), 'uploads/medical-files');
@@ -17,7 +17,7 @@ const storage = multer.diskStorage({
     },
     filename: (req, file, cb) => {
         // Generate cryptographically secure unique filename
-        const randomString = crypto.randomBytes(16).toString('hex');
+        const randomString = crypto.randomBytes(AUTH.TOKEN_BYTE_LENGTH / 2).toString('hex');
         const uniqueName = `${Date.now()}-${randomString}${path.extname(file.originalname).toLowerCase()}`;
         cb(null, uniqueName);
     }
@@ -81,14 +81,14 @@ const handleMulterError = (err, req, res, next) => {
 // Create a separate multer instance for cleaning photos
 const cleaningPhotoStorage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const cleaningDir = path.join(__dirname, '../../uploads/cleaning-photos');
+        const cleaningDir = path.join(process.cwd(), 'uploads/cleaning-photos');
         if (!fs.existsSync(cleaningDir)) {
             fs.mkdirSync(cleaningDir, { recursive: true });
         }
         cb(null, cleaningDir);
     },
     filename: (req, file, cb) => {
-        const randomString = Math.random().toString(36).substring(2, 11);
+        const randomString = crypto.randomBytes(AUTH.TOKEN_BYTE_LENGTH / 4).toString('hex');
         const uniqueName = `${Date.now()}-${randomString}${path.extname(file.originalname)}`;
         cb(null, uniqueName);
     }
@@ -98,21 +98,21 @@ const cleaningPhotoUpload = multer({
     storage: cleaningPhotoStorage,
     fileFilter: fileFilter,
     limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB max file size
+        fileSize: FILE_UPLOAD.MAX_SIZE_BYTES,
     }
 });
 
 // Create a separate multer instance for personnel photos
 const personnelPhotoStorage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const personnelDir = path.join(__dirname, '../../uploads/personnel-photos');
+        const personnelDir = path.join(process.cwd(), 'uploads/personnel-photos');
         if (!fs.existsSync(personnelDir)) {
             fs.mkdirSync(personnelDir, { recursive: true });
         }
         cb(null, personnelDir);
     },
     filename: (req, file, cb) => {
-        const randomString = Math.random().toString(36).substring(2, 11);
+        const randomString = crypto.randomBytes(AUTH.TOKEN_BYTE_LENGTH / 4).toString('hex');
         const uniqueName = `${Date.now()}-${randomString}${path.extname(file.originalname)}`;
         cb(null, uniqueName);
     }
@@ -122,7 +122,7 @@ const personnelPhotoUpload = multer({
     storage: personnelPhotoStorage,
     fileFilter: fileFilter,
     limits: {
-        fileSize: 10 * 1024 * 1024, // 10MB max file size
+        fileSize: FILE_UPLOAD.MAX_SIZE_BYTES,
     }
 });
 

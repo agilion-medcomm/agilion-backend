@@ -140,6 +140,7 @@ vite.config.ts.timestamp-*
 
 # Prisma 
 /prisma/dev.db
+/prisma/migrations/
 
 /src/generated/prisma
 

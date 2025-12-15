@@ -3,7 +3,7 @@ const leaveRequestRepository = require('../repositories/leaveRequest.repository'
 const { ApiError } = require('../api/middlewares/errorHandler');
 const prisma = require('../config/db');
 const logger = require('../utils/logger');
-const { WORKING_HOURS, ROLES } = require('../config/constants');
+const { WORKING_HOURS, ROLES, APPOINTMENT_STATUS } = require('../config/constants');
 const {
     parseAppointmentDate,
     validateAppointmentDateFormat,
@@ -154,7 +154,7 @@ const createAppointment = async (userId, role, appointmentData) => {
         patientId,
         date,
         time,
-        status: status || 'APPROVED',
+        status: status || APPOINTMENT_STATUS.APPROVED,
     });
 
     // Send appointment notification email to patient (fire-and-forget)
@@ -211,11 +211,11 @@ const updateAppointmentStatus = async (appointmentId, status) => {
         status: appointment.status,
     };
 
-    if (status === 'APPROVED') {
+    if (status === APPOINTMENT_STATUS.APPROVED) {
         sendAppointmentNotificationEmail(patientEmail, appointmentDetails).catch((error) => {
             logger.error('Failed to send appointment approval email', error);
         });
-    } else if (status === 'CANCELLED') {
+    } else if (status === APPOINTMENT_STATUS.CANCELED) {
         sendAppointmentCancellationEmail(patientEmail, appointmentDetails).catch((error) => {
             logger.error('Failed to send appointment cancellation email', error);
         });
