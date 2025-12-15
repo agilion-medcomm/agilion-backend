@@ -21,7 +21,7 @@ const OPTIONAL_ENV_VARS = [
     { name: 'PORT', default: '3001', description: 'Server port' },
     { name: 'NODE_ENV', default: 'development', description: 'Environment mode' },
     { name: 'EMAIL_SERVICE', default: 'gmail', description: 'Email service provider' },
-    { name: 'FRONTEND_URL', default: 'http://localhost:5173', description: 'Frontend URL for links in emails' },
+    { name: 'FRONTEND_URL', default: process.env.NODE_ENV === 'production' ? 'https://zeytinburnucerrahitipmerkezi.com' : 'http://localhost:5173', description: 'Frontend URL for links in emails' },
 ];
 
 /**

@@ -118,7 +118,7 @@ module.exports = {
         // CORS origins - comma-separated list or '*' for all
         CORS_ORIGINS: process.env.CORS_ORIGINS 
             ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
-            : ['http://localhost:5173', 'http://localhost:5174'],
+            : ['http://localhost:5173', 'http://localhost:5174', 'https://zeytinburnucerrahitipmerkezi.com', 'https://www.zeytinburnucerrahitipmerkezi.com'],
         
         // Trust proxy (for production behind load balancer)
         TRUST_PROXY: process.env.TRUST_PROXY === 'true',
