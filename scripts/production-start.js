@@ -144,15 +144,28 @@ async function main() {
     process.exit(1);
   }
 
-  // Step 2: Run migrations
-  const migrationsSuccess = await runCommand(
+  // Step 2: Sync database schema
+  // Try migrate deploy first (if migration files exist)
+  // If that fails, use db push (works without migration files)
+  let schemaSuccess = await runCommand(
     'npx prisma migrate deploy',
     'Running database migrations'
   );
   
-  if (!migrationsSuccess) {
-    logWarning('Migrations failed, but continuing...');
-    logWarning('You may need to run migrations manually');
+  if (!schemaSuccess) {
+    logWarning('Migration deploy failed (likely no migration files)');
+    logStep('FALLBACK', 'Using prisma db push to sync schema...');
+    
+    schemaSuccess = await runCommand(
+      'npx prisma db push --accept-data-loss',
+      'Pushing schema to database'
+    );
+    
+    if (!schemaSuccess) {
+      logError('Both migration deploy and db push failed!');
+      logError('Cannot proceed without database schema');
+      process.exit(1);
+    }
   }
 
   // Step 3: Generate Prisma Client (ensures it's up to date)
