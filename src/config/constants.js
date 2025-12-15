@@ -29,7 +29,7 @@ const BLOOD_TYPES = Object.freeze([
 // Appointment Status - Mirrors Prisma AppointmentStatus enum
 const APPOINTMENT_STATUS = Object.freeze({
     APPROVED: 'APPROVED',
-    CANCELED: 'CANCELED',
+    CANCELLED: 'CANCELLED',
     DONE: 'DONE',
 });
 

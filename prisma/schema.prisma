@@ -31,7 +31,7 @@ enum IssueStatus {
 // Defines the status of an appointment
 enum AppointmentStatus {
   APPROVED
-  CANCELED
+  CANCELLED
   DONE
 }
 
