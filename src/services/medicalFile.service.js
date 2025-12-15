@@ -240,7 +240,7 @@ const getFileForDownload = async (fileId, userId, userRole) => {
     // fileUrl format: /uploads/medical-files/filename.ext
     const relativePath = file.fileUrl.replace('/uploads/', '');
     const path = require('path');
-    const absolutePath = path.join(__dirname, '../uploads', relativePath);
+    const absolutePath = path.join(process.cwd(), 'uploads', relativePath);
     
     // Check if file exists on disk
     const fsSync = require('fs');
