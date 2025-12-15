@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const { FILE_UPLOAD } = require('../../config/constants');
 
 // Ensure uploads directory exists
-const uploadDir = path.join(__dirname, '../../../uploads/medical-files');
+const uploadDir = path.join(process.cwd(), 'uploads/medical-files');
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir, { recursive: true });
 }
