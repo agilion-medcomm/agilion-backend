@@ -1,6 +1,7 @@
 const contactRepository = require('../repositories/contact.repository');
 const { sendContactReplyEmail } = require('./email.service');
 const { ApiError } = require('../api/middlewares/errorHandler');
+const { CONTACT_STATUS } = require('../config/constants');
 
 /**
  * Submit a new contact issue (public)
@@ -55,7 +56,7 @@ const replyToIssue = async (issueId, replyMessage) => {
         throw new ApiError(404, 'Contact issue not found.');
     }
 
-    if (issue.status === 'REPLIED') {
+    if (issue.status === CONTACT_STATUS.REPLIED) {
         throw new ApiError(400, 'This issue has already been replied to.');
     }
 

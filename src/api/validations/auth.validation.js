@@ -1,6 +1,6 @@
 const Joi = require('joi');
 const { joiISODateValidator } = require('../../utils/dateTimeValidator');
-const { AUTH, VALIDATION, ROLES } = require('../../config/constants');
+const { AUTH, VALIDATION, ROLES, ROLE_GROUPS } = require('../../config/constants');
 
 // Schema for POST /api/v1/auth/register
 const registerSchema = Joi.object({
@@ -13,7 +13,7 @@ const registerSchema = Joi.object({
     role: Joi.string().valid(ROLES.PATIENT).default(ROLES.PATIENT), // Only PATIENT allowed for public registration
     // Enforce format AND real calendar date using centralized validator
     dateOfBirth: Joi.string()
-        .pattern(/^\d{4}-\d{2}-\d{2}$/)
+        .pattern(VALIDATION.DATE_ISO_PATTERN)
         .required()
         .custom(joiISODateValidator, 'ISO date validation')
         .messages({
@@ -37,16 +37,16 @@ const loginSchema = Joi.object({
 
 const personnelRegisterSchema = Joi.object({
     token: Joi.string().required(), // admin JWT, validated in service
-    tckn: Joi.string().length(11).pattern(/^[0-9]+$/).required(),
+    tckn: Joi.string().length(VALIDATION.TCKN_LENGTH).pattern(/^[0-9]+$/).required(),
     firstName: Joi.string().required(),
     lastName: Joi.string().required(),
-    password: Joi.string().min(8).required(),
+    password: Joi.string().min(AUTH.PASSWORD_MIN_LENGTH).required(),
     // Allow ADMIN, DOCTOR, CASHIER, LABORANT, and CLEANER roles.
-    role: Joi.string().valid('DOCTOR', 'ADMIN', 'CASHIER', 'LABORANT', 'CLEANER').required(),
+    role: Joi.string().valid(...ROLE_GROUPS.PERSONNEL).required(),
     phoneNumber: Joi.string().allow('').optional(),
     email: Joi.string().email().allow('').optional(),
     dateOfBirth: Joi.alternatives().try(
-        Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).custom(joiISODateValidator, 'ISO date validation'),
+        Joi.string().pattern(VALIDATION.DATE_ISO_PATTERN).custom(joiISODateValidator, 'ISO date validation'),
         Joi.valid(null)
     ).optional(),
     // specialization is required for DOCTOR, should be empty for ADMIN; service can enforce if needed.

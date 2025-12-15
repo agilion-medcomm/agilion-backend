@@ -1,4 +1,5 @@
 const prisma = require('../config/db.js');
+const { LEAVE_REQUEST_STATUS } = require('../config/constants');
 
 /**
  * Create a new leave request
@@ -12,7 +13,7 @@ const createLeaveRequest = async (data) => {
             endDate: data.endDate,
             endTime: data.endTime,
             reason: data.reason,
-            status: 'PENDING',
+            status: LEAVE_REQUEST_STATUS.PENDING,
         },
         include: {
             doctor: { include: { user: true } },
@@ -66,7 +67,7 @@ const getApprovedLeaves = async (doctorId) => {
     return prisma.leaveRequest.findMany({
         where: {
             doctorId: parseInt(doctorId),
-            status: 'APPROVED',
+            status: LEAVE_REQUEST_STATUS.APPROVED,
         },
     });
 };

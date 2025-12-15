@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const { AUTH } = require('../config/constants');
 
 /**
  * Centralized Token Generation and Hashing Utilities
@@ -7,10 +8,10 @@ const crypto = require('crypto');
 
 /**
  * Generate a secure random token
- * @param {number} length - Token length in bytes (default: 32)
+ * @param {number} length - Token length in bytes (default from constants)
  * @returns {string} - Random hex token
  */
-const generateSecureToken = (length = 32) => {
+const generateSecureToken = (length = AUTH.TOKEN_BYTE_LENGTH) => {
     return crypto.randomBytes(length).toString('hex');
 };
 
@@ -27,10 +28,10 @@ const hashToken = (token) => {
 /**
  * Generate and hash a token in one step
  * Returns both plain and hashed versions
- * @param {number} length - Token length in bytes (default: 32)
+ * @param {number} length - Token length in bytes (default from constants)
  * @returns {Object} - { token: string, hashedToken: string }
  */
-const generateAndHashToken = (length = 32) => {
+const generateAndHashToken = (length = AUTH.TOKEN_BYTE_LENGTH) => {
     const token = generateSecureToken(length);
     const hashedToken = hashToken(token);
     
@@ -39,10 +40,10 @@ const generateAndHashToken = (length = 32) => {
 
 /**
  * Generate token expiry date
- * @param {number} hoursFromNow - Hours until expiry (default: 24)
+ * @param {number} hoursFromNow - Hours until expiry (default from constants)
  * @returns {Date} - Expiry date
  */
-const generateTokenExpiry = (hoursFromNow = 24) => {
+const generateTokenExpiry = (hoursFromNow = AUTH.EMAIL_VERIFICATION_TOKEN_EXPIRY_HOURS) => {
     return new Date(Date.now() + hoursFromNow * 60 * 60 * 1000);
 };
 

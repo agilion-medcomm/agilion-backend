@@ -1,5 +1,6 @@
 const prisma = require('../config/db');
 const { ApiError } = require('../api/middlewares/errorHandler');
+const { ROLES } = require('../config/constants');
 
 /**
  * Create a cleaning record
@@ -55,7 +56,8 @@ const createCleaningRecord = async (userId, area, time, photoUrl) => {
  */
 const getCleaningRecordsByDate = async (date) => {
     // Validate date format (YYYY-MM-DD)
-    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    const { VALIDATION } = require('../config/constants');
+    if (!date || !VALIDATION.DATE_ISO_PATTERN.test(date)) {
         throw new ApiError(400, 'Invalid date format. Expected YYYY-MM-DD.');
     }
 
@@ -181,7 +183,7 @@ const deleteCleaningRecord = async (recordId, userId) => {
         }
 
         // Admins can delete any record
-        if (user.role === 'ADMIN') {
+        if (user.role === ROLES.ADMIN) {
             // proceed to delete
         } else {
             // Cleaners can only delete their own records

@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const prisma = require('../../config/db');
 const { ApiError } = require('../../api/middlewares/errorHandler');
 const { comparePassword } = require('../../utils/passwordHelper');
-const { AUTH } = require('../../config/constants');
+const { AUTH, ROLES } = require('../../config/constants');
 
 /**
  * Login Service
@@ -26,7 +26,7 @@ const loginUser = async (tckn, password) => {
     }
 
     // Ensure user is a PATIENT (not personnel)
-    if (user.role !== 'PATIENT') {
+    if (user.role !== ROLES.PATIENT) {
         throw new ApiError(403, 'This login is for patients only. Please use the personnel login.');
     }
 
@@ -84,7 +84,7 @@ const loginPersonnel = async (tckn, password) => {
     }
 
     // Ensure user is personnel (not a patient)
-    if (user.role === 'PATIENT') {
+    if (user.role === ROLES.PATIENT) {
         throw new ApiError(403, 'This login is for personnel only. Please use the patient login.');
     }
 
