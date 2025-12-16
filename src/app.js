@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 const { errorHandler } = require("./api/middlewares/errorHandler");
 const prisma = require('./config/db');
 const { TIMEOUT, RATE_LIMIT, SECURITY } = require('./config/constants');
+const logger = require('./utils/logger');
 
 const app = express();
 
@@ -58,15 +59,17 @@ if (RATE_LIMIT.ENABLED) {
 
 // --- Core Middleware ---
 // 1. Enable CORS (Cross-Origin Resource Sharing)
-console.log('═══════════════════════════════════════════════════════════');
-console.log('[CONFIG] Environment:', process.env.NODE_ENV);
-console.log('[CONFIG] Trust Proxy:', SECURITY.TRUST_PROXY);
-console.log('[CONFIG] Rate Limiting:', RATE_LIMIT.ENABLED ? 'Enabled' : 'Disabled');
-console.log('[CONFIG] Helmet:', SECURITY.HELMET_ENABLED ? 'Enabled' : 'Disabled');
-console.log('[CORS] Allowed Origins:', SECURITY.CORS_ORIGINS);
-console.log('[CORS] Credentials:', true);
-console.log('[CORS] Methods:', ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']);
-console.log('═══════════════════════════════════════════════════════════');
+logger.info('═══════════════════════════════════════════════════════════');
+logger.info('Application Configuration', {
+    environment: process.env.NODE_ENV,
+    trustProxy: SECURITY.TRUST_PROXY,
+    rateLimiting: RATE_LIMIT.ENABLED,
+    helmet: SECURITY.HELMET_ENABLED,
+    corsOrigins: SECURITY.CORS_ORIGINS,
+    corsCredentials: true,
+    corsMethods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
+});
+logger.info('═══════════════════════════════════════════════════════════');
 
 app.use(cors({
     origin: SECURITY.CORS_ORIGINS,
@@ -75,16 +78,86 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Debug middleware - log all incoming requests
+// Debug middleware - comprehensive request/response logging
 app.use((req, res, next) => {
+    const startTime = Date.now();
     const origin = req.get('origin');
+    const requestId = Math.random().toString(36).substring(7);
+    
+    // Log incoming request
     if (origin) {
-        console.log(`[REQUEST] ${req.method} ${req.path} - Origin: ${origin}`);
+        logger.info(`Incoming ${req.method} request`, {
+            requestId,
+            method: req.method,
+            path: req.path,
+            origin,
+            userAgent: req.get('user-agent')?.substring(0, 50),
+            ip: req.ip
+        });
+        
         if (req.method === 'OPTIONS') {
-            console.log('[PREFLIGHT] OPTIONS request detected');
-            console.log('[PREFLIGHT] Request Headers:', req.headers['access-control-request-headers']);
-            console.log('[PREFLIGHT] Request Method:', req.headers['access-control-request-method']);
+            logger.info('CORS Preflight detected', {
+                requestId,
+                requestHeaders: req.headers['access-control-request-headers'],
+                requestMethod: req.headers['access-control-request-method']
+            });
         }
+        
+        // Intercept response
+        const originalSend = res.send;
+        const originalJson = res.json;
+        
+        res.send = function(data) {
+            const duration = Date.now() - startTime;
+            logger.info(`Response sent`, {
+                requestId,
+                method: req.method,
+                path: req.path,
+                statusCode: res.statusCode,
+                duration: `${duration}ms`
+            });
+            
+            if (res.statusCode >= 400) {
+                let errorData = data;
+                if (typeof data === 'string') {
+                    try {
+                        errorData = JSON.parse(data);
+                    } catch (e) {
+                        errorData = data.substring(0, 200);
+                    }
+                }
+                logger.error(`Request failed`, {
+                    requestId,
+                    method: req.method,
+                    path: req.path,
+                    statusCode: res.statusCode,
+                    error: errorData
+                });
+            }
+            originalSend.call(this, data);
+        };
+        
+        res.json = function(data) {
+            const duration = Date.now() - startTime;
+            logger.info(`JSON response sent`, {
+                requestId,
+                method: req.method,
+                path: req.path,
+                statusCode: res.statusCode,
+                duration: `${duration}ms`
+            });
+            
+            if (res.statusCode >= 400) {
+                logger.error(`Request failed`, {
+                    requestId,
+                    method: req.method,
+                    path: req.path,
+                    statusCode: res.statusCode,
+                    error: data
+                });
+            }
+            originalJson.call(this, data);
+        };
     }
     next();
 });
