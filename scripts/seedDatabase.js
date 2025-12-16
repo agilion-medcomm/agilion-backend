@@ -373,9 +373,10 @@ async function seed() {
     console.log('║          AGILION BACKEND - DATABASE SEEDER                   ║');
     console.log('╚══════════════════════════════════════════════════════════════╝\n');
 
-    // Safety check
-    if (process.env.NODE_ENV === 'production') {
-        console.error('❌ Cannot run seed script in production!');
+    // Safety check - allow seeding in production if explicitly enabled
+    if (process.env.NODE_ENV === 'production' && process.env.ALLOW_SEED !== 'true') {
+        console.error('❌ Cannot run seed script in production without ALLOW_SEED=true!');
+        console.error('⚠️  Set environment variable ALLOW_SEED=true to enable seeding in production.');
         process.exit(1);
     }
 
