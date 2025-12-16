@@ -58,7 +58,6 @@ if (RATE_LIMIT.ENABLED) {
 }
 
 // --- Core Middleware ---
-// 1. Enable CORS (Cross-Origin Resource Sharing)
 logger.info('═══════════════════════════════════════════════════════════');
 logger.info('Application Configuration', {
     environment: process.env.NODE_ENV,
@@ -71,6 +70,19 @@ logger.info('Application Configuration', {
 });
 logger.info('═══════════════════════════════════════════════════════════');
 
+// Log ALL requests before CORS (to catch OPTIONS)
+app.use((req, res, next) => {
+    logger.info(`RAW REQUEST: ${req.method} ${req.path}`, {
+        origin: req.get('origin'),
+        headers: req.method === 'OPTIONS' ? {
+            requestMethod: req.get('access-control-request-method'),
+            requestHeaders: req.get('access-control-request-headers')
+        } : undefined
+    });
+    next();
+});
+
+// 1. Enable CORS (Cross-Origin Resource Sharing)
 app.use(cors({
     origin: SECURITY.CORS_ORIGINS,
     credentials: true,
