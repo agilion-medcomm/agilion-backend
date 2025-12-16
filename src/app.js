@@ -58,6 +58,7 @@ if (RATE_LIMIT.ENABLED) {
 
 // --- Core Middleware ---
 // 1. Enable CORS (Cross-Origin Resource Sharing)
+console.log('[CORS] Allowed origins:', SECURITY.CORS_ORIGINS);
 app.use(cors({
     origin: SECURITY.CORS_ORIGINS,
     credentials: true,
