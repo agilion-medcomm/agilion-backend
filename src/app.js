@@ -58,13 +58,36 @@ if (RATE_LIMIT.ENABLED) {
 
 // --- Core Middleware ---
 // 1. Enable CORS (Cross-Origin Resource Sharing)
-console.log('[CORS] Allowed origins:', SECURITY.CORS_ORIGINS);
+console.log('═══════════════════════════════════════════════════════════');
+console.log('[CONFIG] Environment:', process.env.NODE_ENV);
+console.log('[CONFIG] Trust Proxy:', SECURITY.TRUST_PROXY);
+console.log('[CONFIG] Rate Limiting:', RATE_LIMIT.ENABLED ? 'Enabled' : 'Disabled');
+console.log('[CONFIG] Helmet:', SECURITY.HELMET_ENABLED ? 'Enabled' : 'Disabled');
+console.log('[CORS] Allowed Origins:', SECURITY.CORS_ORIGINS);
+console.log('[CORS] Credentials:', true);
+console.log('[CORS] Methods:', ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']);
+console.log('═══════════════════════════════════════════════════════════');
+
 app.use(cors({
     origin: SECURITY.CORS_ORIGINS,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Debug middleware - log all incoming requests
+app.use((req, res, next) => {
+    const origin = req.get('origin');
+    if (origin) {
+        console.log(`[REQUEST] ${req.method} ${req.path} - Origin: ${origin}`);
+        if (req.method === 'OPTIONS') {
+            console.log('[PREFLIGHT] OPTIONS request detected');
+            console.log('[PREFLIGHT] Request Headers:', req.headers['access-control-request-headers']);
+            console.log('[PREFLIGHT] Request Method:', req.headers['access-control-request-method']);
+        }
+    }
+    next();
+});
 
 // 2. Enable JSON body parsing with size limit
 app.use(express.json({ limit: '1mb' }));
