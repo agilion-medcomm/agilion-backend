@@ -15,6 +15,7 @@ const mapPersonnelUser = (user, specialization = null) => ({
     phoneNumber: user.phoneNumber,
     role: user.role,
     dateOfBirth: user.dateOfBirth,
+    profilePhoto: user.profilePhoto,
     ...(specialization && { specialization }),
 });
 

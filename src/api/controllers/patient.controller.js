@@ -1,5 +1,6 @@
 const patientService = require('../../services/patient.service');
 const { sendSuccess, sendError } = require('../../utils/responseFormatter');
+const { parseAndValidateId } = require('../../utils/idValidator');
 
 
 /**
@@ -77,9 +78,25 @@ const getPatientByTCKN = async (req, res, next) => {
     }
 };
 
+/**
+ * DELETE /api/v1/patients/:id
+ * Delete patient (admin only)
+ */
+const deletePatient = async (req, res, next) => {
+    try {
+        const id = parseAndValidateId(req.params.id, 'patient ID');
+        const result = await patientService.deletePatient(id);
+
+        sendSuccess(res, result, 'Patient deleted successfully.');
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     getPatients,
     updateProfile,
     changePassword,
     getPatientByTCKN,
+    deletePatient,
 };
