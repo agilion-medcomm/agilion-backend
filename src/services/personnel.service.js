@@ -15,7 +15,7 @@ const mapPersonnelUser = (user, specialization = null) => ({
     phoneNumber: user.phoneNumber,
     role: user.role,
     dateOfBirth: user.dateOfBirth,
-    profilePhoto: user.profilePhoto,
+    photoUrl: user.profilePhoto,
     ...(specialization && { specialization }),
 });
 
@@ -160,7 +160,7 @@ const updatePersonnelPhoto = async (userId, photoUrl) => {
         firstName: updatedUser.firstName,
         lastName: updatedUser.lastName,
         email: updatedUser.email,
-        profilePhoto: updatedUser.profilePhoto,
+        photoUrl: updatedUser.profilePhoto,
         role: updatedUser.role,
     };
 };
