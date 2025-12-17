@@ -10,6 +10,8 @@ const { sanitizeBody } = require('../middlewares/sanitize');
 const { updateProfileSchema, changePasswordSchema } = require('../validations/patient.validation');
 const { ROLES, ROLE_GROUPS } = require('../../config/constants');
 
+const requireAdmin = require('../middlewares/requireAdmin');
+
 // GET /api/v1/patients - Get all patients (requires authentication - for doctor/admin use)
 router.get('/', authMiddleware, patientController.getPatients);
 
@@ -20,5 +22,8 @@ router.put('/me/profile', authMiddleware, authorize(ROLES.PATIENT), sanitizeBody
 
 // PUT /api/v1/patients/me/change-password
 router.put('/me/change-password', authMiddleware, authorize(ROLES.PATIENT), validate(changePasswordSchema), patientController.changePassword);
+
+// DELETE /api/v1/patients/:id - Delete patient (admin only)
+router.delete('/:id', authMiddleware, requireAdmin, patientController.deletePatient);
 
 module.exports = router;

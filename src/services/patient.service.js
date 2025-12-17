@@ -150,9 +150,38 @@ const getPatientByTCKN = async (tckn) => {
     };
 };
 
+/**
+ * Delete a patient and related records
+ * Deletes in order: appointments -> medical files -> patient -> user
+ */
+const deletePatient = async (userId) => {
+    const id = parseInt(userId, 10);
+
+    await prisma.$transaction([
+        // 1. Delete appointments linked to this patient
+        prisma.appointment.deleteMany({
+            where: { patient: { userId: id } }
+        }),
+
+        // 2. Delete medical files linked to this patient
+        prisma.medicalFile.deleteMany({
+            where: { patient: { userId: id } }
+        }),
+
+        // 3. Delete patient profile
+        prisma.patient.deleteMany({ where: { userId: id } }),
+
+        // 4. Finally delete the user record
+        prisma.user.delete({ where: { id: id } })
+    ]);
+
+    return { id };
+};
+
 module.exports = {
     getAllPatients,
     changePassword,
     updateProfile,
     getPatientByTCKN,
+    deletePatient,
 };
