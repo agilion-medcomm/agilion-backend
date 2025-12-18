@@ -59,6 +59,7 @@ const loginUser = async (tckn, password) => {
             phoneNumber: user.phoneNumber,
             tckn: user.tckn,
             dateOfBirth: user.dateOfBirth,
+            photoUrl: user.profilePhoto,
             patientId: user.patient?.id,
         },
     };
@@ -122,6 +123,7 @@ const loginPersonnel = async (tckn, password) => {
         phoneNumber: user.phoneNumber,
         tckn: user.tckn,
         dateOfBirth: user.dateOfBirth,
+        photoUrl: user.profilePhoto,
         // Add doctor/admin/laborant IDs if they exist
         doctorId: user.doctor?.id || null,
         adminId: user.admin?.id || null,
