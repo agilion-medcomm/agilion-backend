@@ -83,7 +83,18 @@ const uploadMedicalFile = async (laborantId, fileData, uploadedFile) => {
     // Save to database
     const medicalFile = await medicalFileRepository.createMedicalFile(medicalFileData);
 
-    return medicalFile;
+        // If requestId provided, link the created medical file to the lab request
+        if (fileData.requestId) {
+            try {
+                const labRequestRepository = require('../repositories/labRequest.repository');
+                await labRequestRepository.attachMedicalFile(fileData.requestId, medicalFile.id);
+            } catch (err) {
+                // If linking fails, log but still return the created file
+                logger.error('Failed to attach medical file to lab request', err);
+            }
+        }
+
+        return medicalFile;
 };
 
 /**

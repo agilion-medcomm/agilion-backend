@@ -46,6 +46,14 @@ const CONTACT_STATUS = Object.freeze({
     REPLIED: 'REPLIED',
 });
 
+    // Lab Request Status
+    const REQUEST_STATUS = Object.freeze({
+        PENDING: 'PENDING',
+        ASSIGNED: 'ASSIGNED',
+        COMPLETED: 'COMPLETED',
+        CANCELED: 'CANCELED',
+    });
+
 module.exports = {
     // User Roles
     ROLES,
@@ -140,4 +148,6 @@ module.exports = {
         DATE_TR_PATTERN: /^\d{2}\.\d{2}\.\d{4}$/,
         TIME_PATTERN: /^([0-1]\d|2[0-3]):([0-5]\d)$/,
     },
+    // Lab Request Status (exported)
+    REQUEST_STATUS,
 };

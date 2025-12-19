@@ -150,3 +150,5 @@ uploads/*
 
 # Frontend - separate repository
 front/
+
+.DS_Store
