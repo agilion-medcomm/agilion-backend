@@ -74,21 +74,31 @@ async function main(){
 
     // Upload medical file with requestId using curl to avoid multipart edge-cases
     const { spawnSync } = require('child_process');
-    const curlArgs = [
-      '-sS', '-X', 'POST', `${BASE}/medical-files`,
-      '-H', `Authorization: Bearer ${laborantToken}`,
-      '-F', `file=@${tmpFile}`,
-      '-F', `patientId=${patientId}`,
-      '-F', `testName=Hemogram`,
-      '-F', `testDate=2025-12-01`,
-      '-F', `description=Uploaded for request`,
-      '-F', `requestId=${reqId}`
-    ];
+        const curlArgs = [
+          '-sS', '-X', 'POST', `${BASE}/medical-files`,
+          '-H', `Authorization: Bearer ${laborantToken}`,
+          '-F', `file=@${tmpFile}`,
+          '-F', `patientId=${patientId}`,
+          '-F', `testName=Hemogram`,
+          '-F', `testDate=2025-12-01`,
+          '-F', `description=Uploaded for request`,
+          '-F', `requestId=${reqId}`
+        ];
 
-    const proc = spawnSync('curl', curlArgs, { encoding: 'utf8' });
-    let uploadOut = proc.stdout || '';
-    if (proc.stderr) uploadOut += '\n' + proc.stderr;
-    console.log('upload ->', uploadOut.trim());
+        const proc = spawnSync('curl', curlArgs, { encoding: 'utf8' });
+        let uploadOut = proc.stdout || '';
+        if (proc.stderr) uploadOut += '\n' + proc.stderr;
+        // Check exit code
+        if (proc.status !== 0) {
+          console.error('curl failed with status', proc.status);
+          console.error(uploadOut);
+          throw new Error('Upload curl failed');
+        }
+
+        // Try parse JSON response
+        let uploadJson = null;
+        try { uploadJson = JSON.parse(uploadOut); } catch (e) { /* ignore parse errors */ }
+        console.log('upload ->', uploadJson ? JSON.stringify(uploadJson) : uploadOut.trim());
 
     // Verify request details
     const detailRes = await fetch(`${BASE}/lab-requests/${reqId}`, {headers:{Authorization:`Bearer ${doctorToken}`}});
@@ -98,7 +108,7 @@ async function main(){
     const filesRes = await fetch(`${BASE}/medical-files/patient/${patientId}`, {headers:{Authorization:`Bearer ${doctorToken}`}});
     console.log('patient files ->', JSON.stringify(await filesRes.json().catch(()=>null)));
 
-    fs.unlinkSync(tmpFile);
+    try { fs.unlinkSync(tmpFile); } catch(e) { /* ignore */ }
   }catch(err){
     console.error('Error in test script', err);
     process.exit(1);

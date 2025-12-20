@@ -165,9 +165,40 @@ const updatePersonnelPhoto = async (userId, photoUrl) => {
     };
 };
 
+/**
+ * Get personnel by role with limited fields (used by UI when requesting specific roles)
+ */
+const getPersonnelByRole = async (role) => {
+    switch (role) {
+        case ROLES.LABORANT: {
+            const laborants = await prisma.laborant.findMany({ include: { user: true } });
+            return laborants.map(l => mapPersonnelUser(l.user));
+        }
+        case ROLES.DOCTOR: {
+            const doctors = await prisma.doctor.findMany({ include: { user: true } });
+            return doctors.map(d => mapPersonnelUser(d.user, d.specialization));
+        }
+        case ROLES.ADMIN: {
+            const admins = await prisma.admin.findMany({ include: { user: true } });
+            return admins.map(a => mapPersonnelUser(a.user));
+        }
+        case ROLES.CASHIER: {
+            const cashiers = await prisma.user.findMany({ where: { role: ROLES.CASHIER } });
+            return cashiers.map(c => mapPersonnelUser(c));
+        }
+        case ROLES.CLEANER: {
+            const cleaners = await prisma.cleaner.findMany({ include: { user: true } });
+            return cleaners.map(cl => mapPersonnelUser(cl.user));
+        }
+        default:
+            throw new ApiError(400, `Unsupported role filter: ${role}`);
+    }
+};
+
 module.exports = {
     getAllPersonnel,
     updatePersonnel,
     deletePersonnel,
     updatePersonnelPhoto,
+    getPersonnelByRole,
 };

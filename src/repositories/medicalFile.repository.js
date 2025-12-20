@@ -1,20 +1,30 @@
 const prisma = require('../config/db.js');
+const { validateRequiredFields } = require('../utils/validators');
+const { ApiError } = require('../api/middlewares/errorHandler');
 
 /**
  * Creates a new medical file record
  */
 const createMedicalFile = async (data) => {
+    // Prevent callers from creating a medical file already linked to a request
+    if (data.requestId) {
+        throw new ApiError(400, 'Do not set requestId when creating a standalone medical file. Use the request-driven upload flow instead.');
+    }
+
+    // Validate required fields for a medical file
+    validateRequiredFields(data, ['patientId', 'fileName', 'fileUrl', 'fileType', 'fileSizeKB', 'testName', 'testDate']);
+
     return prisma.medicalFile.create({
         data: {
-            patientId: data.patientId,
-            laborantId: data.laborantId,
+            patientId: parseInt(data.patientId),
+            laborantId: data.laborantId ? parseInt(data.laborantId) : null,
             fileName: data.fileName,
             fileUrl: data.fileUrl,
             fileType: data.fileType,
-            fileSizeKB: data.fileSizeKB,
+            fileSizeKB: parseFloat(data.fileSizeKB),
             testName: data.testName,
             testDate: data.testDate,
-            description: data.description,
+            description: data.description || null,
         },
         include: {
             patient: {

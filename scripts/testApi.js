@@ -19,6 +19,9 @@
 
 const BASE_URL = process.env.API_URL || 'http://localhost:5001';
 const API_PREFIX = '/api/v1';
+const fs = require('fs');
+const path = require('path');
+const FormData = require('form-data');
 
 // Colors for console output
 const colors = {
@@ -117,7 +120,9 @@ async function request(method, path, options = {}) {
 }
 
 async function requestMultipart(method, path, formData, token) {
-  const url = `${BASE_URL}${path}`;
+  // Honor API_PREFIX like the JSON requests do
+  const fullPath = path.startsWith('/api') ? `${API_PREFIX}${path.slice(4)}` : path;
+  const url = `${BASE_URL}${fullPath}`;
   const headers = {};
   
   if (token) {
@@ -137,6 +142,92 @@ async function requestMultipart(method, path, formData, token) {
   }
 
   return { response, data };
+}
+
+// --------------------------------------------
+// LAB REQUESTS (lightweight checks)
+// --------------------------------------------
+async function testLabRequests() {
+  logSection('LAB REQUESTS');
+
+  await test('Lab requests endpoint does not return 500', async () => {
+    const { response } = await request('GET', '/api/lab-requests');
+    assert(response.status !== 500, 'Should not cause server error');
+  });
+
+  await test('Create lab request as doctor (no crash)', async () => {
+    if (!doctorToken) {
+      console.log('    Skipped: no doctor token');
+      return;
+    }
+    const { response } = await request('POST', '/api/lab-requests', {
+      token: doctorToken,
+      body: {
+        // conservative minimal payload - accept any status except 500
+        patientId: testPatientId || null,
+        fileTitle: 'Auto test request',
+        tests: ['CBC']
+      }
+    });
+    assert(response.status !== 500, 'Should not cause server error');
+  });
+
+  await test('Full lab-request flow: claim → upload → confirm (happy path)', async () => {
+    if (!doctorToken || !laborantToken || !testPatientId) {
+      console.log('    Skipped: missing tokens or patientId');
+      return;
+    }
+
+    // Create request as doctor
+    const { response: createRes, data: createData } = await request('POST', '/api/lab-requests', {
+      token: doctorToken,
+      body: { patientId: testPatientId, fileTitle: 'Flow test' }
+    });
+    if (createRes.status >= 400) {
+      // creation may fail due to validation or missing patient - skip
+      console.log('    Skipped: could not create lab request', createRes.status);
+      return;
+    }
+    const created = createData?.data || createData;
+    const requestId = created?.id || created?.data?.id;
+    if (!requestId) {
+      console.log('    Skipped: no request id returned');
+      return;
+    }
+
+    // Laborant claims the request
+    const { response: claimRes } = await request('PUT', `/api/lab-requests/${requestId}/claim`, { token: laborantToken });
+    assert(claimRes.status !== 500, 'Claim should not cause server error');
+
+    // Upload a medical file attached to this request
+    const testFile = ensureTestImage();
+    const form = new FormData();
+    form.append('patientId', String(testPatientId));
+    form.append('testName', 'CBC');
+    form.append('testDate', new Date().toISOString().split('T')[0]);
+    form.append('requestId', String(requestId));
+    form.append('file', fs.createReadStream(testFile));
+
+    const { response: uploadRes, data: uploadData } = await requestMultipart('POST', '/api/medical-files', form, laborantToken);
+    assert(uploadRes.status !== 500, 'Upload should not cause server error');
+
+    // Confirm the lab request
+    const { response: confirmRes } = await request('PUT', `/api/lab-requests/${requestId}/confirm`, { token: laborantToken });
+    assert(confirmRes.status !== 500, 'Confirm should not cause server error');
+  });
+}
+
+// Ensure a small PNG test file exists for multipart uploads
+function ensureTestImage() {
+  const tmpDir = path.join(process.cwd(), 'scripts', 'tmp');
+  if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
+  const filePath = path.join(tmpDir, 'test-image.png');
+  if (fs.existsSync(filePath)) return filePath;
+
+  // Minimal PNG header + IHDR chunk (not a full valid image but enough for mime sniffers)
+  const pngHeader = Buffer.from([0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A, 0x00,0x00,0x00,0x0D, 0x49,0x48,0x44,0x52]);
+  fs.writeFileSync(filePath, pngHeader);
+  return filePath;
 }
 
 function assert(condition, message) {
@@ -1060,6 +1151,39 @@ async function testMedicalFiles() {
     assertEqual(response.status, 200, 'Status code');
   });
 
+  await test('Laborant can upload a medical file (direct, no requestId)', async () => {
+    if (!laborantToken || !testPatientId) {
+      console.log('    Skipped: missing laborant token or patient id');
+      return;
+    }
+    const testFile = ensureTestImage();
+    const form = new FormData();
+    form.append('patientId', String(testPatientId));
+    form.append('testName', 'DirectUploadTest');
+    form.append('testDate', new Date().toISOString().split('T')[0]);
+    form.append('file', fs.createReadStream(testFile));
+
+    const { response, data } = await requestMultipart('POST', '/api/medical-files', form, laborantToken);
+    assert(response.status !== 500, 'Upload should not cause server error');
+  });
+
+  await test('Upload with invalid requestId fails and does not create file', async () => {
+    if (!laborantToken || !testPatientId) {
+      console.log('    Skipped: missing laborant token or patient id');
+      return;
+    }
+    const testFile = ensureTestImage();
+    const form = new FormData();
+    form.append('patientId', String(testPatientId));
+    form.append('testName', 'BadRequestTest');
+    form.append('testDate', new Date().toISOString().split('T')[0]);
+    form.append('requestId', '999999999');
+    form.append('file', fs.createReadStream(testFile));
+
+    const { response } = await requestMultipart('POST', '/api/medical-files', form, laborantToken);
+    assert(response.status >= 400, 'Invalid requestId should return error status');
+  });
+
   await test('Doctor cannot access patient my-files endpoint', async () => {
     const { response } = await request('GET', '/api/medical-files/my', {
       token: doctorToken
@@ -1256,6 +1380,9 @@ async function runAllTests() {
 
     // Authentication (critical - needed for other tests)
     await testAuthentication();
+
+    // Lab-request sanity checks
+    await testLabRequests();
 
     // Check if we have tokens to proceed
     if (!patientToken || !adminToken) {

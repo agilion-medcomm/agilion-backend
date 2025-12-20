@@ -1,15 +1,22 @@
 const { ApiError } = require("./errorHandler.js");
 
-const validate = (schema) => (req, res, next) => {
-    // abort early false to collect all errors instead of stopping at the first one
-    const { error } = schema.validate(req.body, { abortEarly: false });
+/**
+ * Joi validation middleware factory
+ * @param {Joi.Schema} schema - Joi validation schema
+ * @param {Object} options - Options { property: 'body'|'params'|'query' }
+ */
+const validate = (schema, options = { property: 'body' }) => (req, res, next) => {
+    const property = (options && options.property) || 'body';
+    const target = req[property] || {};
+
+    // abortEarly false to collect all errors
+    const { error } = schema.validate(target, { abortEarly: false });
 
     if (error) {
-        // if validation fails we pass it to global errorHandler
-        return next(error)
+        // Joi error - pass to global error handler which knows how to format it
+        return next(error);
     }
 
-    // If validation passes, move on with the next
     next();
 };
 

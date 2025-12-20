@@ -5,19 +5,11 @@ const authMiddleware = require('../middlewares/authMiddleware');
 const authorize = require('../middlewares/authorize');
 const { ROLES } = require('../../config/constants');
 const validate = require('../middlewares/validate');
-const Joi = require('joi');
+const { createLabRequestSchema, assignLabRequestSchema } = require('../validations/labRequest.validation');
 const { ensureCreatorOrAdmin, ensureLaborantAssignedOrClaimable } = require('../middlewares/labRequestAuth');
 
-// Simple validation for create
-const createSchema = Joi.object({
-    patientId: Joi.number().integer().required(),
-    fileTitle: Joi.string().min(1).required(),
-    notes: Joi.string().allow('', null),
-    assigneeLaborantId: Joi.number().integer().optional(),
-});
-
 // POST create request (Doctor or Admin)
-router.post('/', authMiddleware, authorize(ROLES.DOCTOR, ROLES.ADMIN), validate(createSchema), labRequestController.createLabRequest);
+router.post('/', authMiddleware, authorize(ROLES.DOCTOR, ROLES.ADMIN), validate(createLabRequestSchema), labRequestController.createLabRequest);
 
 // GET list requests (Doctor/Laborant/Admin)
 router.get('/', authMiddleware, authorize(ROLES.DOCTOR, ROLES.LABORANT, ROLES.ADMIN), labRequestController.listLabRequests);
@@ -26,7 +18,7 @@ router.get('/', authMiddleware, authorize(ROLES.DOCTOR, ROLES.LABORANT, ROLES.AD
 router.get('/:id', authMiddleware, authorize(ROLES.DOCTOR, ROLES.LABORANT, ROLES.ADMIN), labRequestController.getLabRequest);
 
 // Assign (Admin or creating Doctor allowed - route-level only)
-router.put('/:id/assign', authMiddleware, authorize(ROLES.DOCTOR, ROLES.ADMIN), ensureCreatorOrAdmin, labRequestController.assignLabRequest);
+router.put('/:id/assign', authMiddleware, authorize(ROLES.DOCTOR, ROLES.ADMIN), ensureCreatorOrAdmin, validate(assignLabRequestSchema), labRequestController.assignLabRequest);
 
 // Laborant claim
 router.put('/:id/claim', authMiddleware, authorize(ROLES.LABORANT), ensureLaborantAssignedOrClaimable, labRequestController.claimLabRequest);

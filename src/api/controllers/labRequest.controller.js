@@ -42,6 +42,9 @@ const assignLabRequest = async (req, res, next) => {
     try {
         const id = parseAndValidateId(req.params.id, 'request id');
         const assigneeLaborantId = req.body.assigneeLaborantId;
+        if (assigneeLaborantId === undefined || assigneeLaborantId === null || assigneeLaborantId === '') {
+            return sendError(res, 'assigneeLaborantId is required.', 400);
+        }
         const result = await labRequestService.assignLabRequest(id, req.user.userId, assigneeLaborantId);
         sendSuccess(res, result, 'Request assigned.');
     } catch (err) {
@@ -67,7 +70,15 @@ const confirmLabRequest = async (req, res, next) => {
 
         // Expect medicalFileId in body when confirming via API; uploads typically go through /medical-files endpoint
         const { medicalFileId } = req.body;
-        if (!medicalFileId) return sendError(res, 'medicalFileId is required to confirm the request.', 400);
+        if (!medicalFileId) {
+            // If no medicalFileId provided, allow idempotent check: if already completed, return success
+            const existing = await labRequestService.getLabRequest(id);
+            const { REQUEST_STATUS } = require('../../config/constants');
+            if (existing.status === REQUEST_STATUS.COMPLETED) {
+                return sendSuccess(res, existing, 'Request already completed.');
+            }
+            return sendError(res, 'medicalFileId is required to confirm the request.', 400);
+        }
 
         const result = await labRequestService.confirmLabRequestWithFile(id, medicalFileId, req.user.laborantId);
         sendSuccess(res, result, 'Request completed.');

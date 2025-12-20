@@ -3,7 +3,7 @@ const prisma = require('../config/db');
 const { ApiError } = require('../api/middlewares/errorHandler');
 const logger = require('../utils/logger');
 const { validateRequiredFields } = require('../utils/validators');
-const { REQUEST_STATUS } = require('../config/constants');
+const { REQUEST_STATUS, ROLES } = require('../config/constants');
 const userRepository = require('../repositories/user.repository');
 
 /**
@@ -32,21 +32,45 @@ const createLabRequest = async (userId, role, data) => {
         // status set in repository based on assignee presence
     };
 
-    const created = await labRequestRepository.createRequest(payload);
-    logger.info(`Lab request ${created.id} created by user ${userId}`);
-    return created;
+    // If assigneeLaborantId provided, verify and normalize it.
+    if (payload.assigneeLaborantId) {
+        // Try to find a laborant by id first
+        const assigneeId = payload.assigneeLaborantId;
+        let laborant = await prisma.laborant.findUnique({ where: { id: assigneeId } });
+        if (!laborant) {
+            // Maybe the frontend sent a personnel user id instead of laborant id — try by userId
+            laborant = await prisma.laborant.findUnique({ where: { userId: assigneeId } });
+        }
+        if (!laborant) {
+            throw new ApiError(404, 'Laborant not found for assigneeLaborantId');
+        }
+        payload.assigneeLaborantId = laborant.id;
+    }
+
+    try {
+        const created = await labRequestRepository.createRequest(payload);
+        logger.info(`Lab request ${created.id} created by user ${userId}`);
+        return created;
+    } catch (err) {
+        // Map common Prisma errors to ApiError for consistent HTTP responses
+        if (err.code === 'P2003') {
+            // Foreign key constraint failed
+            throw new ApiError(400, 'Invalid reference provided for lab request (foreign key constraint)');
+        }
+        throw err;
+    }
 };
 
 const listLabRequests = async (userId, role, filters) => {
     // Adjust filters based on role
     const f = { ...(filters || {}) };
 
-    if (role === 'LABORANT') {
+    if (role === ROLES.LABORANT) {
         // Laborant sees assigned requests and optionally open ones (front-end can request status=PENDING)
-        // If not filtering by assignedLaborantId explicitly, default to their assigned ones
-        if (!f.assignedLaborantId && !f.status) {
+        // If not filtering by assigneeLaborantId explicitly, default to their assigned ones
+        if (!f.assigneeLaborantId && !f.status) {
             const laborant = await prisma.laborant.findUnique({ where: { userId: parseInt(userId) } });
-            if (laborant) f.assignedLaborantId = laborant.id;
+            if (laborant) f.assigneeLaborantId = laborant.id;
         }
     }
 
@@ -62,13 +86,33 @@ const getLabRequest = async (id) => {
 };
 
 const assignLabRequest = async (requestId, assignerUserId, assigneeLaborantId) => {
-    // Verify assignee exists
-    const laborant = await prisma.laborant.findUnique({ where: { id: parseInt(assigneeLaborantId) } });
-    if (!laborant) throw new ApiError(404, 'Laborant not found');
+    try {
+        // Verify assignee exists; accept either laborant.id or personnel userId
+        if (!assigneeLaborantId) throw new ApiError(400, 'assigneeLaborantId is required');
+        const parsed = parseInt(assigneeLaborantId);
+        let laborant = null;
+        if (!isNaN(parsed)) {
+            laborant = await prisma.laborant.findUnique({ where: { id: parsed } });
+        }
+        if (!laborant) {
+            // try by userId (frontend might send personnel user id)
+            laborant = await prisma.laborant.findUnique({ where: { userId: parsed } });
+        }
+        if (!laborant) throw new ApiError(404, 'Laborant not found');
 
-    const updated = await labRequestRepository.assignToLaborant(requestId, assigneeLaborantId);
-    logger.info(`Lab request ${requestId} assigned to laborant ${assigneeLaborantId} by user ${assignerUserId}`);
-    return updated;
+        const updated = await labRequestRepository.assignToLaborant(requestId, laborant.id);
+        logger.info(`Lab request ${requestId} assigned to laborant ${laborant.id} by user ${assignerUserId}`);
+        return updated;
+    } catch (err) {
+        if (err instanceof ApiError) throw err;
+        if (err && err.code === 'P2025') {
+            throw new ApiError(404, 'Lab request not found');
+        }
+        if (err && err.code === 'P2003') {
+            throw new ApiError(400, 'Invalid reference provided when assigning lab request');
+        }
+        throw new ApiError(400, err.message || 'Failed to assign lab request');
+    }
 };
 
 const claimLabRequest = async (requestId, laborantId) => {
@@ -77,6 +121,10 @@ const claimLabRequest = async (requestId, laborantId) => {
         logger.info(`Lab request ${requestId} claimed by laborant ${laborantId}`);
         return updated;
     } catch (err) {
+        if (err instanceof ApiError) throw err;
+        if (err && err.code === 'P2025') {
+            throw new ApiError(404, 'Lab request not found');
+        }
         throw new ApiError(400, err.message || 'Unable to claim request');
     }
 };
@@ -87,7 +135,13 @@ const confirmLabRequestWithFile = async (requestId, medicalFileId, laborantId) =
     if (!req) throw new ApiError(404, 'Lab request not found');
     const { REQUEST_STATUS } = require('../config/constants');
     if (req.status === REQUEST_STATUS.CANCELED) throw new ApiError(400, 'Request is canceled');
-    if (req.status === REQUEST_STATUS.COMPLETED) throw new ApiError(400, 'Request already completed');
+    // If already completed, allow idempotent confirm when same file is provided
+    if (req.status === REQUEST_STATUS.COMPLETED) {
+        if (req.medicalFileId && req.medicalFileId === parseInt(medicalFileId)) {
+            return req; // idempotent success
+        }
+        throw new ApiError(400, 'Request already completed with another medical file');
+    }
 
     // If unassigned, only allow the laborant to confirm if they claim it first
     if (!req.assigneeLaborantId) {
@@ -98,9 +152,15 @@ const confirmLabRequestWithFile = async (requestId, medicalFileId, laborantId) =
     }
 
     // Attach medical file and mark request completed
-    const result = await labRequestRepository.attachMedicalFile(requestId, medicalFileId);
-    logger.info(`Lab request ${requestId} completed by laborant ${laborantId} with medicalFile ${medicalFileId}`);
-    return result;
+    try {
+        const result = await labRequestRepository.attachMedicalFile(requestId, medicalFileId);
+        logger.info(`Lab request ${requestId} completed by laborant ${laborantId} with medicalFile ${medicalFileId}`);
+        return result;
+    } catch (err) {
+        // Propagate ApiError from repository, map others to 400
+        if (err instanceof ApiError) throw err;
+        throw new ApiError(400, err.message || 'Unable to attach medical file to request');
+    }
 };
 
 const cancelLabRequest = async (requestId, userId) => {

@@ -246,7 +246,7 @@ model MedicalFile {
   description String?      // Optional description
 
   // Optional back-reference to a lab request (non-defining side)
-  requestId   Int?
+  requestId   Int? @unique
   request     MedicalFileRequest? @relation("RequestFileRelation")
   
   deletedAt   DateTime?    // Soft delete timestamp (tombstone)
