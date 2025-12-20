@@ -72,21 +72,6 @@ const getFilesByPatientId = async (patientId) => {
                     }
                 }
             }
-            ,
-            request: {
-                include: {
-                    assigneeLaborant: {
-                        include: {
-                            user: {
-                                select: {
-                                    firstName: true,
-                                    lastName: true,
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         },
         orderBy: { createdAt: 'desc' },
     });
@@ -108,21 +93,6 @@ const getFilesByLaborantId = async (laborantId) => {
                         select: {
                             firstName: true,
                             lastName: true,
-                        }
-                    }
-                }
-            }
-            ,
-            request: {
-                include: {
-                    assigneeLaborant: {
-                        include: {
-                            user: {
-                                select: {
-                                    firstName: true,
-                                    lastName: true,
-                                }
-                            }
                         }
                     }
                 }
@@ -159,55 +129,7 @@ const getFileById = async (fileId) => {
                     }
                 }
             }
-            ,
-            request: {
-                include: {
-                    assigneeLaborant: {
-                        include: {
-                            user: {
-                                select: {
-                                    firstName: true,
-                                    lastName: true,
-                                    email: true
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         },
-    });
-};
-
-/**
- * Admin: get all medical files with optional filters
- * options: { includeDeleted: boolean, includeOrphaned: boolean }
- */
-const getAllFiles = async (options = {}) => {
-    const { includeDeleted = false, includeOrphaned = false } = options;
-
-    const where = {};
-    if (!includeDeleted) where.deletedAt = null;
-    if (!includeOrphaned) where.laborantId = { not: null };
-
-    return prisma.medicalFile.findMany({
-        where,
-        include: {
-            patient: {
-                include: { user: { select: { firstName: true, lastName: true, email: true } } }
-            },
-            laborant: {
-                include: { user: { select: { firstName: true, lastName: true, email: true } } }
-            },
-            request: {
-                include: {
-                    assigneeLaborant: {
-                        include: { user: { select: { firstName: true, lastName: true, email: true } } }
-                    }
-                }
-            }
-        },
-        orderBy: { createdAt: 'desc' },
     });
 };
 
@@ -219,16 +141,6 @@ const deleteFileById = async (fileId) => {
     return prisma.medicalFile.update({
         where: { id: parseInt(fileId) },
         data: { deletedAt: new Date() },
-    });
-};
-
-/**
- * Permanently remove a medical file record from the database
- * Returns the deleted record (so caller can remove physical file)
- */
-const hardDeleteFileById = async (fileId) => {
-    return prisma.medicalFile.delete({
-        where: { id: parseInt(fileId) },
     });
 };
 
