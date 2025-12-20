@@ -67,6 +67,17 @@ router.get(
 );
 
 /**
+ * Admin: GET /api/v1/medical-files
+ * Query: includeDeleted=true, includeOrphaned=true
+ */
+router.get(
+    '/',
+    authMiddleware,
+    authorize(ROLES.ADMIN),
+    medicalFileController.listAllMedicalFiles
+);
+
+/**
  * GET /api/v1/medical-files/:fileId/download
  * Download a medical file (protected - requires authentication and authorization)
  * SECURITY: This replaces the public static file serving to prevent unauthorized access
@@ -94,7 +105,7 @@ router.get(
 router.delete(
     '/:fileId',
     authMiddleware,
-    authorize(ROLES.LABORANT, ROLES.ADMIN),
+    authorize(ROLES.LABORANT, ROLES.DOCTOR, ROLES.ADMIN),
     medicalFileController.deleteMedicalFile
 );
 

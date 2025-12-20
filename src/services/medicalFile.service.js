@@ -207,6 +207,15 @@ const getLaborantMedicalFiles = async (laborantId) => {
 };
 
 /**
+ * Admin: get all medical files with optional query flags
+ */
+const getAllMedicalFiles = async (options = {}) => {
+    // options: { includeDeleted: boolean, includeOrphaned: boolean }
+    const files = await medicalFileRepository.getAllFiles(options);
+    return files;
+};
+
+/**
  * Get a single medical file by ID
  */
 const getMedicalFileById = async (fileId, userId, userRole) => {
@@ -295,11 +304,31 @@ const deleteMedicalFile = async (fileId, userId, userRole) => {
         throw new ApiError(403, 'Permission denied. Only the uploader or admin can delete this file.');
     }
 
-    // Soft delete from database (set deletedAt timestamp)
-    // Physical file is kept for audit/recovery purposes
-    await medicalFileRepository.deleteFileById(fileId);
+    // If admin requested deletion => hard delete (permanent)
+    if (userRole === ROLES.ADMIN) {
+        // Attempt to remove physical file first when stored locally
+        try {
+            if (file.fileUrl && file.fileUrl.startsWith('/uploads/')) {
+                const relativePath = file.fileUrl.replace(/^\//, '');
+                const absolutePath = require('path').join(process.cwd(), relativePath);
+                // remove file if exists
+                await fs.unlink(absolutePath).catch((err) => {
+                    // Log and continue; do not block DB deletion
+                    logger.fileOperationError('unlink', absolutePath, err);
+                });
+            }
+        } catch (e) {
+            logger.error('Error while attempting to remove physical file during admin hard-delete', e);
+        }
 
-    return { message: 'Medical file deleted successfully.' };
+        // Permanently remove DB record
+        await medicalFileRepository.hardDeleteFileById(fileId);
+        return { message: 'Medical file permanently deleted by admin.' };
+    }
+
+    // Non-admin (laborant/doctor) => soft delete (tombstone). Admin is only one who can permanently remove
+    await medicalFileRepository.deleteFileById(fileId);
+    return { message: 'Medical file soft-deleted (hidden). Admins can still view or permanently delete it.' };
 };
 
 /**
@@ -370,4 +399,5 @@ module.exports = {
     deleteMedicalFile,
     getFileForDownload,
     getMyUploads,
+    getAllMedicalFiles,
 };

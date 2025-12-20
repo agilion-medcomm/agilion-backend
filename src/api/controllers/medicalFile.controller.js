@@ -94,6 +94,24 @@ const getLaborantMedicalFiles = async (req, res, next) => {
 };
 
 /**
+ * GET /api/v1/medical-files
+ * Admin: list all medical files with optional query params
+ * Query params: includeDeleted=true|false, includeOrphaned=true|false
+ */
+const listAllMedicalFiles = async (req, res, next) => {
+    try {
+        // Only admin can call this route (route-level middleware should ensure that)
+        const includeDeleted = req.query.includeDeleted === 'true';
+        const includeOrphaned = req.query.includeOrphaned === 'true';
+
+        const files = await medicalFileService.getAllMedicalFiles({ includeDeleted, includeOrphaned });
+        sendSuccess(res, files);
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
  * DELETE /api/v1/medical-files/:fileId
  * Delete a medical file
  */
