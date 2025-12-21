@@ -42,6 +42,13 @@ enum LeaveRequestStatus {
   REJECTED
 }
 
+// Defines the status of a home health request
+enum HomeHealthStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 // --- Model Definitions ---
 
 // Base User model for login and common info
@@ -83,6 +90,9 @@ model User {
 
   // Lab requests created by this user (doctor/admin)
   createdLabRequests MedicalFileRequest[]
+
+  // Home health requests created by this user
+  homeHealthRequests HomeHealthRequest[]
 
   @@map("users") // Maps this model to the "users" table in Postgres
 }
@@ -312,4 +322,32 @@ model CleaningRecord {
   updatedAt DateTime     @updatedAt
 
   @@map("cleaning_records")
+}
+
+// Home Health Request model for at-home healthcare service requests
+model HomeHealthRequest {
+  id             Int               @id @default(autoincrement())
+  userId         Int
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  fullName       String
+  tckn           String            @db.VarChar(11)
+  phoneNumber    String
+  email          String?
+  address        String
+  serviceType    String
+  serviceDetails String?
+  preferredDate  DateTime
+  preferredTime  String?
+  notes          String?
+  
+  status         HomeHealthStatus  @default(PENDING)
+  approvedBy     Int?
+  approvedAt     DateTime?
+  approvalNote   String?
+  
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@map("home_health_requests")
 }
