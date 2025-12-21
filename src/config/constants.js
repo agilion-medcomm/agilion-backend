@@ -54,6 +54,13 @@ const REQUEST_STATUS = Object.freeze({
     CANCELED: 'CANCELED',
 });
 
+// Home Health Request Status
+const HOME_HEALTH_STATUS = Object.freeze({
+    PENDING: 'PENDING',
+    APPROVED: 'APPROVED',
+    REJECTED: 'REJECTED',
+});
+
 module.exports = {
     // User Roles
     ROLES,
@@ -62,6 +69,7 @@ module.exports = {
     APPOINTMENT_STATUS,
     LEAVE_REQUEST_STATUS,
     CONTACT_STATUS,
+    HOME_HEALTH_STATUS,
 
     // Working Hours Configuration
     WORKING_HOURS: {
