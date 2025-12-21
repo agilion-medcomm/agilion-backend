@@ -1,5 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
+const cron = require('node-cron');
 const logger = require('../utils/logger');
+const { sendAppointmentReminderEmail } = require('../services/email.service');
 
 const prisma = new PrismaClient();
 
@@ -93,8 +95,97 @@ const findAppointmentsNeedingReminders = async () => {
     }
 };
 
+/**
+ * Process and send reminder emails for appointments
+ * Iterates through appointments, sends emails, and updates reminderSent flag
+ */
+const processAppointmentReminders = async () => {
+    try {
+        logger.info('Starting appointment reminder job...');
+        
+        const appointments = await findAppointmentsNeedingReminders();
+        
+        if (appointments.length === 0) {
+            logger.info('No appointments need reminders at this time.');
+            return;
+        }
+
+        let successCount = 0;
+        let failureCount = 0;
+
+        // Process each appointment individually with error handling
+        for (const appointment of appointments) {
+            try {
+                const patientUser = appointment.patient.user;
+                const doctorUser = appointment.doctor.user;
+
+                // Parse appointment date/time for email display
+                const appointmentDateTime = parseAppointmentDateTime(
+                    appointment.date,
+                    appointment.time
+                );
+
+                // Prepare email details
+                const appointmentDetails = {
+                    patientFirstName: patientUser.firstName,
+                    patientLastName: patientUser.lastName,
+                    doctorName: `${doctorUser.firstName} ${doctorUser.lastName}`,
+                    department: appointment.doctor.specialization,
+                    appointmentDateTime: appointmentDateTime,
+                };
+
+                // Send reminder email
+                await sendAppointmentReminderEmail(
+                    patientUser.email,
+                    appointmentDetails
+                );
+
+                // Update reminderSent flag ONLY after successful email send
+                await prisma.appointment.update({
+                    where: { id: appointment.id },
+                    data: { reminderSent: true },
+                });
+
+                successCount++;
+                logger.info(
+                    `Reminder sent for appointment ${appointment.id} (Patient: ${patientUser.email})`
+                );
+            } catch (error) {
+                failureCount++;
+                logger.error(
+                    `Failed to send reminder for appointment ${appointment.id}`,
+                    error
+                );
+                // Continue processing other appointments despite this failure
+            }
+        }
+
+        logger.info(
+            `Appointment reminder job completed. Success: ${successCount}, Failures: ${failureCount}`
+        );
+    } catch (error) {
+        logger.error('Error in appointment reminder job', error);
+    }
+};
+
+/**
+ * Initialize the cron job for appointment reminders
+ * Runs every hour (0 * * * *)
+ */
+const initializeReminderCronJob = () => {
+    // Run every hour at minute 0
+    cron.schedule('0 * * * *', async () => {
+        logger.info('Appointment reminder cron job triggered');
+        await processAppointmentReminders();
+    });
+
+    logger.info('Appointment reminder cron job initialized (runs hourly)');
+};
+
 module.exports = {
     findAppointmentsNeedingReminders,
     parseAppointmentDateTime, // Export for testing purposes
+    processAppointmentReminders,
+    initializeReminderCronJob,
 };
 
