@@ -7,8 +7,8 @@ const requireAdminOrSelf = require('../middlewares/requireAdminOrSelf');
 const { personnelPhotoUpload, handleMulterError } = require('../middlewares/upload');
 const { sanitizeBody } = require('../middlewares/sanitize');
 
-// GET /api/v1/personnel - List all personnel (admin only)
-router.get('/', authMiddleware, requireAdmin, personnelController.getPersonnel);
+// GET /api/v1/personnel - List all personnel (admin only). Controller enforces role-based rules.
+router.get('/', authMiddleware, personnelController.getPersonnel);
 
 // POST /api/v1/personnel - Register new personnel (admin only, accepts token in body or header)
 router.post('/', authMiddleware, requireAdmin, sanitizeBody, personnelController.createPersonnel);

@@ -119,7 +119,8 @@ const createPersonnelWithUser = async (data) => {
         return { user };
     }
 
-    throw new Error(`Unsupported personnel role for creation: ${data.role}`);
+    const { ApiError } = require('../api/middlewares/errorHandler');
+    throw new ApiError(400, `Unsupported personnel role for creation: ${data.role}`);
 };
 
 module.exports = {

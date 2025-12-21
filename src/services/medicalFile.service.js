@@ -4,7 +4,8 @@ const prisma = require('../config/db');
 const fs = require('fs').promises;
 const FileType = require('file-type');
 const logger = require('../utils/logger');
-const { FILE_UPLOAD, ROLES } = require('../config/constants');
+const { FILE_UPLOAD, ROLES, REQUEST_STATUS } = require('../config/constants');
+const labRequestRepository = require('../repositories/labRequest.repository');
 
 /**
  * Safely delete file with error logging
@@ -42,37 +43,101 @@ const validateFileContent = async (filePath) => {
  */
 const uploadMedicalFile = async (laborantId, fileData, uploadedFile) => {
     // Validate file content using magic number detection
-    // This prevents malicious files with fake extensions
     const fileType = await validateFileContent(uploadedFile.path);
     if (!fileType || !FILE_UPLOAD.ALLOWED_MEDICAL_FILE_TYPES.includes(fileType.mime)) {
-        // Delete the uploaded file since it's invalid
         await safeDeleteFile(uploadedFile.path);
         throw new ApiError(400, 'Invalid file content. File signature does not match allowed types (PDF, JPEG, PNG).');
     }
 
-    // Verify patient exists
+    // If a requestId is provided we derive patient and attach in a transaction
+    if (fileData.requestId) {
+        const requestId = parseInt(fileData.requestId);
+        const reqRow = await labRequestRepository.findRequestById(requestId);
+        if (!reqRow) {
+            await safeDeleteFile(uploadedFile.path);
+            throw new ApiError(404, 'Lab request not found.');
+        }
+
+        if (reqRow.status === REQUEST_STATUS.CANCELED) {
+            await safeDeleteFile(uploadedFile.path);
+            throw new ApiError(400, 'Cannot upload for a canceled request.');
+        }
+
+        if (reqRow.status === REQUEST_STATUS.COMPLETED) {
+            await safeDeleteFile(uploadedFile.path);
+            throw new ApiError(400, 'Request already completed.');
+        }
+
+        // Derive patient from request (do not trust client-provided patientId)
+        const patientId = reqRow.patientId;
+
+        // Parse testDate if provided, otherwise default to now
+        let testDate = fileData.testDate ? new Date(fileData.testDate) : new Date();
+        if (isNaN(testDate.getTime())) {
+            await safeDeleteFile(uploadedFile.path);
+            throw new ApiError(400, 'Invalid test date format. Use YYYY-MM-DD.');
+        }
+
+        const fileSizeKB = uploadedFile.size / 1024;
+
+        // Use a transaction to create the file and attach it to the request atomically
+        try {
+            const createdFile = await prisma.$transaction(async (tx) => {
+                const cf = await tx.medicalFile.create({
+                    data: {
+                        patientId: parseInt(patientId),
+                        laborantId: parseInt(laborantId),
+                        fileName: uploadedFile.originalname,
+                        fileUrl: `/uploads/medical-files/${uploadedFile.filename}`,
+                        fileType: uploadedFile.mimetype,
+                        fileSizeKB: parseFloat((fileSizeKB).toFixed(2)),
+                        testName: fileData.testName,
+                        testDate: testDate,
+                        description: fileData.description || null,
+                    }
+                });
+
+                // Link both sides atomically: set medicalFile.requestId and medicalFileRequest.medicalFileId
+                await tx.medicalFile.update({ where: { id: cf.id }, data: { requestId: requestId } });
+                await tx.medicalFileRequest.update({
+                    where: { id: requestId },
+                    data: { medicalFileId: cf.id, status: REQUEST_STATUS.COMPLETED, completedAt: new Date() }
+                });
+
+                return cf;
+            });
+
+            // Return a fully populated record (with relations) for consistency with repo
+            const full = await medicalFileRepository.getFileById(createdFile.id);
+            return full;
+        } catch (err) {
+            // On any failure, delete the uploaded file and bubble up a friendly error
+            await safeDeleteFile(uploadedFile.path);
+            logger.error('Failed to create and attach medical file for request', err);
+            throw new ApiError(500, 'Failed to save medical file for request.');
+        }
+    }
+
+    // Non-request flow: validate client-provided patient and test date
     const patientExists = await medicalFileRepository.checkPatientExists(fileData.patientId);
     if (!patientExists) {
-        // Delete uploaded file if patient doesn't exist
-        await safeDeleteFile(uploadedFile?.path);
+        await safeDeleteFile(uploadedFile.path);
         throw new ApiError(404, 'Patient not found.');
     }
 
-    // Parse test date to ISO format
     const testDate = new Date(fileData.testDate);
     if (isNaN(testDate.getTime())) {
+        await safeDeleteFile(uploadedFile.path);
         throw new ApiError(400, 'Invalid test date format. Use YYYY-MM-DD.');
     }
 
-    // Calculate file size in KB
     const fileSizeKB = uploadedFile.size / 1024;
 
-    // Prepare data for database
     const medicalFileData = {
         patientId: parseInt(fileData.patientId),
         laborantId: parseInt(laborantId),
         fileName: uploadedFile.originalname,
-        fileUrl: `/uploads/medical-files/${uploadedFile.filename}`, // Local path
+        fileUrl: `/uploads/medical-files/${uploadedFile.filename}`,
         fileType: uploadedFile.mimetype,
         fileSizeKB: parseFloat(fileSizeKB.toFixed(2)),
         testName: fileData.testName,
@@ -81,9 +146,18 @@ const uploadMedicalFile = async (laborantId, fileData, uploadedFile) => {
     };
 
     // Save to database
-    const medicalFile = await medicalFileRepository.createMedicalFile(medicalFileData);
-
-    return medicalFile;
+    try {
+        const medicalFile = await medicalFileRepository.createMedicalFile(medicalFileData);
+        return medicalFile;
+    } catch (err) {
+        if (err && err.code === 'P2002') {
+            // Unique constraint failed (unlikely for files but map it)
+            await safeDeleteFile(uploadedFile.path);
+            throw new ApiError(400, 'Duplicate medical file record');
+        }
+        await safeDeleteFile(uploadedFile.path);
+        throw err;
+    }
 };
 
 /**
@@ -129,6 +203,15 @@ const getLaborantMedicalFiles = async (laborantId) => {
     }
 
     const files = await medicalFileRepository.getFilesByLaborantId(laborantId);
+    return files;
+};
+
+/**
+ * Admin: get all medical files with optional query flags
+ */
+const getAllMedicalFiles = async (options = {}) => {
+    // options: { includeDeleted: boolean, includeOrphaned: boolean }
+    const files = await medicalFileRepository.getAllFiles(options);
     return files;
 };
 
@@ -221,11 +304,31 @@ const deleteMedicalFile = async (fileId, userId, userRole) => {
         throw new ApiError(403, 'Permission denied. Only the uploader or admin can delete this file.');
     }
 
-    // Soft delete from database (set deletedAt timestamp)
-    // Physical file is kept for audit/recovery purposes
-    await medicalFileRepository.deleteFileById(fileId);
+    // If admin requested deletion => hard delete (permanent)
+    if (userRole === ROLES.ADMIN) {
+        // Attempt to remove physical file first when stored locally
+        try {
+            if (file.fileUrl && file.fileUrl.startsWith('/uploads/')) {
+                const relativePath = file.fileUrl.replace(/^\//, '');
+                const absolutePath = require('path').join(process.cwd(), relativePath);
+                // remove file if exists
+                await fs.unlink(absolutePath).catch((err) => {
+                    // Log and continue; do not block DB deletion
+                    logger.fileOperationError('unlink', absolutePath, err);
+                });
+            }
+        } catch (e) {
+            logger.error('Error while attempting to remove physical file during admin hard-delete', e);
+        }
 
-    return { message: 'Medical file deleted successfully.' };
+        // Permanently remove DB record
+        await medicalFileRepository.hardDeleteFileById(fileId);
+        return { message: 'Medical file permanently deleted by admin.' };
+    }
+
+    // Non-admin (laborant/doctor) => soft delete (tombstone). Admin is only one who can permanently remove
+    await medicalFileRepository.deleteFileById(fileId);
+    return { message: 'Medical file soft-deleted (hidden). Admins can still view or permanently delete it.' };
 };
 
 /**
@@ -237,22 +340,38 @@ const getFileForDownload = async (fileId, userId, userRole) => {
     const file = await getMedicalFileById(fileId, userId, userRole);
     
     // Get the physical file path from the URL stored in database
-    // fileUrl format: /uploads/medical-files/filename.ext
-    const relativePath = file.fileUrl.replace('/uploads/', '');
+    // fileUrl format usually: /uploads/medical-files/filename.ext
     const path = require('path');
-    const absolutePath = path.join(process.cwd(), 'uploads', relativePath);
-    
-    // Check if file exists on disk
     const fsSync = require('fs');
-    if (!fsSync.existsSync(absolutePath)) {
-        throw new ApiError(404, 'File not found on disk.');
+
+    if (!file.fileUrl) {
+        throw new ApiError(500, 'No fileUrl available for this medical file');
     }
-    
-    return {
-        path: absolutePath,
-        fileName: file.fileName,
-        mimeType: file.fileType,
-    };
+
+    // If stored as a local uploads path (starts with /uploads/), convert to absolute path
+    if (file.fileUrl.startsWith('/uploads/')) {
+        const relativePath = file.fileUrl.replace(/^\/uploads\//, '');
+        const absolutePath = path.join(process.cwd(), 'uploads', relativePath);
+
+        if (!fsSync.existsSync(absolutePath)) {
+            throw new ApiError(404, 'File not found on disk.');
+        }
+
+        return {
+            path: absolutePath,
+            fileName: file.fileName,
+            mimeType: file.fileType,
+        };
+    }
+
+    // If fileUrl is an absolute HTTP/HTTPS URL (external storage), we don't serve from disk.
+    // Caller should handle redirecting or proxying from external storage.
+    if (/^https?:\/\//i.test(file.fileUrl)) {
+        throw new ApiError(501, 'File is stored in external storage. Download must be handled by the client or proxy.');
+    }
+
+    // Unknown URL format
+    throw new ApiError(500, 'Unsupported file storage location.');
 };
 
 /**
@@ -280,4 +399,5 @@ module.exports = {
     deleteMedicalFile,
     getFileForDownload,
     getMyUploads,
+    getAllMedicalFiles,
 };

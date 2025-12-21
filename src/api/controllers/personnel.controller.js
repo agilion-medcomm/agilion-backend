@@ -2,6 +2,8 @@ const authService = require('../../services/auth.service');
 const personnelService = require('../../services/personnel.service');
 const { sendSuccess, sendCreated } = require('../../utils/responseFormatter');
 const { parseAndValidateId } = require('../../utils/idValidator');
+const { ApiError } = require('../middlewares/errorHandler');
+const { ROLES } = require('../../config/constants');
 
 /**
  * GET /api/v1/personnel
@@ -9,6 +11,32 @@ const { parseAndValidateId } = require('../../utils/idValidator');
  */
 const getPersonnel = async (req, res, next) => {
     try {
+        const roleQuery = (req.query && req.query.role) ? req.query.role.toString().toUpperCase() : null;
+
+        // If caller requests a role-specific list
+        if (roleQuery) {
+            // Only allow doctors and admins to list laborants
+            if (roleQuery === ROLES.LABORANT) {
+                if (!req.user || (req.user.role !== ROLES.ADMIN && req.user.role !== ROLES.DOCTOR)) {
+                    return next(new ApiError(403, 'Admin or doctor access required to list laborants.'));
+                }
+                const list = await personnelService.getPersonnelByRole(ROLES.LABORANT);
+                return sendSuccess(res, list);
+            }
+
+            // For other role filters require admin
+            if (!req.user || req.user.role !== ROLES.ADMIN) {
+                return next(new ApiError(403, 'Admin access required.'));
+            }
+            const list = await personnelService.getPersonnelByRole(roleQuery);
+            return sendSuccess(res, list);
+        }
+
+        // Full personnel listing requires admin
+        if (!req.user || req.user.role !== ROLES.ADMIN) {
+            return next(new ApiError(403, 'Admin access required.'));
+        }
+
         const personnel = await personnelService.getAllPersonnel();
         sendSuccess(res, personnel);
     } catch (error) {

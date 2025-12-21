@@ -27,6 +27,7 @@ const uploadMedicalFileSchema = Joi.object({
     description: Joi.string().max(500).optional().allow('').messages({
         'string.max': 'Description cannot exceed 500 characters.',
     }),
+    requestId: Joi.number().integer().optional(),
 });
 
 module.exports = {

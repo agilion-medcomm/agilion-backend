@@ -1,20 +1,30 @@
 const prisma = require('../config/db.js');
+const { validateRequiredFields } = require('../utils/validators');
+const { ApiError } = require('../api/middlewares/errorHandler');
 
 /**
  * Creates a new medical file record
  */
 const createMedicalFile = async (data) => {
+    // Prevent callers from creating a medical file already linked to a request
+    if (data.requestId) {
+        throw new ApiError(400, 'Do not set requestId when creating a standalone medical file. Use the request-driven upload flow instead.');
+    }
+
+    // Validate required fields for a medical file
+    validateRequiredFields(data, ['patientId', 'fileName', 'fileUrl', 'fileType', 'fileSizeKB', 'testName', 'testDate']);
+
     return prisma.medicalFile.create({
         data: {
-            patientId: data.patientId,
-            laborantId: data.laborantId,
+            patientId: parseInt(data.patientId),
+            laborantId: data.laborantId ? parseInt(data.laborantId) : null,
             fileName: data.fileName,
             fileUrl: data.fileUrl,
             fileType: data.fileType,
-            fileSizeKB: data.fileSizeKB,
+            fileSizeKB: parseFloat(data.fileSizeKB),
             testName: data.testName,
             testDate: data.testDate,
-            description: data.description,
+            description: data.description || null,
         },
         include: {
             patient: {
@@ -62,6 +72,21 @@ const getFilesByPatientId = async (patientId) => {
                     }
                 }
             }
+            ,
+            request: {
+                include: {
+                    assigneeLaborant: {
+                        include: {
+                            user: {
+                                select: {
+                                    firstName: true,
+                                    lastName: true,
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         },
         orderBy: { createdAt: 'desc' },
     });
@@ -83,6 +108,21 @@ const getFilesByLaborantId = async (laborantId) => {
                         select: {
                             firstName: true,
                             lastName: true,
+                        }
+                    }
+                }
+            }
+            ,
+            request: {
+                include: {
+                    assigneeLaborant: {
+                        include: {
+                            user: {
+                                select: {
+                                    firstName: true,
+                                    lastName: true,
+                                }
+                            }
                         }
                     }
                 }
@@ -119,7 +159,55 @@ const getFileById = async (fileId) => {
                     }
                 }
             }
+            ,
+            request: {
+                include: {
+                    assigneeLaborant: {
+                        include: {
+                            user: {
+                                select: {
+                                    firstName: true,
+                                    lastName: true,
+                                    email: true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         },
+    });
+};
+
+/**
+ * Admin: get all medical files with optional filters
+ * options: { includeDeleted: boolean, includeOrphaned: boolean }
+ */
+const getAllFiles = async (options = {}) => {
+    const { includeDeleted = false, includeOrphaned = false } = options;
+
+    const where = {};
+    if (!includeDeleted) where.deletedAt = null;
+    if (!includeOrphaned) where.laborantId = { not: null };
+
+    return prisma.medicalFile.findMany({
+        where,
+        include: {
+            patient: {
+                include: { user: { select: { firstName: true, lastName: true, email: true } } }
+            },
+            laborant: {
+                include: { user: { select: { firstName: true, lastName: true, email: true } } }
+            },
+            request: {
+                include: {
+                    assigneeLaborant: {
+                        include: { user: { select: { firstName: true, lastName: true, email: true } } }
+                    }
+                }
+            }
+        },
+        orderBy: { createdAt: 'desc' },
     });
 };
 
@@ -131,6 +219,16 @@ const deleteFileById = async (fileId) => {
     return prisma.medicalFile.update({
         where: { id: parseInt(fileId) },
         data: { deletedAt: new Date() },
+    });
+};
+
+/**
+ * Permanently remove a medical file record from the database
+ * Returns the deleted record (so caller can remove physical file)
+ */
+const hardDeleteFileById = async (fileId) => {
+    return prisma.medicalFile.delete({
+        where: { id: parseInt(fileId) },
     });
 };
 

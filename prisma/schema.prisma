@@ -81,6 +81,9 @@ model User {
   // A user can be ONE cleaner (1-to-1)
   cleaner Cleaner?
 
+  // Lab requests created by this user (doctor/admin)
+  createdLabRequests MedicalFileRequest[]
+
   @@map("users") // Maps this model to the "users" table in Postgres
 }
 
@@ -102,6 +105,9 @@ model Patient {
   appointments Appointment[]
   // A patient can have MANY medical files
   medicalFiles MedicalFile[]
+
+  // Lab requests created for this patient
+  labRequests MedicalFileRequest[]
 
   @@map("patients")
 }
@@ -201,6 +207,8 @@ model Laborant {
   // --- Relationships ---
   // A laborant can upload MANY medical files
   medicalFiles MedicalFile[]
+  // Lab requests assigned to this laborant
+  assignedLabRequests MedicalFileRequest[]
 
   @@map("laborants")
 }
@@ -236,6 +244,10 @@ model MedicalFile {
   testName    String       // Test name (Hemogram, Kan Tahlili, etc.)
   testDate    DateTime     // Test date
   description String?      // Optional description
+
+  // Optional back-reference to a lab request (non-defining side)
+  requestId   Int? @unique
+  request     MedicalFileRequest? @relation("RequestFileRelation")
   
   deletedAt   DateTime?    // Soft delete timestamp (tombstone)
   
@@ -243,6 +255,44 @@ model MedicalFile {
   updatedAt   DateTime     @updatedAt
 
   @@map("medical_files")
+}
+
+// Enum for lab request status
+enum RequestStatus {
+  PENDING
+  ASSIGNED
+  COMPLETED
+  CANCELED
+}
+
+// MedicalFileRequest model representing a doctor's request for a lab result upload
+model MedicalFileRequest {
+  id                 Int           @id @default(autoincrement())
+  patientId          Int
+  patient            Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  createdByUserId    Int
+  createdByUser      User          @relation(fields: [createdByUserId], references: [id])
+
+  assigneeLaborantId Int?
+  assigneeLaborant   Laborant?     @relation(fields: [assigneeLaborantId], references: [id], onDelete: SetNull)
+
+  fileTitle          String
+  notes              String?
+  status             RequestStatus @default(PENDING)
+
+  medicalFileId      Int? @unique
+  medicalFile        MedicalFile?  @relation("RequestFileRelation", fields: [medicalFileId], references: [id], onDelete: SetNull)
+
+  requestedAt        DateTime      @default(now())
+  assignedAt         DateTime?
+  completedAt        DateTime?
+  canceledAt         DateTime?
+
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  @@map("medical_file_requests")
 }
 
 // Cleaning Record model for cleaner personnel

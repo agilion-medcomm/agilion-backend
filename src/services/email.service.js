@@ -277,7 +277,7 @@ Randevunuza zamanında gelmenizi rica ederiz. Herhangi bir değişiklik için l�
         await transporter.sendMail(mailOptions);
     } catch (error) {
         logger.error('Failed to send appointment notification email', error);
-        throw new Error('Failed to send appointment notification email.');
+        throw new ApiError(500, 'Failed to send appointment notification email.');
     }
 };
 
@@ -368,7 +368,7 @@ Yeni bir randevu almak için lütfen sistemimizi kullanın veya bizimle iletişi
         await transporter.sendMail(mailOptions);
     } catch (error) {
         logger.error('Failed to send appointment cancellation email', error);
-        throw new Error('Failed to send appointment cancellation email.');
+        throw new ApiError(500, 'Failed to send appointment cancellation email.');
     }
 };
 
