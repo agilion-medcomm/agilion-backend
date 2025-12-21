@@ -154,6 +154,7 @@ model Appointment {
   date      String  // Format: DD.MM.YYYY (e.g., "25.11.2025")
   time      String  // Format: HH:MM (e.g., "10:00")
   status    AppointmentStatus @default(APPROVED)
+  reminderSent Boolean @default(false) // Flag for 24-hour email reminder
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
