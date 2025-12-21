@@ -9,6 +9,7 @@ const contactRouter = require("./contact.routes.js");
 const medicalFileRouter = require("./medicalFile.routes.js");
 const labRequestRouter = require("./labRequest.routes.js");
 const cleaningRouter = require("./cleaning.routes.js");
+const homeHealthRouter = require("./homeHealth.routes.js");
 
 const router = express.Router();
 
@@ -22,5 +23,6 @@ router.use("/contact", contactRouter);
 router.use("/medical-files", medicalFileRouter);
 router.use("/lab-requests", labRequestRouter);
 router.use("/cleaning", cleaningRouter);
+router.use("/home-health", homeHealthRouter);
 
 module.exports = router;
