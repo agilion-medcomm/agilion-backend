@@ -3,7 +3,7 @@ const Joi = require('joi');
 const createLabRequestSchema = Joi.object({
     patientId: Joi.number().integer().required(),
     fileTitle: Joi.string().min(1).required(),
-    notes: Joi.string().allow('', null),
+    notes: Joi.string().allow(null),
     assigneeLaborantId: Joi.number().integer().allow('', null).optional(),
 });
 
