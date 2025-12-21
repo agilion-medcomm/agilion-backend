@@ -178,11 +178,12 @@ async function testCreateRequest() {
         });
 
         assert(res.status === 201, `Expected 201, got ${res.status}: ${JSON.stringify(res.data)}`);
-        assert(res.data.success, 'Response success should be true');
-        assert(res.data.data.id, 'Request ID not returned');
+        assert(res.data.status === 'success', 'Response status should be success');
+        assert(res.data.data && res.data.data.id, 'Request ID not returned');
         assert(res.data.data.status === 'PENDING', 'Status should be PENDING');
         
         testRequestId = res.data.data.id;
+        log(`    → Created request ID: ${testRequestId}`, colors.blue);
     });
 
     await test('Create request as Admin', async () => {
@@ -287,7 +288,7 @@ async function testGetAllRequests() {
         });
 
         assert(res.status === 200, `Expected 200, got ${res.status}`);
-        assert(res.data.success, 'Response success should be true');
+        assert(res.data.status === 'success', 'Response status should be success');
         assert(Array.isArray(res.data.data.requests), 'Requests should be an array');
         assert(res.data.data.requests.length >= 2, 'Should have at least 2 requests');
     });
@@ -334,12 +335,16 @@ async function testGetRequestById() {
     logSubSection('Get Single Home Health Request');
 
     await test('Get request by ID as Admin', async () => {
+        if (!testRequestId) {
+            throw new Error('testRequestId not set - previous test failed');
+        }
+        
         const res = await request('GET', `/home-health/${testRequestId}`, {
             token: adminToken
         });
 
-        assert(res.status === 200, `Expected 200, got ${res.status}`);
-        assert(res.data.success, 'Response success should be true');
+        assert(res.status === 200, `Expected 200, got ${res.status}: ${JSON.stringify(res.data)}`);
+        assert(res.data.status === 'success', 'Response status should be success');
         assert(res.data.data.request.id === testRequestId, 'Request ID should match');
         assert(res.data.data.request.fullName, 'Request should have fullName');
         assert(res.data.data.request.status === 'PENDING', 'Status should be PENDING');
@@ -382,6 +387,10 @@ async function testApproveRequest() {
     logSubSection('Approve Home Health Request');
 
     await test('Approve request as Admin', async () => {
+        if (!testRequestId) {
+            throw new Error('testRequestId not set - previous test failed');
+        }
+        
         const res = await request('PATCH', `/home-health/${testRequestId}/approve`, {
             token: adminToken,
             body: {
@@ -389,8 +398,8 @@ async function testApproveRequest() {
             }
         });
 
-        assert(res.status === 200, `Expected 200, got ${res.status}`);
-        assert(res.data.success, 'Response success should be true');
+        assert(res.status === 200, `Expected 200, got ${res.status}: ${JSON.stringify(res.data)}`);
+        assert(res.data.status === 'success', 'Response status should be success');
         assert(res.data.data.status === 'APPROVED', 'Status should be APPROVED');
         assert(res.data.data.approvedBy, 'ApprovedBy should be set');
         assert(res.data.data.approvedAt, 'ApprovedAt should be set');
@@ -426,6 +435,10 @@ async function testRejectRequest() {
     logSubSection('Reject Home Health Request');
 
     await test('Reject request as Cashier', async () => {
+        if (!testRequestId2) {
+            throw new Error('testRequestId2 not set - previous test failed');
+        }
+        
         const res = await request('PATCH', `/home-health/${testRequestId2}/reject`, {
             token: cashierToken,
             body: {
@@ -433,8 +446,8 @@ async function testRejectRequest() {
             }
         });
 
-        assert(res.status === 200, `Expected 200, got ${res.status}`);
-        assert(res.data.success, 'Response success should be true');
+        assert(res.status === 200, `Expected 200, got ${res.status}: ${JSON.stringify(res.data)}`);
+        assert(res.data.status === 'success', 'Response status should be success');
         assert(res.data.data.status === 'REJECTED', 'Status should be REJECTED');
         assert(res.data.data.approvedBy, 'ApprovedBy should be set');
         assert(res.data.data.approvalNote === 'Adres bilgisi eksik, lütfen tekrar başvurun', 'Approval note should match');
@@ -485,7 +498,7 @@ async function testGetStats() {
         });
 
         assert(res.status === 200, `Expected 200, got ${res.status}`);
-        assert(res.data.success, 'Response success should be true');
+        assert(res.data.status === 'success', 'Response status should be success');
         assert(typeof res.data.data.pending === 'number', 'Pending count should be a number');
         assert(typeof res.data.data.approved === 'number', 'Approved count should be a number');
         assert(typeof res.data.data.rejected === 'number', 'Rejected count should be a number');
