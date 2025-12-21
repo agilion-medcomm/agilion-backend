@@ -1,6 +1,11 @@
 const prisma = require('../config/db');
 const { ApiError } = require('../api/middlewares/errorHandler');
 const { validateISODateFormat, validateTimeFormat, isoDateToObject } = require('../utils/dateTimeValidator');
+const { 
+    sendHomeHealthRequestCreatedEmail,
+    sendHomeHealthRequestApprovedEmail,
+    sendHomeHealthRequestRejectedEmail,
+} = require('./email.service');
 
 /**
  * Home Health Service
@@ -60,7 +65,30 @@ const createRequest = async (userId, requestData) => {
             preferredTime: preferredTime || null,
             notes: notes || null,
         },
+        include: {
+            user: {
+                select: {
+                    email: true,
+                },
+            },
+        },
     });
+
+    // Send email notification to user
+    const userEmail = email || homeHealthRequest.user.email;
+    if (userEmail) {
+        // Send email asynchronously (don't block request creation)
+        sendHomeHealthRequestCreatedEmail(userEmail, {
+            fullName,
+            serviceType,
+            address,
+            preferredDate,
+            preferredTime,
+        }).catch(err => {
+            // Log error but don't fail the request
+            console.error('Failed to send home health request created email:', err);
+        });
+    }
 
     return {
         id: homeHealthRequest.id,
@@ -190,6 +218,13 @@ const approveRequest = async (id, approvedByUserId, approvalNote = null) => {
     // Check if request exists
     const existingRequest = await prisma.homeHealthRequest.findUnique({
         where: { id },
+        include: {
+            user: {
+                select: {
+                    email: true,
+                },
+            },
+        },
     });
 
     if (!existingRequest) {
@@ -210,6 +245,26 @@ const approveRequest = async (id, approvedByUserId, approvalNote = null) => {
             approvalNote: approvalNote || null,
         },
     });
+
+    // Send email notification to user
+    const userEmail = existingRequest.email || existingRequest.user.email;
+    if (userEmail) {
+        // Format date for email
+        const preferredDate = existingRequest.preferredDate.toISOString().split('T')[0];
+        
+        // Send email asynchronously (don't block approval)
+        sendHomeHealthRequestApprovedEmail(userEmail, {
+            fullName: existingRequest.fullName,
+            serviceType: existingRequest.serviceType,
+            address: existingRequest.address,
+            preferredDate,
+            preferredTime: existingRequest.preferredTime,
+            approvalNote: approvalNote || '',
+        }).catch(err => {
+            // Log error but don't fail the approval
+            console.error('Failed to send home health request approved email:', err);
+        });
+    }
 
     return {
         id: updatedRequest.id,
@@ -232,6 +287,13 @@ const rejectRequest = async (id, approvedByUserId, approvalNote = null) => {
     // Check if request exists
     const existingRequest = await prisma.homeHealthRequest.findUnique({
         where: { id },
+        include: {
+            user: {
+                select: {
+                    email: true,
+                },
+            },
+        },
     });
 
     if (!existingRequest) {
@@ -252,6 +314,26 @@ const rejectRequest = async (id, approvedByUserId, approvalNote = null) => {
             approvalNote: approvalNote || null,
         },
     });
+
+    // Send email notification to user
+    const userEmail = existingRequest.email || existingRequest.user.email;
+    if (userEmail) {
+        // Format date for email
+        const preferredDate = existingRequest.preferredDate.toISOString().split('T')[0];
+        
+        // Send email asynchronously (don't block rejection)
+        sendHomeHealthRequestRejectedEmail(userEmail, {
+            fullName: existingRequest.fullName,
+            serviceType: existingRequest.serviceType,
+            address: existingRequest.address,
+            preferredDate,
+            preferredTime: existingRequest.preferredTime,
+            approvalNote: approvalNote || '',
+        }).catch(err => {
+            // Log error but don't fail the rejection
+            console.error('Failed to send home health request rejected email:', err);
+        });
+    }
 
     return {
         id: updatedRequest.id,

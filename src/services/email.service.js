@@ -481,6 +481,320 @@ Herhangi bir değişiklik veya iptal için lütfen bizimle iletişime geçin.
     }
 };
 
+/**
+ * Send home health request created email
+ * @param {string} email - Patient's email
+ * @param {object} requestDetails - Request details
+ * @param {string} requestDetails.fullName - Patient's full name
+ * @param {string} requestDetails.serviceType - Type of service requested
+ * @param {string} requestDetails.address - Service address
+ * @param {string} requestDetails.preferredDate - Preferred date (YYYY-MM-DD)
+ * @param {string} requestDetails.preferredTime - Preferred time (HH:MM) or null
+ */
+const sendHomeHealthRequestCreatedEmail = async (email, requestDetails) => {
+    const transporter = createTransporter();
+
+    if (!transporter) {
+        return;
+    }
+
+    const {
+        fullName,
+        serviceType,
+        address,
+        preferredDate,
+        preferredTime,
+    } = requestDetails;
+
+    // Format date to Turkish format (DD.MM.YYYY)
+    const [year, month, day] = preferredDate.split('-');
+    const formattedDate = `${day}.${month}.${year}`;
+
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Evde Sağlık Hizmeti Talebiniz Alındı - Agilion MedComm',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #0e2b4b;">🏥 Evde Sağlık Hizmeti Talebi</h2>
+                <p>Merhaba ${fullName},</p>
+                <p>Evde sağlık hizmeti talebiniz başarıyla alındı. Talebiniz inceleniyor ve en kısa sürede size dönüş yapılacaktır.</p>
+                <div style="background-color: #e7f3ff; padding: 20px; border-left: 4px solid #45b5c4; margin: 20px 0;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 8px 0; color: #666; width: 140px;"><strong>Hizmet Türü:</strong></td>
+                            <td style="padding: 8px 0; color: #333;">${serviceType}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666;"><strong>Adres:</strong></td>
+                            <td style="padding: 8px 0; color: #333;">${address}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666;"><strong>Tercih Tarihi:</strong></td>
+                            <td style="padding: 8px 0; color: #333;">${formattedDate}${preferredTime ? ` - ${preferredTime}` : ''}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666;"><strong>Durum:</strong></td>
+                            <td style="padding: 8px 0; color: #ffc107; font-weight: bold;">Beklemede</td>
+                        </tr>
+                    </table>
+                </div>
+                <div style="background-color: #fff3cd; padding: 15px; border-radius: 4px; margin: 20px 0;">
+                    <p style="margin: 0; color: #856404;">
+                        <strong>ℹ️ Bilgilendirme:</strong> Talebiniz yetkili personelimiz tarafından değerlendirilecek ve onay durumu hakkında size bilgi verilecektir.
+                    </p>
+                </div>
+                <p style="color: #666;">Sorularınız için bizimle iletişime geçebilirsiniz.</p>
+                <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+                <p style="color: #999; font-size: 12px;">© 2025 Agilion MedComm. Tüm hakları saklıdır.</p>
+            </div>
+        `,
+        text: `
+🏥 Evde Sağlık Hizmeti Talebi
+
+Merhaba ${fullName},
+
+Evde sağlık hizmeti talebiniz başarıyla alındı. Talebiniz inceleniyor ve en kısa sürede size dönüş yapılacaktır.
+
+Talep Detayları:
+- Hizmet Türü: ${serviceType}
+- Adres: ${address}
+- Tercih Tarihi: ${formattedDate}${preferredTime ? ` - ${preferredTime}` : ''}
+- Durum: Beklemede
+
+ℹ️ Bilgilendirme: Talebiniz yetkili personelimiz tarafından değerlendirilecek ve onay durumu hakkında size bilgi verilecektir.
+
+Sorularınız için bizimle iletişime geçebilirsiniz.
+
+© 2025 Agilion MedComm
+        `,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        logger.info(`Home health request created email sent to ${email}`);
+    } catch (error) {
+        logger.error('Failed to send home health request created email', error);
+        // Don't throw - email failure shouldn't block request creation
+    }
+};
+
+/**
+ * Send home health request approved email
+ * @param {string} email - Patient's email
+ * @param {object} requestDetails - Request details
+ * @param {string} requestDetails.fullName - Patient's full name
+ * @param {string} requestDetails.serviceType - Type of service requested
+ * @param {string} requestDetails.address - Service address
+ * @param {string} requestDetails.preferredDate - Preferred date (YYYY-MM-DD)
+ * @param {string} requestDetails.preferredTime - Preferred time (HH:MM) or null
+ * @param {string} requestDetails.approvalNote - Approval note from admin/cashier
+ */
+const sendHomeHealthRequestApprovedEmail = async (email, requestDetails) => {
+    const transporter = createTransporter();
+
+    if (!transporter) {
+        return;
+    }
+
+    const {
+        fullName,
+        serviceType,
+        address,
+        preferredDate,
+        preferredTime,
+        approvalNote,
+    } = requestDetails;
+
+    // Format date to Turkish format (DD.MM.YYYY)
+    const [year, month, day] = preferredDate.split('-');
+    const formattedDate = `${day}.${month}.${year}`;
+
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: '✅ Evde Sağlık Hizmeti Talebiniz Onaylandı - Agilion MedComm',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #28a745;">✅ Talebiniz Onaylandı!</h2>
+                <p>Merhaba ${fullName},</p>
+                <p>Evde sağlık hizmeti talebiniz onaylandı. Ekibimiz en kısa sürede sizinle iletişime geçecektir.</p>
+                <div style="background-color: #d4edda; padding: 20px; border-left: 4px solid #28a745; margin: 20px 0;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 8px 0; color: #666; width: 140px;"><strong>Hizmet Türü:</strong></td>
+                            <td style="padding: 8px 0; color: #333;">${serviceType}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666;"><strong>Adres:</strong></td>
+                            <td style="padding: 8px 0; color: #333;">${address}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666;"><strong>Tercih Tarihi:</strong></td>
+                            <td style="padding: 8px 0; color: #333;">${formattedDate}${preferredTime ? ` - ${preferredTime}` : ''}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666;"><strong>Durum:</strong></td>
+                            <td style="padding: 8px 0; color: #28a745; font-weight: bold;">Onaylandı</td>
+                        </tr>
+                    </table>
+                </div>
+                ${approvalNote ? `
+                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 4px; margin: 20px 0;">
+                    <p style="margin: 0; color: #495057;">
+                        <strong>📝 Not:</strong> ${approvalNote}
+                    </p>
+                </div>
+                ` : ''}
+                <div style="background-color: #e7f3ff; padding: 15px; border-radius: 4px; margin: 20px 0;">
+                    <p style="margin: 0; color: #0c5460;">
+                        <strong>📞 Sonraki Adım:</strong> Ekibimiz belirttiğiniz tarihte hizmet vermek üzere sizinle iletişime geçecektir. Herhangi bir değişiklik olursa lütfen bize bildirin.
+                    </p>
+                </div>
+                <p style="color: #666;">Sağlıklı günler dileriz.</p>
+                <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+                <p style="color: #999; font-size: 12px;">© 2025 Agilion MedComm. Tüm hakları saklıdır.</p>
+            </div>
+        `,
+        text: `
+✅ Talebiniz Onaylandı!
+
+Merhaba ${fullName},
+
+Evde sağlık hizmeti talebiniz onaylandı. Ekibimiz en kısa sürede sizinle iletişime geçecektir.
+
+Talep Detayları:
+- Hizmet Türü: ${serviceType}
+- Adres: ${address}
+- Tercih Tarihi: ${formattedDate}${preferredTime ? ` - ${preferredTime}` : ''}
+- Durum: Onaylandı
+
+${approvalNote ? `📝 Not: ${approvalNote}\n\n` : ''}
+📞 Sonraki Adım: Ekibimiz belirttiğiniz tarihte hizmet vermek üzere sizinle iletişime geçecektir. Herhangi bir değişiklik olursa lütfen bize bildirin.
+
+Sağlıklı günler dileriz.
+
+© 2025 Agilion MedComm
+        `,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        logger.info(`Home health request approved email sent to ${email}`);
+    } catch (error) {
+        logger.error('Failed to send home health request approved email', error);
+        // Don't throw - email failure shouldn't block approval
+    }
+};
+
+/**
+ * Send home health request rejected email
+ * @param {string} email - Patient's email
+ * @param {object} requestDetails - Request details
+ * @param {string} requestDetails.fullName - Patient's full name
+ * @param {string} requestDetails.serviceType - Type of service requested
+ * @param {string} requestDetails.address - Service address
+ * @param {string} requestDetails.preferredDate - Preferred date (YYYY-MM-DD)
+ * @param {string} requestDetails.preferredTime - Preferred time (HH:MM) or null
+ * @param {string} requestDetails.approvalNote - Rejection reason from admin/cashier
+ */
+const sendHomeHealthRequestRejectedEmail = async (email, requestDetails) => {
+    const transporter = createTransporter();
+
+    if (!transporter) {
+        return;
+    }
+
+    const {
+        fullName,
+        serviceType,
+        address,
+        preferredDate,
+        preferredTime,
+        approvalNote,
+    } = requestDetails;
+
+    // Format date to Turkish format (DD.MM.YYYY)
+    const [year, month, day] = preferredDate.split('-');
+    const formattedDate = `${day}.${month}.${year}`;
+
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Evde Sağlık Hizmeti Talebiniz Hakkında - Agilion MedComm',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #dc3545;">Talep Durumu Güncellendi</h2>
+                <p>Merhaba ${fullName},</p>
+                <p>Evde sağlık hizmeti talebiniz değerlendirildi. Maalesef mevcut durumda talebinizi karşılayamıyoruz.</p>
+                <div style="background-color: #f8d7da; padding: 20px; border-left: 4px solid #dc3545; margin: 20px 0;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 8px 0; color: #666; width: 140px;"><strong>Hizmet Türü:</strong></td>
+                            <td style="padding: 8px 0; color: #333;">${serviceType}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666;"><strong>Adres:</strong></td>
+                            <td style="padding: 8px 0; color: #333;">${address}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666;"><strong>Tercih Tarihi:</strong></td>
+                            <td style="padding: 8px 0; color: #333;">${formattedDate}${preferredTime ? ` - ${preferredTime}` : ''}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666;"><strong>Durum:</strong></td>
+                            <td style="padding: 8px 0; color: #dc3545; font-weight: bold;">Reddedildi</td>
+                        </tr>
+                    </table>
+                </div>
+                ${approvalNote ? `
+                <div style="background-color: #fff3cd; padding: 15px; border-radius: 4px; margin: 20px 0;">
+                    <p style="margin: 0; color: #856404;">
+                        <strong>📝 Açıklama:</strong> ${approvalNote}
+                    </p>
+                </div>
+                ` : ''}
+                <div style="background-color: #e7f3ff; padding: 15px; border-radius: 4px; margin: 20px 0;">
+                    <p style="margin: 0; color: #0c5460;">
+                        <strong>ℹ️ Bilgi:</strong> Farklı bir tarih veya hizmet türü için yeni bir talep oluşturabilirsiniz. Detaylı bilgi için lütfen bizimle iletişime geçin.
+                    </p>
+                </div>
+                <p style="color: #666;">Anlayışınız için teşekkür ederiz.</p>
+                <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+                <p style="color: #999; font-size: 12px;">© 2025 Agilion MedComm. Tüm hakları saklıdır.</p>
+            </div>
+        `,
+        text: `
+Talep Durumu Güncellendi
+
+Merhaba ${fullName},
+
+Evde sağlık hizmeti talebiniz değerlendirildi. Maalesef mevcut durumda talebinizi karşılayamıyoruz.
+
+Talep Detayları:
+- Hizmet Türü: ${serviceType}
+- Adres: ${address}
+- Tercih Tarihi: ${formattedDate}${preferredTime ? ` - ${preferredTime}` : ''}
+- Durum: Reddedildi
+
+${approvalNote ? `📝 Açıklama: ${approvalNote}\n\n` : ''}
+ℹ️ Bilgi: Farklı bir tarih veya hizmet türü için yeni bir talep oluşturabilirsiniz. Detaylı bilgi için lütfen bizimle iletişime geçin.
+
+Anlayışınız için teşekkür ederiz.
+
+© 2025 Agilion MedComm
+        `,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        logger.info(`Home health request rejected email sent to ${email}`);
+    } catch (error) {
+        logger.error('Failed to send home health request rejected email', error);
+        // Don't throw - email failure shouldn't block rejection
+    }
+};
+
 module.exports = {
     sendPasswordResetEmail,
     sendVerificationEmail,
@@ -488,4 +802,7 @@ module.exports = {
     sendAppointmentNotificationEmail,
     sendAppointmentCancellationEmail,
     sendAppointmentReminderEmail,
+    sendHomeHealthRequestCreatedEmail,
+    sendHomeHealthRequestApprovedEmail,
+    sendHomeHealthRequestRejectedEmail,
 };
