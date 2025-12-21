@@ -2,17 +2,34 @@ const prisma = require('../config/db');
 const cron = require('node-cron');
 const logger = require('../utils/logger');
 const { sendAppointmentReminderEmail } = require('../services/email.service');
+const {
+    parseAppointmentDate,
+    validateTimeFormat,
+    validateAppointmentDateFormat,
+} = require('../utils/dateTimeValidator');
 
 /**
  * Parse DD.MM.YYYY and HH:MM into a Date object (UTC)
+ * Uses centralized date/time validation utilities
  * @param {string} dateStr - Date in DD.MM.YYYY format
  * @param {string} timeStr - Time in HH:MM format
  * @returns {Date} - Parsed Date object in UTC
+ * @throws {Error} - If date or time format is invalid
  */
 const parseAppointmentDateTime = (dateStr, timeStr) => {
-    // Parse DD.MM.YYYY
-    const [day, month, year] = dateStr.split('.').map(Number);
-    // Parse HH:MM
+    // Validate formats using centralized utilities
+    if (!validateAppointmentDateFormat(dateStr)) {
+        throw new Error(`Invalid date format: ${dateStr}. Expected DD.MM.YYYY`);
+    }
+    
+    if (!validateTimeFormat(timeStr)) {
+        throw new Error(`Invalid time format: ${timeStr}. Expected HH:MM`);
+    }
+    
+    // Parse date using centralized utility
+    const { day, month, year } = parseAppointmentDate(dateStr);
+    
+    // Parse time
     const [hours, minutes] = timeStr.split(':').map(Number);
     
     // Create date in UTC

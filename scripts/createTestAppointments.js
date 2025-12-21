@@ -38,7 +38,7 @@ if (TEST_EMAILS.length === 0) {
 /**
  * Format date to DD.MM.YYYY
  */
-const formatDate = (date) => {
+const formatAppointmentDate = (date) => {
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
@@ -183,7 +183,7 @@ const createTestAppointments = async () => {
         appointmentDateTime.setHours(appointmentDateTime.getHours() + 24);
         appointmentDateTime.setMinutes(0); // Round to the hour for cleaner times
 
-        const dateStr = formatDate(appointmentDateTime);
+        const dateStr = formatAppointmentDate(appointmentDateTime);
         const timeStr = formatTime(appointmentDateTime);
 
         const appointments = [];
