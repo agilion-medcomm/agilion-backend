@@ -1,6 +1,7 @@
 const labRequestService = require('../../services/labRequest.service');
 const { parseAndValidateId } = require('../../utils/idValidator');
 const { sendSuccess, sendCreated, sendError } = require('../../utils/responseFormatter');
+const { REQUEST_STATUS } = require('../../config/constants');
 
 const createLabRequest = async (req, res, next) => {
     try {
@@ -42,7 +43,7 @@ const assignLabRequest = async (req, res, next) => {
     try {
         const id = parseAndValidateId(req.params.id, 'request id');
         const assigneeLaborantId = req.body.assigneeLaborantId;
-        if (assigneeLaborantId === undefined || assigneeLaborantId === null || assigneeLaborantId === '') {
+        if (assigneeLaborantId === undefined || assigneeLaborantId === null) {
             return sendError(res, 'assigneeLaborantId is required.', 400);
         }
         const result = await labRequestService.assignLabRequest(id, req.user.userId, assigneeLaborantId);
@@ -73,7 +74,6 @@ const confirmLabRequest = async (req, res, next) => {
         if (!medicalFileId) {
             // If no medicalFileId provided, allow idempotent check: if already completed, return success
             const existing = await labRequestService.getLabRequest(id);
-            const { REQUEST_STATUS } = require('../../config/constants');
             if (existing.status === REQUEST_STATUS.COMPLETED) {
                 return sendSuccess(res, existing, 'Request already completed.');
             }

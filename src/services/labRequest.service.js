@@ -3,8 +3,7 @@ const prisma = require('../config/db');
 const { ApiError } = require('../api/middlewares/errorHandler');
 const logger = require('../utils/logger');
 const { validateRequiredFields } = require('../utils/validators');
-const { REQUEST_STATUS, ROLES } = require('../config/constants');
-const userRepository = require('../repositories/user.repository');
+const { ROLES } = require('../config/constants');
 
 /**
  * Create a new lab request
@@ -133,7 +132,6 @@ const confirmLabRequestWithFile = async (requestId, medicalFileId, laborantId) =
     // Verify request exists and assigned to this laborant (or assign if unassigned)
     const req = await labRequestRepository.findRequestById(requestId);
     if (!req) throw new ApiError(404, 'Lab request not found');
-    const { REQUEST_STATUS } = require('../config/constants');
     if (req.status === REQUEST_STATUS.CANCELED) throw new ApiError(400, 'Request is canceled');
     // If already completed, allow idempotent confirm when same file is provided
     if (req.status === REQUEST_STATUS.COMPLETED) {
@@ -166,7 +164,6 @@ const confirmLabRequestWithFile = async (requestId, medicalFileId, laborantId) =
 const cancelLabRequest = async (requestId, userId) => {
     const req = await labRequestRepository.findRequestById(requestId);
     if (!req) throw new ApiError(404, 'Lab request not found');
-    const { REQUEST_STATUS } = require('../config/constants');
     if (req.status === REQUEST_STATUS.COMPLETED) throw new ApiError(400, 'Cannot cancel a completed request');
 
     const updated = await labRequestRepository.cancelRequest(requestId);

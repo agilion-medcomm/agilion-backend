@@ -71,8 +71,7 @@ const getFilesByPatientId = async (patientId) => {
                         }
                     }
                 }
-            }
-            ,
+            },
             request: {
                 include: {
                     assigneeLaborant: {
@@ -111,8 +110,7 @@ const getFilesByLaborantId = async (laborantId) => {
                         }
                     }
                 }
-            }
-            ,
+            },
             request: {
                 include: {
                     assigneeLaborant: {
@@ -158,8 +156,7 @@ const getFileById = async (fileId) => {
                         }
                     }
                 }
-            }
-            ,
+            },
             request: {
                 include: {
                     assigneeLaborant: {
@@ -247,6 +244,8 @@ module.exports = {
     getFilesByPatientId,
     getFilesByLaborantId,
     getFileById,
+    getAllFiles,
     deleteFileById,
+    hardDeleteFileById,
     checkPatientExists,
 };

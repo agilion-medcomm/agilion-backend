@@ -46,13 +46,13 @@ const CONTACT_STATUS = Object.freeze({
     REPLIED: 'REPLIED',
 });
 
-    // Lab Request Status
-    const REQUEST_STATUS = Object.freeze({
-        PENDING: 'PENDING',
-        ASSIGNED: 'ASSIGNED',
-        COMPLETED: 'COMPLETED',
-        CANCELED: 'CANCELED',
-    });
+// Lab Request Status
+const REQUEST_STATUS = Object.freeze({
+    PENDING: 'PENDING',
+    ASSIGNED: 'ASSIGNED',
+    COMPLETED: 'COMPLETED',
+    CANCELED: 'CANCELED',
+});
 
 module.exports = {
     // User Roles

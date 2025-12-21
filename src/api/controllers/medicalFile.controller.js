@@ -184,4 +184,5 @@ module.exports = {
     deleteMedicalFile,
     downloadMedicalFile,
     getMyUploads,
+    listAllMedicalFiles,
 };

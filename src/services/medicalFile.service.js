@@ -94,11 +94,11 @@ const uploadMedicalFile = async (laborantId, fileData, uploadedFile) => {
                         testName: fileData.testName,
                         testDate: testDate,
                         description: fileData.description || null,
+                        requestId: requestId,
                     }
                 });
 
-                // Link both sides atomically: set medicalFile.requestId and medicalFileRequest.medicalFileId
-                await tx.medicalFile.update({ where: { id: cf.id }, data: { requestId: requestId } });
+                // Link request side atomically: set medicalFileRequest.medicalFileId and complete the request
                 await tx.medicalFileRequest.update({
                     where: { id: requestId },
                     data: { medicalFileId: cf.id, status: REQUEST_STATUS.COMPLETED, completedAt: new Date() }

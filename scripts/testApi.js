@@ -208,7 +208,7 @@ async function testLabRequests() {
     form.append('requestId', String(requestId));
     form.append('file', fs.createReadStream(testFile));
 
-    const { response: uploadRes, data: uploadData } = await requestMultipart('POST', '/api/medical-files', form, laborantToken);
+    const { response: uploadRes } = await requestMultipart('POST', '/api/medical-files', form, laborantToken);
     assert(uploadRes.status !== 500, 'Upload should not cause server error');
 
     // Confirm the lab request
@@ -1163,7 +1163,7 @@ async function testMedicalFiles() {
     form.append('testDate', new Date().toISOString().split('T')[0]);
     form.append('file', fs.createReadStream(testFile));
 
-    const { response, data } = await requestMultipart('POST', '/api/medical-files', form, laborantToken);
+    const { response } = await requestMultipart('POST', '/api/medical-files', form, laborantToken);
     assert(response.status !== 500, 'Upload should not cause server error');
   });
 
