@@ -1,9 +1,7 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../config/db');
 const cron = require('node-cron');
 const logger = require('../utils/logger');
 const { sendAppointmentReminderEmail } = require('../services/email.service');
-
-const prisma = new PrismaClient();
 
 /**
  * Parse DD.MM.YYYY and HH:MM into a Date object (UTC)
