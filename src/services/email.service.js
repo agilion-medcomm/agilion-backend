@@ -372,10 +372,120 @@ Yeni bir randevu almak için lütfen sistemimizi kullanın veya bizimle iletişi
     }
 };
 
+/**
+ * Send 24-hour appointment reminder email
+ * @param {string} email - Patient's email
+ * @param {object} appointmentDetails - Appointment details
+ * @param {string} appointmentDetails.patientFirstName - Patient's first name
+ * @param {string} appointmentDetails.patientLastName - Patient's last name
+ * @param {string} appointmentDetails.doctorName - Doctor's full name
+ * @param {string} appointmentDetails.department - Doctor's specialization/department
+ * @param {Date} appointmentDetails.appointmentDateTime - Appointment date/time as Date object
+ */
+const sendAppointmentReminderEmail = async (email, appointmentDetails) => {
+    const transporter = createTransporter();
+
+    if (!transporter) {
+        // Email not configured - in development, check console or email service logs
+        return;
+    }
+
+    const {
+        patientFirstName,
+        patientLastName,
+        doctorName,
+        department,
+        appointmentDateTime,
+    } = appointmentDetails;
+
+    // Format date and time using tr-TR locale and Europe/Istanbul timezone
+    const formattedDate = appointmentDateTime.toLocaleDateString('tr-TR', {
+        timeZone: 'Europe/Istanbul',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+    });
+
+    const formattedTime = appointmentDateTime.toLocaleTimeString('tr-TR', {
+        timeZone: 'Europe/Istanbul',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+
+    const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Randevu Hatırlatma - Yarın Randevunuz Var! - Agilion MedComm',
+        html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #0e2b4b;">🔔 Randevu Hatırlatması</h2>
+                <p>Merhaba ${patientFirstName} ${patientLastName},</p>
+                <p>Yarın randevunuz olduğunu hatırlatmak istiyoruz. Lütfen randevunuza zamanında gelmeyi unutmayın.</p>
+                <div style="background-color: #fff3cd; padding: 20px; border-left: 4px solid #ffc107; margin: 20px 0;">
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="padding: 8px 0; color: #666; width: 120px;"><strong>Doktor:</strong></td>
+                            <td style="padding: 8px 0; color: #333;">${doctorName}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666;"><strong>Klinik:</strong></td>
+                            <td style="padding: 8px 0; color: #333;">${department}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666;"><strong>Tarih:</strong></td>
+                            <td style="padding: 8px 0; color: #333;">${formattedDate}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 8px 0; color: #666;"><strong>Saat:</strong></td>
+                            <td style="padding: 8px 0; color: #333; font-size: 18px; font-weight: bold;">${formattedTime}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div style="background-color: #e7f3ff; padding: 15px; border-radius: 4px; margin: 20px 0;">
+                    <p style="margin: 0; color: #0c5460;">
+                        <strong>💡 Hatırlatma:</strong> Randevunuza 10 dakika erken gelmenizi öneririz. Yanınızda kimlik belgenizi getirmeyi unutmayın.
+                    </p>
+                </div>
+                <p style="color: #666;">Herhangi bir değişiklik veya iptal için lütfen bizimle iletişime geçin.</p>
+                <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+                <p style="color: #999; font-size: 12px;">© 2025 Agilion MedComm. Tüm hakları saklıdır.</p>
+            </div>
+        `,
+        text: `
+🔔 Randevu Hatırlatması
+
+Merhaba ${patientFirstName} ${patientLastName},
+
+Yarın randevunuz olduğunu hatırlatmak istiyoruz. Lütfen randevunuza zamanında gelmeyi unutmayın.
+
+Randevu Detayları:
+- Doktor: ${doctorName}
+- Klinik: ${department}
+- Tarih: ${formattedDate}
+- Saat: ${formattedTime}
+
+💡 Hatırlatma: Randevunuza 10 dakika erken gelmenizi öneririz. Yanınızda kimlik belgenizi getirmeyi unutmayın.
+
+Herhangi bir değişiklik veya iptal için lütfen bizimle iletişime geçin.
+
+© 2025 Agilion MedComm
+        `,
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        logger.info(`Reminder email sent successfully to ${email}`);
+    } catch (error) {
+        logger.error('Failed to send appointment reminder email', error);
+        throw new ApiError(500, 'Failed to send appointment reminder email.');
+    }
+};
+
 module.exports = {
     sendPasswordResetEmail,
     sendVerificationEmail,
     sendContactReplyEmail,
     sendAppointmentNotificationEmail,
     sendAppointmentCancellationEmail,
+    sendAppointmentReminderEmail,
 };
