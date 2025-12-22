@@ -9,11 +9,12 @@ const {
 } = require('../utils/dateTimeValidator');
 
 /**
- * Parse DD.MM.YYYY and HH:MM into a Date object (UTC)
+ * Parse DD.MM.YYYY and HH:MM into a Date object (Turkey timezone)
  * Uses centralized date/time validation utilities
+ * Database stores appointment times in Turkey local time (UTC+3)
  * @param {string} dateStr - Date in DD.MM.YYYY format
- * @param {string} timeStr - Time in HH:MM format
- * @returns {Date} - Parsed Date object in UTC
+ * @param {string} timeStr - Time in HH:MM format (Turkey local time)
+ * @returns {Date} - Parsed Date object
  * @throws {Error} - If date or time format is invalid
  */
 const parseAppointmentDateTime = (dateStr, timeStr) => {
@@ -32,8 +33,9 @@ const parseAppointmentDateTime = (dateStr, timeStr) => {
     // Parse time
     const [hours, minutes] = timeStr.split(':').map(Number);
     
-    // Create date in UTC
-    return new Date(Date.UTC(year, month - 1, day, hours, minutes, 0, 0));
+    // Create date as local time (Turkey timezone)
+    // Database stores times in Turkey local time, so we interpret them as local time
+    return new Date(year, month - 1, day, hours, minutes, 0, 0);
 };
 
 /**
