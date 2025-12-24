@@ -1,4 +1,4 @@
-const prisma = require('../config/db');
+const doctorRepository = require('../repositories/doctor.repository');
 const { ROLES } = require('../config/constants');
 
 /**
@@ -13,22 +13,7 @@ const getAllDoctors = async (specialization) => {
         where.specialization = specialization;
     }
 
-    const doctors = await prisma.doctor.findMany({
-        where,
-        include: {
-            user: {
-                select: {
-                    id: true,
-                    firstName: true,
-                    lastName: true,
-                    tckn: true,
-                    email: true,
-                    phoneNumber: true,
-                    profilePhoto: true,
-                },
-            },
-        },
-    });
+    const doctors = await doctorRepository.getAllDoctors(where);
 
     return doctors.map(doc => ({
         id: doc.id,
@@ -41,6 +26,8 @@ const getAllDoctors = async (specialization) => {
         phoneNumber: doc.user.phoneNumber,
         img: doc.user.profilePhoto || '',
         role: ROLES.DOCTOR,
+        averageRating: doc.averageRating,
+        totalRatings: doc.totalRatings,
     }));
 };
 
