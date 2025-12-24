@@ -132,6 +132,10 @@ model Doctor {
   specialization String
   // bio            String? // We can add more fields later
 
+  // Rating fields (automatically calculated from appointments)
+  averageRating Float? // Average rating from completed appointments
+  totalRatings  Int    @default(0) // Total number of ratings
+
   // --- Relationships ---
   // A doctor can have MANY appointments
   appointments Appointment[]
@@ -165,6 +169,10 @@ model Appointment {
   time      String  // Format: HH:MM (e.g., "10:00")
   status    AppointmentStatus @default(APPROVED)
   reminderSent Boolean @default(false) // Flag for 24-hour email reminder
+
+  // Rating fields
+  rating    Int?      // Patient rating (1-5)
+  ratedAt   DateTime? // Rating timestamp
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
