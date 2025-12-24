@@ -1,9 +1,10 @@
 const appointmentRepository = require('../repositories/appointment.repository');
 const leaveRequestRepository = require('../repositories/leaveRequest.repository');
+const doctorRepository = require('../repositories/doctor.repository');
 const { ApiError } = require('../api/middlewares/errorHandler');
 const prisma = require('../config/db');
 const logger = require('../utils/logger');
-const { WORKING_HOURS, ROLES, APPOINTMENT_STATUS } = require('../config/constants');
+const { WORKING_HOURS, ROLES, APPOINTMENT_STATUS, RATING } = require('../config/constants');
 const {
     parseAppointmentDate,
     validateAppointmentDateFormat,
@@ -29,6 +30,8 @@ const getAppointmentsList = async (filters) => {
         time: app.time,
         status: app.status,
         department: app.doctor.specialization || '-',
+        rating: app.rating,
+        ratedAt: app.ratedAt,
         createdAt: app.createdAt,
     }));
 };
@@ -227,9 +230,99 @@ const updateAppointmentStatus = async (appointmentId, status) => {
     };
 };
 
+/**
+ * Calculate and update doctor's average rating
+ * @param {number} doctorId - Doctor ID
+ */
+const calculateDoctorAverageRating = async (doctorId) => {
+    // Get all rated appointments for this doctor
+    const ratedAppointments = await appointmentRepository.getRatedAppointmentsForDoctor(doctorId);
+    
+    if (ratedAppointments.length === 0) {
+        // No ratings yet, set to null/0
+        await doctorRepository.updateDoctorRatings(doctorId, null, 0);
+        return { averageRating: null, totalRatings: 0 };
+    }
+    
+    // Calculate average rating
+    const sum = ratedAppointments.reduce((acc, app) => acc + app.rating, 0);
+    const average = sum / ratedAppointments.length;
+    const averageRating = Math.round(average * 10) / 10; // Round to 1 decimal place
+    
+    // Update doctor's rating in database
+    await doctorRepository.updateDoctorRatings(doctorId, averageRating, ratedAppointments.length);
+    
+    return { averageRating, totalRatings: ratedAppointments.length };
+};
+
+/**
+ * Rate an appointment
+ * @param {number} appointmentId - Appointment ID
+ * @param {number} userId - User ID (must be the patient who owns the appointment)
+ * @param {number} rating - Rating value (1-5)
+ */
+const rateAppointment = async (appointmentId, userId, rating) => {
+    // Validate rating value
+    if (!rating || typeof rating !== 'number' || !Number.isInteger(rating)) {
+        throw new ApiError(400, 'Rating must be an integer.');
+    }
+    
+    if (rating < RATING.MIN || rating > RATING.MAX) {
+        throw new ApiError(400, `Rating must be between ${RATING.MIN} and ${RATING.MAX}.`);
+    }
+    
+    // Get appointment with full details
+    const appointment = await appointmentRepository.getAppointmentById(appointmentId);
+    
+    if (!appointment) {
+        throw new ApiError(404, 'Randevu bulunamadı.');
+    }
+    
+    // Check if appointment is DONE
+    if (appointment.status !== APPOINTMENT_STATUS.DONE) {
+        throw new ApiError(400, 'Sadece tamamlanmış randevular değerlendirilebilir.');
+    }
+    
+    // Check if user is the patient who owns this appointment
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: { patient: true },
+    });
+    
+    if (!user || !user.patient) {
+        throw new ApiError(403, 'Patient profile not found.');
+    }
+    
+    if (appointment.patientId !== user.patient.id) {
+        throw new ApiError(403, 'Bu randevuyu sadece randevunun sahibi değerlendirebilir.');
+    }
+    
+    // Check if appointment has already been rated
+    if (appointment.rating !== null) {
+        throw new ApiError(400, 'Bu randevu zaten değerlendirilmiş.');
+    }
+    
+    // Rate the appointment
+    const ratedAppointment = await appointmentRepository.rateAppointment(appointmentId, rating);
+    
+    // Recalculate doctor's average rating
+    await calculateDoctorAverageRating(appointment.doctorId);
+    
+    logger.info(`Appointment ${appointmentId} rated with ${rating} stars by patient ${user.patient.id}`);
+    
+    return {
+        id: ratedAppointment.id,
+        rating: ratedAppointment.rating,
+        ratedAt: ratedAppointment.ratedAt,
+        status: ratedAppointment.status,
+    };
+};
+
 module.exports = {
     getAppointmentsList,
     getBookedTimesForDoctor,
     createAppointment,
     updateAppointmentStatus,
+    rateAppointment,
+    calculateDoctorAverageRating,
 };
