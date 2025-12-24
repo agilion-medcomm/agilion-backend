@@ -156,6 +156,12 @@ module.exports = {
         DATE_TR_PATTERN: /^\d{2}\.\d{2}\.\d{4}$/,
         TIME_PATTERN: /^([0-1]\d|2[0-3]):([0-5]\d)$/,
     },
+
+    // Rating Configuration
+    RATING: {
+        MIN: 1,
+        MAX: 5,
+    },
     // Lab Request Status (exported)
     REQUEST_STATUS,
 };

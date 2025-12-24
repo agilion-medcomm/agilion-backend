@@ -4,6 +4,8 @@ const appointmentController = require('../controllers/appointment.controller');
 const authMiddleware = require('../middlewares/authMiddleware');
 const optionalAuth = require('../middlewares/optionalAuth');
 const authorize = require('../middlewares/authorize');
+const validate = require('../middlewares/validate');
+const { rateAppointmentSchema } = require('../validations/rating.validation');
 const { ROLES } = require('../../config/constants');
 
 // GET /api/v1/appointments - Get appointments (public for slot checking, auth for lists)
@@ -14,5 +16,8 @@ router.post('/', authMiddleware, authorize(ROLES.PATIENT, ROLES.CASHIER), appoin
 
 // PUT /api/v1/appointments/:id/status - Update status (requires auth)
 router.put('/:id/status', authMiddleware, appointmentController.updateAppointmentStatus);
+
+// POST /api/v1/appointments/:id/rate - Rate appointment (PATIENT only)
+router.post('/:id/rate', authMiddleware, authorize(ROLES.PATIENT), validate(rateAppointmentSchema), appointmentController.rateAppointment);
 
 module.exports = router;
