@@ -15,4 +15,7 @@ router.post('/', authMiddleware, authorize(ROLES.PATIENT, ROLES.CASHIER), appoin
 // PUT /api/v1/appointments/:id/status - Update status (requires auth)
 router.put('/:id/status', authMiddleware, appointmentController.updateAppointmentStatus);
 
+// POST /api/v1/appointments/:id/rate - Rate appointment (PATIENT only)
+router.post('/:id/rate', authMiddleware, authorize(ROLES.PATIENT), appointmentController.rateAppointment);
+
 module.exports = router;

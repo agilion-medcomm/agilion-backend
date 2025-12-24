@@ -72,8 +72,30 @@ const updateAppointmentStatus = async (req, res, next) => {
     }
 };
 
+/**
+ * POST /api/v1/appointments/:id/rate
+ * Rate a completed appointment (PATIENT only)
+ */
+const rateAppointment = async (req, res, next) => {
+    try {
+        const id = parseAndValidateId(req.params.id, 'appointment ID');
+        const { rating } = req.body;
+
+        const ratedAppointment = await appointmentService.rateAppointment(
+            id,
+            req.user.userId,
+            rating
+        );
+
+        sendSuccess(res, ratedAppointment, 'Randevu başarıyla değerlendirildi.');
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     getAppointments,
     createAppointment,
     updateAppointmentStatus,
+    rateAppointment,
 };
