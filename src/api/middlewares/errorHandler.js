@@ -44,8 +44,8 @@ const handlePrismaError = (err) => {
                     ? err.meta.target 
                     : [err.meta?.target].filter(Boolean);
                 
-                const isEmailOrTckn = targets.includes('email') || targets.includes('tckn');
-                if (isEmailOrTckn) {
+            const isEmailOrTckn = targets.includes('email') || targets.includes('tckn');
+            if (isEmailOrTckn) {
                     return {
                         statusCode: 409,
                         message: 'A user with this TCKN or email already exists.'
@@ -187,7 +187,7 @@ const handlePrismaError = (err) => {
             
             case 'P2024':
                 return {
-                    statusCode: 500,
+                    statusCode: 503,
                     message: 'Timed out fetching a new connection from the pool.'
                 };
             
@@ -215,6 +215,12 @@ const handlePrismaError = (err) => {
                     message: 'Transaction API error.'
                 };
             
+            case 'P2029':
+                return {
+                    statusCode: 500,
+                    message: 'Query engine error. Please try again later.'
+                };
+            
             case 'P2030':
                 return {
                     statusCode: 500,
@@ -225,6 +231,12 @@ const handlePrismaError = (err) => {
                 return {
                     statusCode: 500,
                     message: 'MongoDB replica set required.'
+                };
+            
+            case 'P2032':
+                return {
+                    statusCode: 400,
+                    message: 'Cannot parse the provided JSON value.'
                 };
             
             case 'P2033':
@@ -321,6 +333,11 @@ const errorHandler = (err, req, res, next) => {
     let message = err.message || "Internal Server Error";
     let errors = undefined;
 
+    // Production'da operational olmayan hataların mesajlarını gizle
+    if (process.env.NODE_ENV === 'production' && !err.isOperational) {
+        message = "An unexpected error occurred on the server.";
+    }
+
     // --- Handle Joi Validation Errors ---
     if (err.isJoi) {
         statusCode = 400;
@@ -343,38 +360,20 @@ const errorHandler = (err, req, res, next) => {
         message = prismaErrorInfo.message;
     }
 
-    // --- Handle Non-Operational Errors (Programming Errors) ---
-    // If it's not an ApiError and not a known error type, sanitize the message in production
-    if (!err.isOperational && !err.isJoi && !prismaErrorInfo) {
-        if (isProduction()) {
-            // Hide implementation details in production
-            message = 'Something went wrong. Please try again later.';
-            statusCode = 500;
-        }
-    }
-
-    // Prepare response object
-    const response = {
+    // Send response with conditional stack trace in development
+    res.status(statusCode).json({
         status: `${statusCode}`.startsWith('4') ? "error" : 'fail',
         message: message,
-    };
-
-    // Add errors array if present (for validation errors)
-    if (errors) {
-        response.errors = errors;
-    }
-
-    // Add stack trace in development mode
-    if (!isProduction() && err.stack) {
-        response.stack = err.stack;
-        response.originalError = {
-            name: err.name,
-            code: err.code,
-            meta: err.meta
-        };
-    }
-
-    res.status(statusCode).json(response);
+        ...(errors && { errors }), // Validation errors (Joi)
+        ...(process.env.NODE_ENV === 'development' && { 
+            stack: err.stack,
+            originalError: {
+                name: err.name,
+                code: err.code,
+                meta: err.meta
+            }
+        })
+    });
 };
 
 module.exports = {
