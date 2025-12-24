@@ -82,9 +82,57 @@ const getBookedTimes = async (doctorId, date) => {
     return appointments.map(a => a.time);
 };
 
+/**
+ * Get appointment by ID with full details
+ */
+const getAppointmentById = async (id) => {
+    return prisma.appointment.findUnique({
+        where: { id: parseInt(id) },
+        include: {
+            patient: { include: { user: true } },
+            doctor: { include: { user: true } },
+        },
+    });
+};
+
+/**
+ * Rate an appointment
+ */
+const rateAppointment = async (id, rating) => {
+    return prisma.appointment.update({
+        where: { id: parseInt(id) },
+        data: {
+            rating: rating,
+            ratedAt: new Date(),
+        },
+        include: {
+            patient: { include: { user: true } },
+            doctor: { include: { user: true } },
+        },
+    });
+};
+
+/**
+ * Get all rated appointments for a doctor (for calculating average rating)
+ */
+const getRatedAppointmentsForDoctor = async (doctorId) => {
+    return prisma.appointment.findMany({
+        where: {
+            doctorId: parseInt(doctorId),
+            rating: { not: null },
+        },
+        select: {
+            rating: true,
+        },
+    });
+};
+
 module.exports = {
     createAppointment,
     getAppointments,
     updateAppointmentStatus,
     getBookedTimes,
+    getAppointmentById,
+    rateAppointment,
+    getRatedAppointmentsForDoctor,
 };
