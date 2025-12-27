@@ -11,7 +11,8 @@
     "test:api": "node scripts/testApi.js",
     "db:seed": "node scripts/seedDatabase.js",
     "db:reset": "npx prisma migrate reset --force && npm run db:seed",
-    "db:studio": "npx prisma studio"
+    "db:studio": "npx prisma studio",
+    "db:seed:doctors": "node scripts/seedDoctorsProduction.js"
   },
   "repository": {
     "type": "git",
