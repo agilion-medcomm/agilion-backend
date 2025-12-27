@@ -53,40 +53,40 @@ enum HomeHealthStatus {
 
 // Base User model for login and common info
 model User {
-  id         Int      @id @default(autoincrement())
-  email      String   @unique
-  password   String // We will store a hashed password
-  role       UserRole @default(PATIENT)
-  firstName  String
-  tckn  String   @unique // TCKN
-  lastName   String
-  phoneNumber      String?  @unique @db.VarChar(10) // Format: 5XXXXXXXXX (without +90)
-  dateOfBirth DateTime?
-  profilePhoto     String?  // Optional profile photo URL
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  password     String // We will store a hashed password
+  role         UserRole  @default(PATIENT)
+  firstName    String
+  tckn         String    @unique // TCKN
+  lastName     String
+  phoneNumber  String?   @unique @db.VarChar(10) // Format: 5XXXXXXXXX (without +90)
+  dateOfBirth  DateTime?
+  profilePhoto String? // Optional profile photo URL
 
   // Password reset fields
-  resetToken        String?   @unique
-  resetTokenExpiry  DateTime?
+  resetToken       String?   @unique
+  resetTokenExpiry DateTime?
 
   // Email verification fields
-  isEmailVerified   Boolean   @default(false)
-  emailToken        String?   @unique
-  emailTokenExpiry  DateTime?
+  isEmailVerified  Boolean   @default(false)
+  emailToken       String?   @unique
+  emailTokenExpiry DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // --- Relationships ---
   // A user can be ONE patient (1-to-1)
-  patient Patient?
+  patient  Patient?
   // A user can be ONE doctor (1-to-1)
-  doctor  Doctor?
+  doctor   Doctor?
   // A user can be ONE admin (1-to-1)
-  admin   Admin?
+  admin    Admin?
   // A user can be ONE laborant (1-to-1)
   laborant Laborant?
   // A user can be ONE cleaner (1-to-1)
-  cleaner Cleaner?
+  cleaner  Cleaner?
 
   // Lab requests created by this user (doctor/admin)
   createdLabRequests MedicalFileRequest[]
@@ -122,6 +122,18 @@ model Patient {
   @@map("patients")
 }
 
+// Defines the medical specialties available
+enum MedicalSpecialty {
+  EMERGENCY // Acil 7/24
+  ORAL_AND_DENTAL // Ağız ve Diş
+  NUTRITION_DIET // Beslenme Diyet
+  DERMATOLOGY // Dermatoloji
+  GENERAL_SURGERY // Genel Cerrahi
+  EYE_HEALTH // Göz Sağlığı
+  INTERNAL_MEDICINE // İç Hastalıklar
+  GYNECOLOGY_OBSTETRICS // Kadın & Doğum
+}
+
 // Doctor model, linked to a User
 model Doctor {
   id     Int  @id @default(autoincrement())
@@ -129,13 +141,13 @@ model Doctor {
   user   User @relation(fields: [userId], references: [id])
 
   // Doctor-specific fields
-  specialization String
+  specialization MedicalSpecialty
 
   // Doctor profile information ("Doktor Hakkında" section)
-  biography                 String? @db.Text    // Özgeçmiş
-  expertiseAreas            String? @db.Text    // Uzmanlık Alanları 
-  educationAndAchievements  String? @db.Text    // Eğitim & Başarılar 
-  workPrinciples            String? @db.Text    // Çalışma İlkeleri
+  biography                String? @db.Text // Özgeçmiş
+  expertiseAreas           String? @db.Text // Uzmanlık Alanları 
+  educationAndAchievements String? @db.Text // Eğitim & Başarılar 
+  workPrinciples           String? @db.Text // Çalışma İlkeleri
 
   // Rating fields (automatically calculated from appointments)
   averageRating Float? // Average rating from completed appointments
@@ -143,7 +155,7 @@ model Doctor {
 
   // --- Relationships ---
   // A doctor can have MANY appointments
-  appointments Appointment[]
+  appointments  Appointment[]
   // A doctor can have MANY leave requests
   leaveRequests LeaveRequest[]
 
@@ -170,14 +182,14 @@ model Appointment {
   doctorId  Int
   doctor    Doctor  @relation(fields: [doctorId], references: [id])
 
-  date      String  // Format: DD.MM.YYYY (e.g., "25.11.2025")
-  time      String  // Format: HH:MM (e.g., "10:00")
-  status    AppointmentStatus @default(APPROVED)
-  reminderSent Boolean @default(false) // Flag for 24-hour email reminder
+  date         String // Format: DD.MM.YYYY (e.g., "25.11.2025")
+  time         String // Format: HH:MM (e.g., "10:00")
+  status       AppointmentStatus @default(APPROVED)
+  reminderSent Boolean           @default(false) // Flag for 24-hour email reminder
 
   // Rating fields
-  rating    Int?      // Patient rating (1-5)
-  ratedAt   DateTime? // Rating timestamp
+  rating  Int? // Patient rating (1-5)
+  ratedAt DateTime? // Rating timestamp
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -187,19 +199,19 @@ model Appointment {
 
 // Leave Request model for doctors
 model LeaveRequest {
-  id        Int     @id @default(autoincrement())
-  doctorId  Int
-  doctor    Doctor  @relation(fields: [doctorId], references: [id])
+  id       Int    @id @default(autoincrement())
+  doctorId Int
+  doctor   Doctor @relation(fields: [doctorId], references: [id])
 
-  startDate String  // Format: YYYY-MM-DD
-  startTime String  // Format: HH:MM
-  endDate   String  // Format: YYYY-MM-DD
-  endTime   String  // Format: HH:MM
+  startDate String // Format: YYYY-MM-DD
+  startTime String // Format: HH:MM
+  endDate   String // Format: YYYY-MM-DD
+  endTime   String // Format: HH:MM
   reason    String
 
-  status    LeaveRequestStatus @default(PENDING)
+  status LeaveRequestStatus @default(PENDING)
 
-  requestedAt DateTime @default(now())
+  requestedAt DateTime  @default(now())
   resolvedAt  DateTime?
 
   @@map("leave_requests")
@@ -214,10 +226,10 @@ model ContactIssue {
   subject      String
   message      String
   status       IssueStatus @default(PENDING)
-  replyMessage String?     // Admin's reply message
-  repliedAt    DateTime?   // When the admin replied
+  replyMessage String? // Admin's reply message
+  repliedAt    DateTime? // When the admin replied
 
-  createdAt    DateTime    @default(now())
+  createdAt DateTime @default(now())
 
   @@map("contact_issues")
 }
@@ -230,7 +242,7 @@ model Laborant {
 
   // --- Relationships ---
   // A laborant can upload MANY medical files
-  medicalFiles MedicalFile[]
+  medicalFiles        MedicalFile[]
   // Lab requests assigned to this laborant
   assignedLabRequests MedicalFileRequest[]
 
@@ -252,31 +264,31 @@ model Cleaner {
 
 // Medical File model for patient test results
 model MedicalFile {
-  id          Int      @id @default(autoincrement())
-  patientId   Int
-  patient     Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  id         Int       @id @default(autoincrement())
+  patientId  Int
+  patient    Patient   @relation(fields: [patientId], references: [id], onDelete: Cascade)
   // laborantId is nullable to preserve file records when a laborant account is deleted
   // Historical/orphaned files with null laborantId can still be accessed by patients/doctors/admins
-  laborantId  Int?
-  laborant    Laborant? @relation(fields: [laborantId], references: [id], onDelete: SetNull)
-  
-  fileName    String       // Original file name
-  fileUrl     String       // Cloudinary URL or local path
-  fileType    String       // MIME type (application/pdf, image/jpeg)
-  fileSizeKB  Float        // File size in KB
-  
-  testName    String       // Test name (Hemogram, Kan Tahlili, etc.)
-  testDate    DateTime     // Test date
-  description String?      // Optional description
+  laborantId Int?
+  laborant   Laborant? @relation(fields: [laborantId], references: [id], onDelete: SetNull)
+
+  fileName   String // Original file name
+  fileUrl    String // Cloudinary URL or local path
+  fileType   String // MIME type (application/pdf, image/jpeg)
+  fileSizeKB Float // File size in KB
+
+  testName    String // Test name (Hemogram, Kan Tahlili, etc.)
+  testDate    DateTime // Test date
+  description String? // Optional description
 
   // Optional back-reference to a lab request (non-defining side)
-  requestId   Int? @unique
-  request     MedicalFileRequest? @relation("RequestFileRelation")
-  
-  deletedAt   DateTime?    // Soft delete timestamp (tombstone)
-  
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  requestId Int?                @unique
+  request   MedicalFileRequest? @relation("RequestFileRelation")
+
+  deletedAt DateTime? // Soft delete timestamp (tombstone)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("medical_files")
 }
@@ -291,30 +303,30 @@ enum RequestStatus {
 
 // MedicalFileRequest model representing a doctor's request for a lab result upload
 model MedicalFileRequest {
-  id                 Int           @id @default(autoincrement())
-  patientId          Int
-  patient            Patient       @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  id        Int     @id @default(autoincrement())
+  patientId Int
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
 
-  createdByUserId    Int
-  createdByUser      User          @relation(fields: [createdByUserId], references: [id])
+  createdByUserId Int
+  createdByUser   User @relation(fields: [createdByUserId], references: [id])
 
   assigneeLaborantId Int?
-  assigneeLaborant   Laborant?     @relation(fields: [assigneeLaborantId], references: [id], onDelete: SetNull)
+  assigneeLaborant   Laborant? @relation(fields: [assigneeLaborantId], references: [id], onDelete: SetNull)
 
-  fileTitle          String
-  notes              String?
-  status             RequestStatus @default(PENDING)
+  fileTitle String
+  notes     String?
+  status    RequestStatus @default(PENDING)
 
-  medicalFileId      Int? @unique
-  medicalFile        MedicalFile?  @relation("RequestFileRelation", fields: [medicalFileId], references: [id], onDelete: SetNull)
+  medicalFileId Int?         @unique
+  medicalFile   MedicalFile? @relation("RequestFileRelation", fields: [medicalFileId], references: [id], onDelete: SetNull)
 
-  requestedAt        DateTime      @default(now())
-  assignedAt         DateTime?
-  completedAt        DateTime?
-  canceledAt         DateTime?
+  requestedAt DateTime  @default(now())
+  assignedAt  DateTime?
+  completedAt DateTime?
+  canceledAt  DateTime?
 
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("medical_file_requests")
 }
@@ -324,28 +336,28 @@ model CleaningRecord {
   id        Int     @id @default(autoincrement())
   cleanerId Int
   cleaner   Cleaner @relation(fields: [cleanerId], references: [id], onDelete: Cascade)
-  
-  area      String       // Cleaning area (e.g., "Zemin Kat Koridor")
-  time      String       // Time slot (e.g., "Sabah", "Öğle", "Akşam")
-  photoUrl  String?      // URL to uploaded cleaning photo
-  
-  date      String       // Date in YYYY-MM-DD format
-  
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+
+  area     String // Cleaning area (e.g., "Zemin Kat Koridor")
+  time     String // Time slot (e.g., "Sabah", "Öğle", "Akşam")
+  photoUrl String? // URL to uploaded cleaning photo
+
+  date String // Date in YYYY-MM-DD format
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("cleaning_records")
 }
 
 // Home Health Request model for at-home healthcare service requests
 model HomeHealthRequest {
-  id             Int               @id @default(autoincrement())
-  userId         Int
-  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  id     Int  @id @default(autoincrement())
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   fullName       String
-  tckn           String            @db.VarChar(11)
-  phoneNumber    String            @db.VarChar(10) // Format: 5XXXXXXXXX (without +90)
+  tckn           String   @db.VarChar(11)
+  phoneNumber    String   @db.VarChar(10) // Format: 5XXXXXXXXX (without +90)
   email          String?
   address        String
   serviceType    String
@@ -353,14 +365,14 @@ model HomeHealthRequest {
   preferredDate  DateTime
   preferredTime  String?
   notes          String?
-  
-  status         HomeHealthStatus  @default(PENDING)
-  approvedBy     Int?
-  approvedAt     DateTime?
-  approvalNote   String?
-  
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
+
+  status       HomeHealthStatus @default(PENDING)
+  approvedBy   Int?
+  approvedAt   DateTime?
+  approvalNote String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("home_health_requests")
 }

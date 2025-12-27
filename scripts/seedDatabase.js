@@ -39,7 +39,7 @@ const testUsers = {
             lastName: 'Yılmaz',
             email: 'ahmet.yilmaz@agilion.test',
             phoneNumber: '5551111111',
-            specialization: 'Kardiyoloji',
+            specialization: 'INTERNAL_MEDICINE', // Kardiyoloji replaced
         },
         {
             tckn: '11111111112',
@@ -47,7 +47,7 @@ const testUsers = {
             lastName: 'Demir',
             email: 'fatma.demir@agilion.test',
             phoneNumber: '5551111112',
-            specialization: 'Nöroloji',
+            specialization: 'INTERNAL_MEDICINE', // Nöroloji replaced
         },
         {
             tckn: '11111111113',
@@ -55,7 +55,7 @@ const testUsers = {
             lastName: 'Kaya',
             email: 'mehmet.kaya@agilion.test',
             phoneNumber: '5551111113',
-            specialization: 'Ortopedi',
+            specialization: 'GENERAL_SURGERY',
         },
     ],
     patients: [
@@ -119,7 +119,7 @@ const testUsers = {
 
 async function createAdmin(hashedPassword) {
     const data = testUsers.admin;
-    
+
     const existing = await prisma.user.findUnique({ where: { tckn: data.tckn } });
     if (existing) {
         console.log(`  ⏭️  Admin already exists: ${data.email}`);
@@ -150,7 +150,7 @@ async function createAdmin(hashedPassword) {
 
 async function createDoctors(hashedPassword) {
     const created = [];
-    
+
     for (const data of testUsers.doctors) {
         const existing = await prisma.user.findUnique({ where: { tckn: data.tckn } });
         if (existing) {
@@ -187,7 +187,7 @@ async function createDoctors(hashedPassword) {
 
 async function createPatients(hashedPassword) {
     const created = [];
-    
+
     for (const data of testUsers.patients) {
         const existing = await prisma.user.findUnique({ where: { tckn: data.tckn } });
         if (existing) {
@@ -226,7 +226,7 @@ async function createPatients(hashedPassword) {
 
 async function createCashier(hashedPassword) {
     const data = testUsers.cashier;
-    
+
     const existing = await prisma.user.findUnique({ where: { tckn: data.tckn } });
     if (existing) {
         console.log(`  ⏭️  Cashier already exists: ${data.email}`);
@@ -252,7 +252,7 @@ async function createCashier(hashedPassword) {
 
 async function createLaborant(hashedPassword) {
     const data = testUsers.laborant;
-    
+
     const existing = await prisma.user.findUnique({ where: { tckn: data.tckn } });
     if (existing) {
         console.log(`  ⏭️  Laborant already exists: ${data.email}`);
@@ -283,7 +283,7 @@ async function createLaborant(hashedPassword) {
 
 async function createCleaner(hashedPassword) {
     const data = testUsers.cleaner;
-    
+
     const existing = await prisma.user.findUnique({ where: { tckn: data.tckn } });
     if (existing) {
         console.log(`  ⏭️  Cleaner already exists: ${data.email}`);
