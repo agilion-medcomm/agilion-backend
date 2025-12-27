@@ -60,7 +60,7 @@ model User {
   firstName  String
   tckn  String   @unique // TCKN
   lastName   String
-  phoneNumber      String?  @unique // '?' means optional
+  phoneNumber      String?  @unique @db.VarChar(10) // Format: 5XXXXXXXXX (without +90)
   dateOfBirth DateTime?
   profilePhoto     String?  // Optional profile photo URL
 
@@ -205,7 +205,7 @@ model ContactIssue {
   id           Int         @id @default(autoincrement())
   name         String
   email        String
-  phone        String
+  phone        String      @db.VarChar(10) // Format: 5XXXXXXXXX (without +90)
   subject      String
   message      String
   status       IssueStatus @default(PENDING)
@@ -340,7 +340,7 @@ model HomeHealthRequest {
   
   fullName       String
   tckn           String            @db.VarChar(11)
-  phoneNumber    String
+  phoneNumber    String            @db.VarChar(10) // Format: 5XXXXXXXXX (without +90)
   email          String?
   address        String
   serviceType    String

@@ -31,7 +31,7 @@ const createRequestSchema = Joi.object({
         .pattern(VALIDATION.PHONE_PATTERN)
         .required()
         .messages({
-            'string.pattern.base': 'Invalid phone number format.',
+            'string.pattern.base': 'Phone number must be in format +905XXXXXXXXX.',
             'any.required': 'Phone number is required.',
             'string.empty': 'Phone number is required.',
         }),
