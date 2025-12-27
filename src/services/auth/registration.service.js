@@ -88,7 +88,7 @@ const registerPersonnel = async (personnelData) => {
             status: 'success',
             message: `Personnel with TCKN ${created.user.tckn} registered successfully.`,
             data: {
-                id: created.id,
+                id: created.user.id,  // Return User ID (frontend uses this for photo upload & profile update)
                 userId: created.user.id,
                 tckn: created.user.tckn,
                 firstName: created.user.firstName,

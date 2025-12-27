@@ -5,8 +5,11 @@ const { ApiError } = require('../api/middlewares/errorHandler');
 
 /**
  * Map personnel user data to consistent format
+ * @param {Object} user - User object from database
+ * @param {string|null} specialization - Doctor specialization
+ * @param {Object|null} doctorData - Full doctor object with bio fields
  */
-const mapPersonnelUser = (user, specialization = null) => ({
+const mapPersonnelUser = (user, specialization = null, doctorData = null) => ({
     id: user.id,
     tckn: user.tckn,
     firstName: user.firstName,
@@ -17,6 +20,13 @@ const mapPersonnelUser = (user, specialization = null) => ({
     dateOfBirth: user.dateOfBirth,
     photoUrl: user.profilePhoto,
     ...(specialization && { specialization }),
+    // Map doctor bio fields from DB schema to frontend format
+    ...(doctorData && {
+        bio: doctorData.biography || '',
+        expertise: doctorData.expertiseAreas || '',
+        education: doctorData.educationAndAchievements || '',
+        principles: doctorData.workPrinciples || ''
+    }),
 });
 
 /**
@@ -32,7 +42,7 @@ const getAllPersonnel = async () => {
     ]);
 
     return [
-        ...doctors.map(d => mapPersonnelUser(d.user, d.specialization)),
+        ...doctors.map(d => mapPersonnelUser(d.user, d.specialization, d)),
         ...admins.map(a => mapPersonnelUser(a.user)),
         ...cashiers.map(c => mapPersonnelUser(c)),
         ...laborants.map(l => mapPersonnelUser(l.user)),
@@ -228,7 +238,7 @@ const getPersonnelByRole = async (role) => {
         }
         case ROLES.DOCTOR: {
             const doctors = await prisma.doctor.findMany({ include: { user: true } });
-            return doctors.map(d => mapPersonnelUser(d.user, d.specialization));
+            return doctors.map(d => mapPersonnelUser(d.user, d.specialization, d));
         }
         case ROLES.ADMIN: {
             const admins = await prisma.admin.findMany({ include: { user: true } });
