@@ -32,84 +32,82 @@ const testUsers = {
         role: 'ADMIN',
         phoneNumber: '5550000001',
     },
-    doctors: [
         {
-            tckn: '11111111111',
-            firstName: 'Ahmet',
+    tckn: '11111111111',
+        firstName: 'Ahmet',
             lastName: 'Yılmaz',
-            email: 'ahmet.yilmaz@agilion.test',
-            phoneNumber: '5551111111',
-            specialization: 'Kardiyoloji',
+                email: 'ahmet.yilmaz@agilion.test',
+                    phoneNumber: '5551111111',
+                        specialization: 'INTERNAL_MEDICINE', // Kardiyoloji replaced
         },
-        {
-            tckn: '11111111112',
-            firstName: 'Fatma',
+{
+    tckn: '11111111112',
+        firstName: 'Fatma',
             lastName: 'Demir',
-            email: 'fatma.demir@agilion.test',
-            phoneNumber: '5551111112',
-            specialization: 'Nöroloji',
+                email: 'fatma.demir@agilion.test',
+                    phoneNumber: '5551111112',
+                        specialization: 'INTERNAL_MEDICINE', // Nöroloji replaced
         },
-        {
-            tckn: '11111111113',
-            firstName: 'Mehmet',
+{
+    tckn: '11111111113',
+        firstName: 'Mehmet',
             lastName: 'Kaya',
-            email: 'mehmet.kaya@agilion.test',
-            phoneNumber: '5551111113',
-            specialization: 'Ortopedi',
+                email: 'mehmet.kaya@agilion.test',
+                    phoneNumber: '5551111113',
+                        specialization: 'GENERAL_SURGERY', // Ortopedi replaced
         },
-    ],
-    patients: [
-        {
-            tckn: '22222222221',
-            firstName: 'Ali',
-            lastName: 'Öztürk',
-            email: 'ali.ozturk@test.com',
-            phoneNumber: '5552222221',
-            dateOfBirth: new Date('1990-05-15'),
-            address: 'İstanbul, Kadıköy',
-            bloodType: 'A+',
-        },
-        {
-            tckn: '22222222222',
-            firstName: 'Ayşe',
-            lastName: 'Şahin',
-            email: 'ayse.sahin@test.com',
-            phoneNumber: '5552222222',
-            dateOfBirth: new Date('1985-03-20'),
-            address: 'Ankara, Çankaya',
-            bloodType: 'B-',
-        },
-        {
-            tckn: '22222222223',
-            firstName: 'Mustafa',
-            lastName: 'Çelik',
-            email: 'mustafa.celik@test.com',
-            phoneNumber: '5552222223',
-            dateOfBirth: new Date('1975-11-08'),
-            address: 'İzmir, Karşıyaka',
-            bloodType: 'O+',
-        },
-    ],
+patients: [
+    {
+        tckn: '22222222221',
+        firstName: 'Ali',
+        lastName: 'Öztürk',
+        email: 'ali.ozturk@test.com',
+        phoneNumber: '5552222221',
+        dateOfBirth: new Date('1990-05-15'),
+        address: 'İstanbul, Kadıköy',
+        bloodType: 'A+',
+    },
+    {
+        tckn: '22222222222',
+        firstName: 'Ayşe',
+        lastName: 'Şahin',
+        email: 'ayse.sahin@test.com',
+        phoneNumber: '5552222222',
+        dateOfBirth: new Date('1985-03-20'),
+        address: 'Ankara, Çankaya',
+        bloodType: 'B-',
+    },
+    {
+        tckn: '22222222223',
+        firstName: 'Mustafa',
+        lastName: 'Çelik',
+        email: 'mustafa.celik@test.com',
+        phoneNumber: '5552222223',
+        dateOfBirth: new Date('1975-11-08'),
+        address: 'İzmir, Karşıyaka',
+        bloodType: 'O+',
+    },
+],
     cashier: {
-        tckn: '33333333331',
+    tckn: '33333333331',
         firstName: 'Zeynep',
-        lastName: 'Arslan',
-        email: 'zeynep.arslan@agilion.test',
-        phoneNumber: '5553333331',
+            lastName: 'Arslan',
+                email: 'zeynep.arslan@agilion.test',
+                    phoneNumber: '5553333331',
     },
-    laborant: {
-        tckn: '44444444441',
+laborant: {
+    tckn: '44444444441',
         firstName: 'Emre',
-        lastName: 'Koç',
-        email: 'emre.koc@agilion.test',
-        phoneNumber: '5554444441',
+            lastName: 'Koç',
+                email: 'emre.koc@agilion.test',
+                    phoneNumber: '5554444441',
     },
-    cleaner: {
-        tckn: '55555555551',
+cleaner: {
+    tckn: '55555555551',
         firstName: 'Hasan',
-        lastName: 'Yıldız',
-        email: 'hasan.yildiz@agilion.test',
-        phoneNumber: '5555555551',
+            lastName: 'Yıldız',
+                email: 'hasan.yildiz@agilion.test',
+                    phoneNumber: '5555555551',
     },
 };
 
@@ -119,7 +117,7 @@ const testUsers = {
 
 async function createAdmin(hashedPassword) {
     const data = testUsers.admin;
-    
+
     const existing = await prisma.user.findUnique({ where: { tckn: data.tckn } });
     if (existing) {
         console.log(`  ⏭️  Admin already exists: ${data.email}`);
@@ -150,7 +148,7 @@ async function createAdmin(hashedPassword) {
 
 async function createDoctors(hashedPassword) {
     const created = [];
-    
+
     for (const data of testUsers.doctors) {
         const existing = await prisma.user.findUnique({ where: { tckn: data.tckn } });
         if (existing) {
@@ -187,7 +185,7 @@ async function createDoctors(hashedPassword) {
 
 async function createPatients(hashedPassword) {
     const created = [];
-    
+
     for (const data of testUsers.patients) {
         const existing = await prisma.user.findUnique({ where: { tckn: data.tckn } });
         if (existing) {
@@ -226,7 +224,7 @@ async function createPatients(hashedPassword) {
 
 async function createCashier(hashedPassword) {
     const data = testUsers.cashier;
-    
+
     const existing = await prisma.user.findUnique({ where: { tckn: data.tckn } });
     if (existing) {
         console.log(`  ⏭️  Cashier already exists: ${data.email}`);
@@ -252,7 +250,7 @@ async function createCashier(hashedPassword) {
 
 async function createLaborant(hashedPassword) {
     const data = testUsers.laborant;
-    
+
     const existing = await prisma.user.findUnique({ where: { tckn: data.tckn } });
     if (existing) {
         console.log(`  ⏭️  Laborant already exists: ${data.email}`);
@@ -283,7 +281,7 @@ async function createLaborant(hashedPassword) {
 
 async function createCleaner(hashedPassword) {
     const data = testUsers.cleaner;
-    
+
     const existing = await prisma.user.findUnique({ where: { tckn: data.tckn } });
     if (existing) {
         console.log(`  ⏭️  Cleaner already exists: ${data.email}`);
