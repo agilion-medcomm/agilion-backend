@@ -60,8 +60,8 @@ const getUserProfile = async (userId) => {
 
     // Format response based on role
     const response = {
-        id: user.doctor?.id || user.admin?.id || user.laborant?.id || user.cleaner?.id || user.patient?.id || user.id,
-        userId: user.id,
+        id: user.id, // Always return user ID as 'id'
+        userId: user.id, // Keep for backward compatibility
         firstName: user.firstName,
         lastName: user.lastName,
         tckn: user.tckn,
@@ -73,10 +73,24 @@ const getUserProfile = async (userId) => {
     };
 
     if (user.doctor) {
+        response.profileId = user.doctor.id; // Profile ID for reference
         response.specialization = user.doctor.specialization;
     }
 
+    if (user.admin) {
+        response.profileId = user.admin.id; // Profile ID for reference
+    }
+
+    if (user.laborant) {
+        response.profileId = user.laborant.id; // Profile ID for reference
+    }
+
+    if (user.cleaner) {
+        response.profileId = user.cleaner.id; // Profile ID for reference
+    }
+
     if (user.patient) {
+        response.profileId = user.patient.id; // Profile ID for reference
         response.address = user.patient.address;
         response.emergencyContact = user.patient.emergencyContact;
         response.bloodType = user.patient.bloodType;

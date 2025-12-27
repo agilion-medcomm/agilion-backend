@@ -16,7 +16,7 @@ const submitIssueSchema = Joi.object({
         .pattern(VALIDATION.PHONE_PATTERN)
         .required()
         .messages({
-            'string.pattern.base': 'Phone number must be in format +905XXXXXXXXX.',
+            'string.pattern.base': 'Phone number must be in format 5XXXXXXXXX (10 digits).',
             'any.required': 'Phone is required.',
             'string.empty': 'Phone is required.',
         }),

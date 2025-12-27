@@ -109,7 +109,7 @@ async function request(method, path, options = {}) {
   }
 
   const response = await fetch(url, fetchOptions);
-  
+
   let data = null;
   const contentType = response.headers.get('content-type');
   if (contentType && contentType.includes('application/json')) {
@@ -124,7 +124,7 @@ async function requestMultipart(method, path, formData, token) {
   const fullPath = path.startsWith('/api') ? `${API_PREFIX}${path.slice(4)}` : path;
   const url = `${BASE_URL}${fullPath}`;
   const headers = {};
-  
+
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
@@ -225,7 +225,7 @@ function ensureTestImage() {
   if (fs.existsSync(filePath)) return filePath;
 
   // Minimal PNG header + IHDR chunk (not a full valid image but enough for mime sniffers)
-  const pngHeader = Buffer.from([0x89,0x50,0x4E,0x47,0x0D,0x0A,0x1A,0x0A, 0x00,0x00,0x00,0x0D, 0x49,0x48,0x44,0x52]);
+  const pngHeader = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52]);
   fs.writeFileSync(filePath, pngHeader);
   return filePath;
 }
@@ -263,13 +263,13 @@ async function testHealthAndInfrastructure() {
 
   await test('Security headers are present', async () => {
     const { headers } = await request('GET', '/api/health');
-    
+
     // Check helmet security headers
     const csp = headers.get('content-security-policy');
     const xssProtection = headers.get('x-xss-protection');
     const frameOptions = headers.get('x-frame-options');
     const contentType = headers.get('x-content-type-options');
-    
+
     assert(csp || xssProtection || frameOptions || contentType, 'At least one security header should be present');
   });
 
@@ -297,7 +297,7 @@ async function testHealthAndInfrastructure() {
 
 async function testAuthentication() {
   logSection('AUTHENTICATION');
-  
+
   // Test Login with Seeded Users
   logSubSection('Login Tests');
 
@@ -625,7 +625,7 @@ async function testAppointments() {
     // Get a doctor ID first
     const { data: doctorData } = await request('GET', '/api/doctors');
     const doctors = doctorData.data || doctorData;
-    
+
     if (doctors && doctors.length > 0) {
       const tomorrow = new Date();
       tomorrow.setDate(tomorrow.getDate() + 1);
@@ -640,7 +640,7 @@ async function testAppointments() {
           reason: 'Test appointment'
         }
       });
-      
+
       if (response.status === 201 || response.status === 200) {
         testAppointmentId = data.data?.id || data.id;
         assert(true, 'Appointment created');
@@ -674,7 +674,7 @@ async function testAppointments() {
           reason: 'Cashier created appointment'
         }
       });
-      
+
       assert(response.status === 201 || response.status === 200 || response.status >= 400, 'Response received');
     } else {
       assert(true, 'Not enough data to test');
@@ -729,7 +729,7 @@ async function testPersonnel() {
   await test('Create personnel as admin', async () => {
     const uniqueEmail = `personnel_${Date.now()}@test.com`;
     const uniqueTckn = String(Math.floor(10000000000 + Math.random() * 89999999999));
-    const uniquePhone = `0555${Date.now().toString().slice(-7)}`;
+    const uniquePhone = `555${Date.now().toString().slice(-7)}`;
 
     const { response, data } = await request('POST', '/api/personnel', {
       token: adminToken,
@@ -785,7 +785,7 @@ async function testPersonnel() {
     // Get laborant profile ID from /api/auth/me
     const { data: meData } = await request('GET', '/api/auth/me', { token: laborantToken });
     const laborantProfileId = meData.data?.id || meData.id;
-    
+
     const { response, data } = await request('PUT', `/api/personnel/${laborantProfileId}`, {
       token: laborantToken,
       body: {
@@ -793,9 +793,9 @@ async function testPersonnel() {
         newPassword: 'NewTest1234!'
       }
     });
-    
+
     assert(response.status === 200, `Expected 200, got ${response.status}: ${JSON.stringify(data)}`);
-    
+
     // Change it back for other tests
     await request('PUT', `/api/personnel/${laborantProfileId}`, {
       token: laborantToken,
@@ -809,21 +809,21 @@ async function testPersonnel() {
   await test('Doctor can update their own profile', async () => {
     const { data: meData } = await request('GET', '/api/auth/me', { token: doctorToken });
     const doctorProfileId = meData.data?.id || meData.id;
-    
+
     const { response, data } = await request('PUT', `/api/personnel/${doctorProfileId}`, {
       token: doctorToken,
       body: {
         phoneNumber: '5559998877'
       }
     });
-    
+
     assert(response.status === 200, `Expected 200, got ${response.status}: ${JSON.stringify(data)}`);
   });
 
   await test('Personnel cannot update with wrong current password', async () => {
     const { data: meData } = await request('GET', '/api/auth/me', { token: laborantToken });
     const laborantProfileId = meData.data?.id || meData.id;
-    
+
     const { response } = await request('PUT', `/api/personnel/${laborantProfileId}`, {
       token: laborantToken,
       body: {
@@ -831,7 +831,7 @@ async function testPersonnel() {
         newPassword: 'NewTest1234!'
       }
     });
-    
+
     assert(response.status === 401, 'Should fail with wrong current password');
   });
 
@@ -839,7 +839,7 @@ async function testPersonnel() {
     // Cashiers don't have a profile table, so /api/auth/me returns user.id directly
     const { data: meData } = await request('GET', '/api/auth/me', { token: cashierToken });
     const cashierUserId = meData.data?.id || meData.id;
-    
+
     const { response, data } = await request('PUT', `/api/personnel/${cashierUserId}`, {
       token: cashierToken,
       body: {
@@ -847,9 +847,9 @@ async function testPersonnel() {
         newPassword: 'NewTest1234!'
       }
     });
-    
+
     assert(response.status === 200, `Expected 200, got ${response.status}: ${JSON.stringify(data)}`);
-    
+
     // Change it back
     await request('PUT', `/api/personnel/${cashierUserId}`, {
       token: cashierToken,
@@ -912,22 +912,22 @@ async function testLeaveRequests() {
     if (!doctorToken) {
       throw new Error('Doctor token not available - doctor login failed');
     }
-    
+
     // First get the doctor's profile ID
     const { response: meResponse, data: meData } = await request('GET', '/api/auth/me', { token: doctorToken });
-    
+
     if (meResponse.status !== 200 || !meData) {
       throw new Error(`Failed to get doctor profile: status ${meResponse.status}`);
     }
-    
+
     // For personnel, /api/auth/me returns { id: DoctorProfileId, userId: UserTableId }
     const doctorUserId = meData.data?.userId || meData.user?.userId || meData.userId || meData.data?.id || meData.id;
-    
+
     // Get doctor profile to find personnelId
     const { data: doctorsData } = await request('GET', '/api/doctors');
     const doctors = doctorsData.data || doctorsData;
     const doctorProfile = doctors.find(d => d.userId === doctorUserId);
-    
+
     if (!doctorProfile) {
       throw new Error(`Could not find doctor profile for user ID ${doctorUserId}`);
     }
@@ -1073,12 +1073,12 @@ async function testContactForm() {
       body: {
         name: 'Test User',
         email: 'contact@test.com',
-        phone: '05551234567',
+        phone: '5551234567',
         subject: 'Test Subject',
         message: 'This is a test message from the API test suite.'
       }
     });
-    
+
     assert(response.status === 201 || response.status === 200, `Expected 201 or 200, got ${response.status}: ${JSON.stringify(data)}`);
     testContactIssueId = data.data?.id || data.id;
   });
@@ -1320,7 +1320,7 @@ async function testPerformanceAndStability() {
       promises.push(request('GET', '/api/doctors'));
     }
     const results = await Promise.all(promises);
-    
+
     // All should succeed (under rate limit)
     const allSuccess = results.every(r => r.response.status === 200);
     assert(allSuccess, 'All requests should succeed');
@@ -1333,7 +1333,7 @@ async function testPerformanceAndStability() {
       request('GET', '/api/auth/me', { token: adminToken }),
     ];
     const results = await Promise.all(promises);
-    
+
     // Count successful requests - at least 2 of 3 should succeed
     const successCount = results.filter(r => r.response.status === 200).length;
     assert(successCount >= 2, `At least 2 of 3 concurrent requests should succeed (got ${successCount})`);
