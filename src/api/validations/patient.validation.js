@@ -9,7 +9,7 @@ const updateProfileSchema = Joi.object({
     phoneNumber: Joi.string()
         .pattern(VALIDATION.PHONE_PATTERN)
         .messages({
-            'string.pattern.base': 'Phone number must be in format +905XXXXXXXXX.',
+            'string.pattern.base': 'Phone number must be in format 5XXXXXXXXX (10 digits).',
         }),
     address: Joi.string(),
     emergencyContact: Joi.string(),

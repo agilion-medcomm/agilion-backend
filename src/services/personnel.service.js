@@ -45,37 +45,51 @@ const getAllPersonnel = async () => {
  */
 const updatePersonnel = async (personnelId, updates) => {
     const userId = parseInt(personnelId);
-    
+
     // Separate user fields from doctor-specific fields
-    const { specialization, currentPassword, newPassword, ...userUpdates } = updates;
-    
+    const {
+        specialization,
+        biography,
+        expertiseAreas,
+        educationAndAchievements,
+        workPrinciples,
+        currentPassword,
+        newPassword,
+        ...userUpdates
+    } = updates;
+
     // Handle password change with current password verification
     if (newPassword) {
         if (!currentPassword) {
             throw new ApiError(400, 'Current password is required to change password.');
         }
-        
+
         // Get user to verify current password
         const user = await prisma.user.findUnique({
             where: { id: userId },
             select: { password: true }
         });
-        
+
         if (!user) {
             throw new ApiError(404, 'User not found.');
         }
-        
+
         // Verify current password
         const isPasswordValid = await comparePassword(currentPassword, user.password);
         if (!isPasswordValid) {
             throw new ApiError(401, 'Current password is incorrect.');
         }
-        
+
         // Hash and set new password
         userUpdates.password = await hashPassword(newPassword);
     } else if (userUpdates.password) {
         // Direct password update (admin use case)
         userUpdates.password = await hashPassword(userUpdates.password);
+    }
+
+    // Remove invalid dateOfBirth values (empty strings, null, etc.)
+    if (userUpdates.dateOfBirth !== undefined && (!userUpdates.dateOfBirth || userUpdates.dateOfBirth === '')) {
+        delete userUpdates.dateOfBirth;
     }
 
     // Update user fields
@@ -84,16 +98,29 @@ const updatePersonnel = async (personnelId, updates) => {
         data: userUpdates,
     });
 
-    // Update doctor specialization if provided
-    if (specialization !== undefined) {
+    // Update doctor profile fields if provided
+    const hasDoctorUpdates = specialization !== undefined ||
+        biography !== undefined ||
+        expertiseAreas !== undefined ||
+        educationAndAchievements !== undefined ||
+        workPrinciples !== undefined;
+
+    if (hasDoctorUpdates) {
         const doctor = await prisma.doctor.findUnique({
             where: { userId: userId }
         });
-        
+
         if (doctor) {
+            const doctorUpdates = {};
+            if (specialization !== undefined) doctorUpdates.specialization = specialization;
+            if (biography !== undefined) doctorUpdates.biography = biography;
+            if (expertiseAreas !== undefined) doctorUpdates.expertiseAreas = expertiseAreas;
+            if (educationAndAchievements !== undefined) doctorUpdates.educationAndAchievements = educationAndAchievements;
+            if (workPrinciples !== undefined) doctorUpdates.workPrinciples = workPrinciples;
+
             await prisma.doctor.update({
                 where: { id: doctor.id },
-                data: { specialization }
+                data: doctorUpdates
             });
         }
     }
@@ -117,27 +144,52 @@ const deletePersonnel = async (personnelId) => {
             where: { doctor: { userId: id } }
         }),
 
-        // 2. Delete leave requests linked to this doctor
+        // 2. Delete appointments linked to this patient
+        prisma.appointment.deleteMany({
+            where: { patient: { userId: id } }
+        }),
+
+        // 3. Delete leave requests linked to this doctor
         prisma.leaveRequest.deleteMany({
             where: { doctor: { userId: id } }
         }),
 
-        // 3. Delete doctor profile (if exists)
+        // 4. Delete medical files linked to this patient
+        prisma.medicalFile.deleteMany({
+            where: { patient: { userId: id } }
+        }),
+
+        // 5. Delete cleaning records linked to this cleaner
+        prisma.cleaningRecord.deleteMany({
+            where: { cleaner: { userId: id } }
+        }),
+
+        // 6. Delete doctor profile (if exists)
         prisma.doctor.deleteMany({
             where: { userId: id }
         }),
 
-        // 4. Delete admin profile (if exists)
+        // 7. Delete admin profile (if exists)
         prisma.admin.deleteMany({
             where: { userId: id }
         }),
 
-        // 5. Delete laborant profile (if exists)
+        // 8. Delete laborant profile (if exists)
         prisma.laborant.deleteMany({
             where: { userId: id }
         }),
 
-        // 6. Finally delete the user record
+        // 9. Delete cleaner profile (if exists)
+        prisma.cleaner.deleteMany({
+            where: { userId: id }
+        }),
+
+        // 10. Delete patient profile (if exists)
+        prisma.patient.deleteMany({
+            where: { userId: id }
+        }),
+
+        // 11. Finally delete the user record
         prisma.user.delete({
             where: { id: id },
         })

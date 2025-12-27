@@ -52,7 +52,7 @@ const createPersonnel = async (req, res, next) => {
     try {
         // Middleware already verified admin role via authMiddleware + requireAdmin
         const result = await authService.registerPersonnel(req.body);
-        
+
         sendCreated(res, result.data, result.message);
     } catch (error) {
         next(error);
@@ -67,7 +67,27 @@ const updatePersonnel = async (req, res, next) => {
     try {
         // Use targetUserId set by requireAdminOrSelf middleware
         const userId = req.targetUserId;
-        const user = await personnelService.updatePersonnel(userId, req.body);
+
+        // Map frontend field names to database schema field names
+        const updates = { ...req.body };
+        if (updates.bio !== undefined) {
+            updates.biography = updates.bio;
+            delete updates.bio;
+        }
+        if (updates.expertise !== undefined) {
+            updates.expertiseAreas = updates.expertise;
+            delete updates.expertise;
+        }
+        if (updates.education !== undefined) {
+            updates.educationAndAchievements = updates.education;
+            delete updates.education;
+        }
+        if (updates.principles !== undefined) {
+            updates.workPrinciples = updates.principles;
+            delete updates.principles;
+        }
+
+        const user = await personnelService.updatePersonnel(userId, updates);
 
         sendSuccess(res, user, 'Personnel updated successfully.');
     } catch (error) {

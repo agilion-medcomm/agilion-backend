@@ -25,7 +25,7 @@ const registerSchema = Joi.object({
         .pattern(VALIDATION.PHONE_PATTERN)
         .required()
         .messages({
-            'string.pattern.base': 'Phone number must be in format +905XXXXXXXXX.',
+            'string.pattern.base': 'Phone number must be in format 5XXXXXXXXX (10 digits).',
             'any.required': 'Phone number is required.',
         }),
     password: Joi.string().min(AUTH.PASSWORD_MIN_LENGTH).required().messages({
@@ -53,7 +53,7 @@ const personnelRegisterSchema = Joi.object({
         .pattern(VALIDATION.PHONE_PATTERN)
         .allow('').optional()
         .messages({
-            'string.pattern.base': 'Phone number must be in format +905XXXXXXXXX.',
+            'string.pattern.base': 'Phone number must be in format 5XXXXXXXXX (10 digits).',
         }),
     email: Joi.string().email().allow('').optional(),
     dateOfBirth: Joi.alternatives().try(
