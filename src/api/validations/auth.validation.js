@@ -21,7 +21,13 @@ const registerSchema = Joi.object({
             'any.invalid': 'Invalid date format. Use YYYY-MM-DD.',
         }),
     email: Joi.string().email().required(),
-    phoneNumber: Joi.string().required(),
+    phoneNumber: Joi.string()
+        .pattern(VALIDATION.PHONE_PATTERN)
+        .required()
+        .messages({
+            'string.pattern.base': 'Phone number must be in format +905XXXXXXXXX.',
+            'any.required': 'Phone number is required.',
+        }),
     password: Joi.string().min(AUTH.PASSWORD_MIN_LENGTH).required().messages({
         'string.min': `Password must be at least ${AUTH.PASSWORD_MIN_LENGTH} characters long.`,
     }),
@@ -43,7 +49,12 @@ const personnelRegisterSchema = Joi.object({
     password: Joi.string().min(AUTH.PASSWORD_MIN_LENGTH).required(),
     // Allow ADMIN, DOCTOR, CASHIER, LABORANT, and CLEANER roles.
     role: Joi.string().valid(...ROLE_GROUPS.PERSONNEL).required(),
-    phoneNumber: Joi.string().allow('').optional(),
+    phoneNumber: Joi.string()
+        .pattern(VALIDATION.PHONE_PATTERN)
+        .allow('').optional()
+        .messages({
+            'string.pattern.base': 'Phone number must be in format +905XXXXXXXXX.',
+        }),
     email: Joi.string().email().allow('').optional(),
     dateOfBirth: Joi.alternatives().try(
         Joi.string().pattern(VALIDATION.DATE_ISO_PATTERN).custom(joiISODateValidator, 'ISO date validation'),

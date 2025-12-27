@@ -151,7 +151,8 @@ module.exports = {
     VALIDATION: {
         TCKN_LENGTH: 11,
         TCKN_PATTERN: /^[0-9]{11}$/,
-        PHONE_PATTERN: /^\+?[0-9\s-]{10,15}$/,
+        PHONE_PATTERN: /^\+905[0-9]{9}$/,  // Input format: +905XXXXXXXXX (validates with +90)
+        PHONE_STORAGE_LENGTH: 10,  // Storage format: 5XXXXXXXXX (stored without +90)
         DATE_ISO_PATTERN: /^\d{4}-\d{2}-\d{2}$/,
         DATE_TR_PATTERN: /^\d{2}\.\d{2}\.\d{4}$/,
         TIME_PATTERN: /^([0-1]\d|2[0-3]):([0-5]\d)$/,

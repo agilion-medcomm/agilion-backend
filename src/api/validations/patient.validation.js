@@ -1,12 +1,16 @@
 const Joi = require('joi');
-const { AUTH, BLOOD_TYPES } = require('../../config/constants');
+const { AUTH, BLOOD_TYPES, VALIDATION } = require('../../config/constants');
 
 const updateProfileSchema = Joi.object({
     firstName: Joi.string().min(2).max(50),
     lastName: Joi.string().min(2).max(50),
     email: Joi.string().email(),
 
-    phoneNumber: Joi.string().pattern(/^\+?[0-9\s]+$/), 
+    phoneNumber: Joi.string()
+        .pattern(VALIDATION.PHONE_PATTERN)
+        .messages({
+            'string.pattern.base': 'Phone number must be in format +905XXXXXXXXX.',
+        }),
     address: Joi.string(),
     emergencyContact: Joi.string(),
 
