@@ -538,20 +538,21 @@ async function testDoctors() {
   });
 
   await test('Get doctors filtered by specialization', async () => {
-    const { response, data } = await request('GET', '/api/doctors?specialization=Kardiyoloji');
+    const { response, data } = await request('GET', '/api/doctors?specialization=INTERNAL_MEDICINE');
     assertEqual(response.status, 200, 'Status code');
     const doctors = data.data || data;
     if (Array.isArray(doctors) && doctors.length > 0) {
       // All returned doctors should have the requested specialization
-      assert(doctors.every(d => d.specialization === 'Kardiyoloji'), 'All doctors should have Kardiyoloji specialization');
+      assert(doctors.every(d => d.specialization === 'INTERNAL_MEDICINE'), 'All doctors should have INTERNAL_MEDICINE specialization');
     }
   });
 
-  await test('Get doctors with invalid specialization returns empty', async () => {
-    const { response, data } = await request('GET', '/api/doctors?specialization=NonExistentDept');
+  await test('Get doctors with unused specialization returns empty', async () => {
+    const { response, data } = await request('GET', '/api/doctors?specialization=EYE_HEALTH');
     assertEqual(response.status, 200, 'Status code');
     const doctors = data.data || data;
     assert(Array.isArray(doctors), 'Returns array');
+    assert(doctors.length === 0, 'Should be empty');
   });
 }
 
