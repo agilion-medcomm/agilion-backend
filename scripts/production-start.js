@@ -13,6 +13,8 @@
 
 const { execSync, spawn } = require('child_process');
 const path = require('path');
+// Ensure env vars are loaded exclusively for this script execution
+require('dotenv').config();
 
 // Colors for console output
 const colors = {

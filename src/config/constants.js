@@ -110,7 +110,7 @@ module.exports = {
 
     // Rate Limiting Configuration
     RATE_LIMIT: {
-        ENABLED: process.env.RATE_LIMIT_ENABLED !== 'false', // Disable with RATE_LIMIT_ENABLED=false
+        ENABLED: (process.env.RATE_LIMIT_ENABLED || 'true').trim().toLowerCase() !== 'false', // Disable with RATE_LIMIT_ENABLED=false
         WINDOW_MS: 15 * 60 * 1000, // 15 minutes
         MAX_REQUESTS: 100, // per window
         LOGIN_MAX_ATTEMPTS: 5, // login attempts per window
@@ -127,15 +127,15 @@ module.exports = {
     SECURITY: {
         // Helmet configuration
         HELMET_ENABLED: process.env.HELMET_ENABLED !== 'false',
-        
+
         // Content Security Policy - more relaxed in development
         CSP_ENABLED: process.env.CSP_ENABLED !== 'false',
-        
+
         // CORS origins - comma-separated list or '*' for all
-        CORS_ORIGINS: process.env.CORS_ORIGINS 
+        CORS_ORIGINS: process.env.CORS_ORIGINS
             ? process.env.CORS_ORIGINS.split(',').map(o => o.trim())
             : ['http://localhost:5173', 'http://localhost:5174', 'https://zeytinburnucerrahitipmerkezi.com', 'https://www.zeytinburnucerrahitipmerkezi.com'],
-        
+
         // Trust proxy (for production behind load balancer)
         TRUST_PROXY: process.env.TRUST_PROXY === 'true',
     },
