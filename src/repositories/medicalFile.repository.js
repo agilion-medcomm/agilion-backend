@@ -57,7 +57,7 @@ const createMedicalFile = async (data) => {
  */
 const getFilesByPatientId = async (patientId) => {
     return prisma.medicalFile.findMany({
-        where: { 
+        where: {
             patientId: parseInt(patientId),
             deletedAt: null, // Exclude soft-deleted files
         },
@@ -83,6 +83,12 @@ const getFilesByPatientId = async (patientId) => {
                                 }
                             }
                         }
+                    },
+                    createdByUser: {
+                        select: {
+                            firstName: true,
+                            lastName: true,
+                        }
                     }
                 }
             }
@@ -96,7 +102,7 @@ const getFilesByPatientId = async (patientId) => {
  */
 const getFilesByLaborantId = async (laborantId) => {
     return prisma.medicalFile.findMany({
-        where: { 
+        where: {
             laborantId: parseInt(laborantId),
             deletedAt: null, // Exclude soft-deleted files
         },
@@ -121,6 +127,12 @@ const getFilesByLaborantId = async (laborantId) => {
                                     lastName: true,
                                 }
                             }
+                        }
+                    },
+                    createdByUser: {
+                        select: {
+                            firstName: true,
+                            lastName: true,
                         }
                     }
                 }
