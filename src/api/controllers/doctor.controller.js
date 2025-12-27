@@ -1,7 +1,7 @@
 const doctorService = require('../../services/doctor.service');
 const { sendSuccess } = require('../../utils/responseFormatter');
 const prisma = require('../../config/db');
-const ApiError = require('../../utils/ApiError');
+const { ApiError } = require('../middlewares/errorHandler');
 
 /**
  * GET /api/v1/doctors
