@@ -1,6 +1,6 @@
 const Joi = require('joi');
 const { joiISODateValidator } = require('../../utils/dateTimeValidator');
-const { AUTH, VALIDATION, ROLES, ROLE_GROUPS } = require('../../config/constants');
+const { AUTH, VALIDATION, ROLES, ROLE_GROUPS, MEDICAL_SPECIALTIES } = require('../../config/constants');
 
 // Schema for POST /api/v1/auth/register
 const registerSchema = Joi.object({
@@ -60,8 +60,12 @@ const personnelRegisterSchema = Joi.object({
         Joi.string().pattern(VALIDATION.DATE_ISO_PATTERN).custom(joiISODateValidator, 'ISO date validation'),
         Joi.valid(null)
     ).optional(),
-    // specialization is required for DOCTOR, should be empty for ADMIN; service can enforce if needed.
-    specialization: Joi.string().allow('').required(),
+    // specialization is required for DOCTOR and must be a valid enum value
+    specialization: Joi.when('role', {
+        is: ROLES.DOCTOR,
+        then: Joi.string().valid(...Object.values(MEDICAL_SPECIALTIES)).required(),
+        otherwise: Joi.string().allow('').optional()
+    }),
 });
 
 // Schema for POST /api/v1/auth/request-password-reset

@@ -21,6 +21,18 @@ const ROLE_GROUPS = Object.freeze({
     CAN_VIEW_PATIENTS: [ROLES.ADMIN, ROLES.DOCTOR, ROLES.CASHIER],
 });
 
+// Medical Specialties - Mirrors Prisma MedicalSpecialty enum
+const MEDICAL_SPECIALTIES = Object.freeze({
+    EMERGENCY: 'EMERGENCY',
+    ORAL_AND_DENTAL: 'ORAL_AND_DENTAL',
+    NUTRITION_DIET: 'NUTRITION_DIET',
+    DERMATOLOGY: 'DERMATOLOGY',
+    GENERAL_SURGERY: 'GENERAL_SURGERY',
+    EYE_HEALTH: 'EYE_HEALTH',
+    INTERNAL_MEDICINE: 'INTERNAL_MEDICINE',
+    GYNECOLOGY_OBSTETRICS: 'GYNECOLOGY_OBSTETRICS',
+});
+
 // Blood Types
 const BLOOD_TYPES = Object.freeze([
     'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'
@@ -65,6 +77,7 @@ module.exports = {
     // User Roles
     ROLES,
     ROLE_GROUPS,
+    MEDICAL_SPECIALTIES,
     BLOOD_TYPES,
     APPOINTMENT_STATUS,
     LEAVE_REQUEST_STATUS,
