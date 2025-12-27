@@ -1,5 +1,7 @@
 const doctorService = require('../../services/doctor.service');
 const { sendSuccess } = require('../../utils/responseFormatter');
+const prisma = require('../../config/db');
+const ApiError = require('../../utils/ApiError');
 
 /**
  * GET /api/v1/doctors
@@ -22,13 +24,24 @@ const getDoctors = async (req, res, next) => {
  * PUT /api/v1/doctors/:id/profile
  * Update doctor profile information
  * Authenticated endpoint - only the doctor themselves or admin can update
+ * :id is User ID (frontend sends User ID)
  */
 const updateDoctorProfile = async (req, res, next) => {
     try {
-        const { id } = req.params;
+        const userId = parseInt(req.params.id);  // Frontend sends User ID
         const { biography, expertiseAreas, educationAndAchievements, workPrinciples } = req.body;
 
-        const updatedDoctor = await doctorService.updateDoctorProfile(id, {
+        // Convert User ID to Doctor ID
+        const doctor = await prisma.doctor.findUnique({
+            where: { userId: userId }
+        });
+
+        if (!doctor) {
+            return next(new ApiError(404, 'Doctor not found for this user.'));
+        }
+
+        // Update doctor profile using Doctor ID
+        const updatedDoctor = await doctorService.updateDoctorProfile(doctor.id, {
             biography,
             expertiseAreas,
             educationAndAchievements,
