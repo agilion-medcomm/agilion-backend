@@ -17,6 +17,31 @@ const getDoctors = async (req, res, next) => {
     }
 };
 
+
+/**
+ * PUT /api/v1/doctors/:id/profile
+ * Update doctor profile information
+ * Authenticated endpoint - only the doctor themselves or admin can update
+ */
+const updateDoctorProfile = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const { biography, expertiseAreas, educationAndAchievements, workPrinciples } = req.body;
+
+        const updatedDoctor = await doctorService.updateDoctorProfile(id, {
+            biography,
+            expertiseAreas,
+            educationAndAchievements,
+            workPrinciples,
+        });
+
+        sendSuccess(res, updatedDoctor);
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     getDoctors,
+    updateDoctorProfile,
 };

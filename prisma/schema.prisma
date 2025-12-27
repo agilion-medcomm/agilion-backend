@@ -130,7 +130,12 @@ model Doctor {
 
   // Doctor-specific fields
   specialization String
-  // bio            String? // We can add more fields later
+
+  // Doctor profile information ("Doktor Hakkında" section)
+  biography                 String? @db.Text    // Özgeçmiş
+  expertiseAreas            String? @db.Text    // Uzmanlık Alanları 
+  educationAndAchievements  String? @db.Text    // Eğitim & Başarılar 
+  workPrinciples            String? @db.Text    // Çalışma İlkeleri
 
   // Rating fields (automatically calculated from appointments)
   averageRating Float? // Average rating from completed appointments
