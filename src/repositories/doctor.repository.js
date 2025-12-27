@@ -66,9 +66,40 @@ const updateDoctorRatings = async (doctorId, averageRating, totalRatings) => {
     });
 };
 
+/**
+ * Update doctor's profile information
+ */
+const updateDoctorProfile = async (doctorId, profileData) => {
+    const { biography, expertiseAreas, educationAndAchievements, workPrinciples } = profileData;
+
+    return prisma.doctor.update({
+        where: { id: parseInt(doctorId) },
+        data: {
+            ...(biography !== undefined && { biography }),
+            ...(expertiseAreas !== undefined && { expertiseAreas }),
+            ...(educationAndAchievements !== undefined && { educationAndAchievements }),
+            ...(workPrinciples !== undefined && { workPrinciples }),
+        },
+        include: {
+            user: {
+                select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    tckn: true,
+                    email: true,
+                    phoneNumber: true,
+                    profilePhoto: true,
+                },
+            },
+        },
+    });
+};
+
 module.exports = {
     getAllDoctors,
     getDoctorById,
     updateDoctorRatings,
+    updateDoctorProfile,
 };
 

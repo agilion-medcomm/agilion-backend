@@ -28,9 +28,43 @@ const getAllDoctors = async (specialization) => {
         role: ROLES.DOCTOR,
         averageRating: doc.averageRating,
         totalRatings: doc.totalRatings,
+        biography: doc.biography || '',
+        expertiseAreas: doc.expertiseAreas || '',
+        educationAndAchievements: doc.educationAndAchievements || '',
+        workPrinciples: doc.workPrinciples || '',
     }));
+};
+
+
+/**
+ * Update doctor profile information
+ * @param {number} doctorId - Doctor ID
+ * @param {object} profileData - Profile data to update
+ */
+const updateDoctorProfile = async (doctorId, profileData) => {
+    const updatedDoctor = await doctorRepository.updateDoctorProfile(doctorId, profileData);
+
+    return {
+        id: updatedDoctor.id,
+        userId: updatedDoctor.user.id,
+        tckn: updatedDoctor.user.tckn,
+        firstName: updatedDoctor.user.firstName,
+        lastName: updatedDoctor.user.lastName,
+        specialization: updatedDoctor.specialization,
+        email: updatedDoctor.user.email,
+        phoneNumber: updatedDoctor.user.phoneNumber,
+        img: updatedDoctor.user.profilePhoto || '',
+        role: ROLES.DOCTOR,
+        averageRating: updatedDoctor.averageRating,
+        totalRatings: updatedDoctor.totalRatings,
+        biography: updatedDoctor.biography || '',
+        expertiseAreas: updatedDoctor.expertiseAreas || '',
+        educationAndAchievements: updatedDoctor.educationAndAchievements || '',
+        workPrinciples: updatedDoctor.workPrinciples || '',
+    };
 };
 
 module.exports = {
     getAllDoctors,
+    updateDoctorProfile,
 };
