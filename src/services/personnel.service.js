@@ -25,7 +25,8 @@ const mapPersonnelUser = (user, specialization = null, doctorData = null) => ({
         bio: doctorData.biography || '',
         expertise: doctorData.expertiseAreas || '',
         education: doctorData.educationAndAchievements || '',
-        principles: doctorData.workPrinciples || ''
+        principles: doctorData.workPrinciples || '',
+        availabilityProtocol: doctorData.availabilityProtocol || null
     }),
 });
 

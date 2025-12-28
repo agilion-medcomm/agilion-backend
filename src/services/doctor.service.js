@@ -31,7 +31,10 @@ const getAllDoctors = async (specialization) => {
         biography: doc.biography || '',
         expertiseAreas: doc.expertiseAreas || '',
         educationAndAchievements: doc.educationAndAchievements || '',
+        expertiseAreas: doc.expertiseAreas || '',
+        educationAndAchievements: doc.educationAndAchievements || '',
         workPrinciples: doc.workPrinciples || '',
+        availabilityProtocol: doc.availabilityProtocol || null,
     }));
 };
 
@@ -64,7 +67,17 @@ const updateDoctorProfile = async (doctorId, profileData) => {
     };
 };
 
+/**
+ * Update doctor availability protocol
+ * @param {number} doctorId - Doctor ID
+ * @param {object} availabilityProtocol - Protocol object
+ */
+const updateDoctorAvailability = async (doctorId, availabilityProtocol) => {
+    return await doctorRepository.updateDoctorAvailability(doctorId, availabilityProtocol);
+};
+
 module.exports = {
     getAllDoctors,
     updateDoctorProfile,
+    updateDoctorAvailability,
 };

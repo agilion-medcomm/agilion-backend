@@ -33,6 +33,17 @@ const MEDICAL_SPECIALTIES = Object.freeze({
     GYNECOLOGY_OBSTETRICS: 'GYNECOLOGY_OBSTETRICS',
 });
 
+const SPECIALTY_LABELS = Object.freeze({
+    EMERGENCY: 'Acil 7/24',
+    ORAL_AND_DENTAL: 'Ağız ve Diş',
+    NUTRITION_DIET: 'Beslenme Diyet',
+    DERMATOLOGY: 'Dermatoloji',
+    GENERAL_SURGERY: 'Genel Cerrahi',
+    EYE_HEALTH: 'Göz Sağlığı',
+    INTERNAL_MEDICINE: 'İç Hastalıklar',
+    GYNECOLOGY_OBSTETRICS: 'Kadın & Doğum',
+});
+
 // Blood Types
 const BLOOD_TYPES = Object.freeze([
     'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'
@@ -73,11 +84,25 @@ const HOME_HEALTH_STATUS = Object.freeze({
     REJECTED: 'REJECTED',
 });
 
+// Week Days
+const WEEKDAYS = Object.freeze([
+    'sunday',
+    'monday',
+    'tuesday',
+    'wednesday',
+    'thursday',
+    'friday',
+    'saturday'
+]);
+
 module.exports = {
     // User Roles
     ROLES,
     ROLE_GROUPS,
+    WEEKDAYS,
+    ROLE_GROUPS,
     MEDICAL_SPECIALTIES,
+    SPECIALTY_LABELS,
     BLOOD_TYPES,
     APPOINTMENT_STATUS,
     LEAVE_REQUEST_STATUS,

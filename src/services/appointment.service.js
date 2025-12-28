@@ -4,7 +4,7 @@ const doctorRepository = require('../repositories/doctor.repository');
 const { ApiError } = require('../api/middlewares/errorHandler');
 const prisma = require('../config/db');
 const logger = require('../utils/logger');
-const { WORKING_HOURS, ROLES, APPOINTMENT_STATUS, RATING } = require('../config/constants');
+const { WORKING_HOURS, ROLES, APPOINTMENT_STATUS, RATING, WEEKDAYS } = require('../config/constants');
 const {
     parseAppointmentDate,
     validateAppointmentDateFormat,
@@ -18,7 +18,7 @@ const { sendAppointmentNotificationEmail, sendAppointmentCancellationEmail } = r
  */
 const getAppointmentsList = async (filters) => {
     const appointments = await appointmentRepository.getAppointments(filters);
-    
+
     return appointments.map(app => ({
         id: app.id,
         doctorId: app.doctorId,
@@ -42,22 +42,27 @@ const getAppointmentsList = async (filters) => {
 const getBookedTimesForDoctor = async (doctorId, date) => {
     // Validate and parse date
     const { day, month, year } = parseAppointmentDate(date);
-    
+
     const bookedTimes = await appointmentRepository.getBookedTimes(doctorId, date);
-    
+
     // Get approved leaves and calculate blocked slots
     const approvedLeaves = await leaveRequestRepository.getApprovedLeaves(doctorId);
-    
+
     // Generate daily time slots based on working hours configuration
     const dailySlots = [];
     const { START, END, INTERVAL_MINUTES } = WORKING_HOURS;
-    
+
     for (let h = START; h <= END; h++) {
         for (let m = 0; m < 60; m += INTERVAL_MINUTES) {
             if (h === END && m > 0) continue;
             dailySlots.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
         }
     }
+
+
+    // Get doctor availability protocol
+    const doctor = await doctorRepository.getDoctorById(doctorId);
+    const availabilityProtocol = doctor?.availabilityProtocol;
 
     dailySlots.forEach(slot => {
         const [h, m] = slot.split(':');
@@ -68,12 +73,40 @@ const getBookedTimesForDoctor = async (doctorId, date) => {
             throw new ApiError(500, 'Error processing time slot dates.');
         }
 
+        // Check Availability Protocol
+        if (availabilityProtocol) {
+            const dayName = WEEKDAYS[slotDate.getDay()];
+            const dayConfig = availabilityProtocol[dayName];
+
+            // Default to CLOSED if protocol is defined but today is missing or marked unavailable
+            let isAllowed = false;
+
+            if (dayConfig && dayConfig.isAvailable) {
+                // If start/end times are defined, check them. Otherwise assume full day available if isAvailable=true
+                const start = dayConfig.start || '00:00';
+                const end = dayConfig.end || '23:59';
+
+                if (slot >= start && slot < end) {
+                    isAllowed = true;
+                }
+            }
+
+            // If not allowed by protocol, mark as booked
+            if (!isAllowed) {
+                if (!bookedTimes.includes(slot)) {
+                    bookedTimes.push(slot);
+                }
+                // Skip further checks for this slot (it's already blocked)
+                return;
+            }
+        }
+
         const isBlockedByLeave = approvedLeaves.some(leave => {
             try {
                 // Leave dates are in YYYY-MM-DD format
                 const leaveStart = createDateTimeFromISO(leave.startDate, leave.startTime);
                 const leaveEnd = createDateTimeFromISO(leave.endDate, leave.endTime);
-                
+
                 return slotDate >= leaveStart && slotDate < leaveEnd;
             } catch (error) {
                 logger.error('Error parsing leave dates', error);
@@ -122,16 +155,16 @@ const createAppointment = async (userId, role, appointmentData) => {
         if (!patientIdFromBody) {
             throw new ApiError(400, 'Patient ID is required for cashier appointments.');
         }
-        
+
         // Verify the patient exists
         const patient = await prisma.patient.findUnique({
             where: { id: parseInt(patientIdFromBody) },
         });
-        
+
         if (!patient) {
             throw new ApiError(404, 'Patient not found.');
         }
-        
+
         patientId = patient.id;
     }
     // PATIENT creates appointment for themselves
@@ -144,7 +177,7 @@ const createAppointment = async (userId, role, appointmentData) => {
         if (!user || !user.patient) {
             throw new ApiError(400, 'Patient profile not found.');
         }
-        
+
         patientId = user.patient.id;
     }
     // Other roles cannot create appointments
@@ -237,21 +270,21 @@ const updateAppointmentStatus = async (appointmentId, status) => {
 const calculateDoctorAverageRating = async (doctorId) => {
     // Get all rated appointments for this doctor
     const ratedAppointments = await appointmentRepository.getRatedAppointmentsForDoctor(doctorId);
-    
+
     if (ratedAppointments.length === 0) {
         // No ratings yet, set to null/0
         await doctorRepository.updateDoctorRatings(doctorId, null, 0);
         return { averageRating: null, totalRatings: 0 };
     }
-    
+
     // Calculate average rating
     const sum = ratedAppointments.reduce((acc, app) => acc + app.rating, 0);
     const average = sum / ratedAppointments.length;
     const averageRating = Math.round(average * 10) / 10; // Round to 1 decimal place
-    
+
     // Update doctor's rating in database
     await doctorRepository.updateDoctorRatings(doctorId, averageRating, ratedAppointments.length);
-    
+
     return { averageRating, totalRatings: ratedAppointments.length };
 };
 
@@ -266,50 +299,50 @@ const rateAppointment = async (appointmentId, userId, rating) => {
     if (!rating || typeof rating !== 'number' || !Number.isInteger(rating)) {
         throw new ApiError(400, 'Rating must be an integer.');
     }
-    
+
     if (rating < RATING.MIN || rating > RATING.MAX) {
         throw new ApiError(400, `Rating must be between ${RATING.MIN} and ${RATING.MAX}.`);
     }
-    
+
     // Get appointment with full details
     const appointment = await appointmentRepository.getAppointmentById(appointmentId);
-    
+
     if (!appointment) {
         throw new ApiError(404, 'Randevu bulunamadı.');
     }
-    
+
     // Check if appointment is DONE
     if (appointment.status !== APPOINTMENT_STATUS.DONE) {
         throw new ApiError(400, 'Sadece tamamlanmış randevular değerlendirilebilir.');
     }
-    
+
     // Check if user is the patient who owns this appointment
     const user = await prisma.user.findUnique({
         where: { id: userId },
         include: { patient: true },
     });
-    
+
     if (!user || !user.patient) {
         throw new ApiError(403, 'Patient profile not found.');
     }
-    
+
     if (appointment.patientId !== user.patient.id) {
         throw new ApiError(403, 'Bu randevuyu sadece randevunun sahibi değerlendirebilir.');
     }
-    
+
     // Check if appointment has already been rated
     if (appointment.rating !== null) {
         throw new ApiError(400, 'Bu randevu zaten değerlendirilmiş.');
     }
-    
+
     // Rate the appointment
     const ratedAppointment = await appointmentRepository.rateAppointment(appointmentId, rating);
-    
+
     // Recalculate doctor's average rating
     await calculateDoctorAverageRating(appointment.doctorId);
-    
+
     logger.info(`Appointment ${appointmentId} rated with ${rating} stars by patient ${user.patient.id}`);
-    
+
     return {
         id: ratedAppointment.id,
         rating: ratedAppointment.rating,
