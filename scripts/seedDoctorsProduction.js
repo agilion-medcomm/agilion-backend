@@ -1,6 +1,7 @@
 const { PrismaClient, UserRole } = require('@prisma/client');
 const prisma = new PrismaClient();
 const bcrypt = require('bcryptjs');
+const { MEDICAL_SPECIALTIES, SPECIALTY_LABELS } = require('../src/config/constants');
 
 // Scraped Data from https://zeytinburnutipmerkezi.com.tr/hekimlerimiz/
 const doctorsData = [
@@ -81,6 +82,29 @@ function slugify(text) {
         .replace(/[^a-z0-9]/g, '');
 }
 
+/**
+ * Maps the scraped title to a valid MEDICAL_SPECIALTY enum value
+ * using the logic derived from SPECIALTY_LABELS where possible,
+ * or direct mapping for the scraped variations.
+ */
+function getSpecialtyFromTitle(title) {
+    const t = title.toLocaleLowerCase('tr-TR');
+
+    // Map scraped titles to MEDICAL_SPECIALTIES key
+    if (t.includes('acil')) return MEDICAL_SPECIALTIES.EMERGENCY;
+    if (t.includes('dahiliye') || t.includes('iç hastalıklar')) return MEDICAL_SPECIALTIES.INTERNAL_MEDICINE;
+    if (t.includes('dermatoloji') || t.includes('deri')) return MEDICAL_SPECIALTIES.DERMATOLOGY;
+    if (t.includes('kadın') || t.includes('doğum')) return MEDICAL_SPECIALTIES.GYNECOLOGY_OBSTETRICS;
+    if (t.includes('göz')) return MEDICAL_SPECIALTIES.EYE_HEALTH;
+    if (t.includes('genel cerrahi')) return MEDICAL_SPECIALTIES.GENERAL_SURGERY;
+    if (t.includes('ağız') || t.includes('diş')) return MEDICAL_SPECIALTIES.ORAL_AND_DENTAL;
+    if (t.includes('beslenme') || t.includes('diyet')) return MEDICAL_SPECIALTIES.NUTRITION_DIET;
+
+    // Fallback? or throw error?
+    console.warn(`Warning: Could not map title "${title}" to a known specialty. Defaulting to INTERNAL_MEDICINE as fallback (unsafe).`);
+    return MEDICAL_SPECIALTIES.INTERNAL_MEDICINE;
+}
+
 async function main() {
     console.log(`Start seeding ${doctorsData.length} doctors...`);
 
@@ -119,7 +143,12 @@ async function main() {
         // Phone: 55500000XX (where XX is index + 10)
         const phoneNumber = `55500000${10 + i}`;
 
-        console.log(`Processing: ${doc.name} - TCKN: ${tckn} (${email})`);
+        // Determine correct specialty enum
+        const specialtyEnum = getSpecialtyFromTitle(doc.title);
+        // Get the pretty label for biography/display (optional, or just use doc.title)
+        const specialtyLabel = SPECIALTY_LABELS[specialtyEnum] || doc.title;
+
+        console.log(`Processing: ${doc.name} - TCKN: ${tckn} (${email}) - Specialty: ${specialtyEnum}`);
 
         try {
             // Check if user exists by email or TCKN
@@ -170,9 +199,9 @@ async function main() {
                 await prisma.doctor.create({
                     data: {
                         userId: user.id,
-                        specialization: doc.title,
+                        specialization: specialtyEnum,
                         // Add some dummy bio text
-                        biography: `${doc.name}, ${doc.title} alanında uzman bir hekimdir.`,
+                        biography: `${doc.name}, ${specialtyLabel} alanında uzman bir hekimdir.`,
                         workPrinciples: "Hasta odaklı yaklaşım.",
                         educationAndAchievements: "Alanında çeşitli ödüller."
                     }
@@ -182,7 +211,7 @@ async function main() {
                 await prisma.doctor.update({
                     where: { id: doctor.id },
                     data: {
-                        specialization: doc.title
+                        specialization: specialtyEnum
                     }
                 });
                 console.log(` - Updated Doctor Profile`);
@@ -209,9 +238,11 @@ async function main() {
         const firstName = nameParts.slice(0, -1).join(' ') || nameParts[0];
         const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
         const emailSlug = slugify(firstName + lastName);
+        const specialtyEnum = getSpecialtyFromTitle(doc.title);
 
         return {
             Name: doc.name,
+            Specialty: specialtyEnum,
             TCKN: `888888888${80 + i}`,
             Email: `${emailSlug}@zeytinburnutipmerkezi.com.tr`,
             Password: 'Test1234!'
