@@ -96,10 +96,24 @@ const updateDoctorProfile = async (doctorId, profileData) => {
     });
 };
 
+
+/**
+ * Update doctor's availability protocol
+ */
+const updateDoctorAvailability = async (doctorId, availabilityProtocol) => {
+    return prisma.doctor.update({
+        where: { id: parseInt(doctorId) },
+        data: {
+            availabilityProtocol
+        }
+    });
+};
+
 module.exports = {
     getAllDoctors,
     getDoctorById,
     updateDoctorRatings,
     updateDoctorProfile,
+    updateDoctorAvailability,
 };
 

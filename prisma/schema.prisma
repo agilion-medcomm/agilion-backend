@@ -159,6 +159,9 @@ model Doctor {
   // A doctor can have MANY leave requests
   leaveRequests LeaveRequest[]
 
+  // Availability Protocol
+  availabilityProtocol Json? // Weekly availability schedule (e.g. { monday: { start: "09:00", end: "17:00" }, ... })
+
   @@map("doctors")
 }
 

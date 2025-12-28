@@ -54,7 +54,33 @@ const updateDoctorProfile = async (req, res, next) => {
     }
 };
 
+/**
+ * PUT /api/v1/doctors/:id/availability
+ * Update doctor availability protocol
+ */
+const updateDoctorAvailability = async (req, res, next) => {
+    try {
+        const userId = parseInt(req.params.id);
+        const { availabilityProtocol } = req.body;
+
+        const doctor = await prisma.doctor.findUnique({
+            where: { userId: userId }
+        });
+
+        if (!doctor) {
+            return next(new ApiError(404, 'Doctor not found for this user.'));
+        }
+
+        const updated = await doctorService.updateDoctorAvailability(doctor.id, availabilityProtocol);
+
+        sendSuccess(res, updated);
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     getDoctors,
     updateDoctorProfile,
+    updateDoctorAvailability,
 };
