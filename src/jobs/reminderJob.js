@@ -7,6 +7,7 @@ const {
     validateTimeFormat,
     validateAppointmentDateFormat,
 } = require('../utils/dateTimeValidator');
+const { SPECIALTY_LABELS } = require('../config/constants');
 
 /**
  * Parse DD.MM.YYYY and HH:MM into a Date object (Turkey timezone)
@@ -22,17 +23,17 @@ const parseAppointmentDateTime = (dateStr, timeStr) => {
     if (!validateAppointmentDateFormat(dateStr)) {
         throw new Error(`Invalid date format: ${dateStr}. Expected DD.MM.YYYY`);
     }
-    
+
     if (!validateTimeFormat(timeStr)) {
         throw new Error(`Invalid time format: ${timeStr}. Expected HH:MM`);
     }
-    
+
     // Parse date using centralized utility
     const { day, month, year } = parseAppointmentDate(dateStr);
-    
+
     // Parse time
     const [hours, minutes] = timeStr.split(':').map(Number);
-    
+
     // Create date as local time (Turkey timezone)
     // Database stores times in Turkey local time, so we interpret them as local time
     return new Date(year, month - 1, day, hours, minutes, 0, 0);
@@ -71,10 +72,10 @@ const findAppointmentsNeedingReminders = async () => {
 
         // Current time
         const now = new Date();
-        
+
         // 23 hours from now (in milliseconds)
         const twentyThreeHoursFromNow = new Date(now.getTime() + 23 * 60 * 60 * 1000);
-        
+
         // 24 hours from now (in milliseconds)
         const twentyFourHoursFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
@@ -119,9 +120,9 @@ const findAppointmentsNeedingReminders = async () => {
 const processAppointmentReminders = async () => {
     try {
         logger.info('Starting appointment reminder job...');
-        
+
         const appointments = await findAppointmentsNeedingReminders();
-        
+
         if (appointments.length === 0) {
             logger.info('No appointments need reminders at this time.');
             return;
@@ -147,7 +148,7 @@ const processAppointmentReminders = async () => {
                     patientFirstName: patientUser.firstName,
                     patientLastName: patientUser.lastName,
                     doctorName: `${doctorUser.firstName} ${doctorUser.lastName}`,
-                    department: appointment.doctor.specialization,
+                    department: SPECIALTY_LABELS[appointment.doctor.specialization] || appointment.doctor.specialization,
                     appointmentDateTime: appointmentDateTime,
                 };
 
