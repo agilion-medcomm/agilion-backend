@@ -4,7 +4,7 @@ const doctorRepository = require('../repositories/doctor.repository');
 const { ApiError } = require('../api/middlewares/errorHandler');
 const prisma = require('../config/db');
 const logger = require('../utils/logger');
-const { WORKING_HOURS, ROLES, APPOINTMENT_STATUS, RATING, WEEKDAYS } = require('../config/constants');
+const { WORKING_HOURS, ROLES, APPOINTMENT_STATUS, RATING, WEEKDAYS, SPECIALTY_LABELS } = require('../config/constants');
 const {
     parseAppointmentDate,
     validateAppointmentDateFormat,
@@ -200,7 +200,7 @@ const createAppointment = async (userId, role, appointmentData) => {
         patientFirstName: appointment.patient.user.firstName,
         patientLastName: appointment.patient.user.lastName,
         doctorName: `${appointment.doctor.user.firstName} ${appointment.doctor.user.lastName}`,
-        department: appointment.doctor.specialization || '-',
+        department: SPECIALTY_LABELS[appointment.doctor.specialization] || appointment.doctor.specialization || '-',
         date: appointment.date,
         time: appointment.time,
         status: appointment.status,
@@ -241,7 +241,7 @@ const updateAppointmentStatus = async (appointmentId, status) => {
         patientFirstName: appointment.patient.user.firstName,
         patientLastName: appointment.patient.user.lastName,
         doctorName: `${appointment.doctor.user.firstName} ${appointment.doctor.user.lastName}`,
-        department: appointment.doctor.specialization || '-',
+        department: SPECIALTY_LABELS[appointment.doctor.specialization] || appointment.doctor.specialization || '-',
         date: appointment.date,
         time: appointment.time,
         status: appointment.status,
