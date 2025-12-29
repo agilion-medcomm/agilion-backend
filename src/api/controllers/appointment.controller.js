@@ -2,6 +2,8 @@ const appointmentService = require('../../services/appointment.service');
 const { sendSuccess, sendCreated } = require('../../utils/responseFormatter');
 const { parseAndValidateId } = require('../../utils/idValidator');
 
+const prisma = require('../config/db');
+
 /**
  * GET /api/v1/appointments
  * Query params:
@@ -15,7 +17,21 @@ const getAppointments = async (req, res, next) => {
         // A) Full list for doctor/admin panel
         if (list === 'true') {
             const filters = {};
-            if (doctorId) filters.doctorId = doctorId;
+
+            // If user is a DOCTOR, enforce their own doctorId
+            if (req.user.role === 'DOCTOR') {
+                const doctor = await prisma.doctor.findUnique({
+                    where: { userId: req.user.userId }
+                });
+
+                if (doctor) {
+                    filters.doctorId = doctor.id;
+                }
+            } else if (doctorId) {
+                // For admins, allow filtering by any doctorId
+                filters.doctorId = doctorId;
+            }
+
             if (patientId) filters.patientId = patientId;
 
             const appointments = await appointmentService.getAppointmentsList(filters);
