@@ -73,6 +73,13 @@ const listLabRequests = async (userId, role, filters) => {
         }
     }
 
+    if (role === ROLES.PATIENT) {
+        // Patients can only see their own requests
+        const patient = await prisma.patient.findUnique({ where: { userId: parseInt(userId) } });
+        if (!patient) return []; // Should not happen if data integrity is maintained
+        f.patientId = patient.id;
+    }
+
     // DOCTOR and ADMIN see all requests by default; front-end can filter further
     const results = await labRequestRepository.findRequests(f);
     return results;
