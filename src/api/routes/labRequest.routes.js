@@ -11,8 +11,8 @@ const { ensureCreatorOrAdmin, ensureLaborantAssignedOrClaimable } = require('../
 // POST create request (Doctor or Admin)
 router.post('/', authMiddleware, authorize(ROLES.DOCTOR, ROLES.ADMIN), validate(createLabRequestSchema), labRequestController.createLabRequest);
 
-// GET list requests (Doctor/Laborant/Admin)
-router.get('/', authMiddleware, authorize(ROLES.DOCTOR, ROLES.LABORANT, ROLES.ADMIN), labRequestController.listLabRequests);
+// GET list requests (Doctor/Laborant/Admin/Patient)
+router.get('/', authMiddleware, authorize(ROLES.DOCTOR, ROLES.LABORANT, ROLES.ADMIN, ROLES.PATIENT), labRequestController.listLabRequests);
 
 // GET detail
 router.get('/:id', authMiddleware, authorize(ROLES.DOCTOR, ROLES.LABORANT, ROLES.ADMIN), labRequestController.getLabRequest);
