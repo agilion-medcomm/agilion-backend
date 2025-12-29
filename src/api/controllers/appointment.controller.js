@@ -2,7 +2,7 @@ const appointmentService = require('../../services/appointment.service');
 const { sendSuccess, sendCreated } = require('../../utils/responseFormatter');
 const { parseAndValidateId } = require('../../utils/idValidator');
 
-const prisma = require('../config/db');
+const prisma = require('../../config/db');
 
 /**
  * GET /api/v1/appointments
