@@ -3,6 +3,8 @@ const { sendSuccess } = require('../../utils/responseFormatter');
 const prisma = require('../../config/db');
 const { ApiError } = require('../middlewares/errorHandler');
 
+const { SPECIALTY_LABELS } = require('../../config/constants');
+
 /**
  * GET /api/v1/doctors
  * GET /api/v1/doctors?specialization=...
@@ -11,7 +13,16 @@ const { ApiError } = require('../middlewares/errorHandler');
  */
 const getDoctors = async (req, res, next) => {
     try {
-        const { specialization } = req.query;
+        let { specialization } = req.query;
+
+        // Map display label (e.g., "Dermatoloji") to Enum key (e.g., "DERMATOLOGY")
+        if (specialization) {
+            const entry = Object.entries(SPECIALTY_LABELS).find(([key, label]) => label === specialization);
+            if (entry) {
+                specialization = entry[0];
+            }
+        }
+
         const doctors = await doctorService.getAllDoctors(specialization);
         sendSuccess(res, doctors);
     } catch (error) {
